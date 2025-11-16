@@ -1,0 +1,2 @@
+export const FREE_GENERATION_LIMIT = 30;
+export const HOBBYIST_GENERATION_LIMIT = 50;
