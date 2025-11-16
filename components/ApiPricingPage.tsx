@@ -46,7 +46,7 @@ const ApiPricingPage: React.FC<ApiPricingPageProps> = ({ onBack, onNavigate }) =
 const apiKey = 'YOUR_API_KEY'; // Get this from your dashboard
 const prompt = 'A serverless API on GCP using Cloud Functions and Firestore.';
 
-fetch('https://cubegen.ai/api/v1/diagrams/generate', {
+fetch('https://ube-chainsmoker231978-a1y8un6p.leapcell.dev/api/v1/diagrams/generate', {
   method: 'POST',
   headers: {
     'Authorization': \`Bearer \${apiKey}\`,
