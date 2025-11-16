@@ -2,7 +2,7 @@ import { DiagramData, ArchNode } from "../types";
 import type { Content } from "@google/genai";
 import { supabase } from '../supabaseClient';
 
-const BACKEND_URL = ''; // Use Vite proxy for local development
+const BACKEND_URL = 'https://ube-chainsmoker231978-a1y8un6p.leapcell.dev'; // Use Vite proxy for local development
 
 // Reusable fetch function for our backend API
 const fetchFromApi = async (endpoint: string, body?: object, method: 'POST' | 'GET' | 'DELETE' = 'POST', adminToken?: string | null) => {
