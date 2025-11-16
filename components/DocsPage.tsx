@@ -157,7 +157,7 @@ const DocsPage: React.FC<DocsPageProps> = ({ onBack, onLaunch, onNavigateToApi, 
                             <DocsSection id="api-access" title="API Access">
                                 <p>Want to automate diagram generation? CubeGen AI offers a simple REST API to integrate into your own applications and workflows.</p>
                                 <p>Generate diagrams from your CI/CD pipeline, build custom internal tools, or create automated documentation. Our API provides the flexibility you need.</p>
-                                <CodeBlock code={`curl 'https://cubegen.ai/api/v1/diagrams/generate' \\
+                                <CodeBlock code={`curl 'https://ube-chainsmoker231978-a1y8un6p.leapcell.dev/api/v1/diagrams/generate' \\
   -X POST \\
   -H 'Authorization: Bearer YOUR_API_KEY' \\
   -H 'Content-Type: application/json' \\
