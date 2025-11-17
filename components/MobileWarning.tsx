@@ -2,42 +2,61 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MobileWarningProps {
-  onDismiss: () => void;
+  onProceed: () => void;
+  onCancel: () => void;
 }
 
-const MobileWarning: React.FC<MobileWarningProps> = ({ onDismiss }) => {
+const MobileWarning: React.FC<MobileWarningProps> = ({ onProceed, onCancel }) => {
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1 },
+    exit: { opacity: 0, scale: 0.95 },
+  };
+
   return (
-    <div
-      className="fixed inset-0 bg-black/30 z-50 flex items-end justify-center p-4 md:hidden"
-      onClick={onDismiss}
-    >
+    <AnimatePresence>
       <motion.div
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-        className="bg-[var(--color-panel-bg)] w-full max-w-sm rounded-2xl shadow-xl border border-[var(--color-border)] p-6 text-center"
-        onClick={(e) => e.stopPropagation()}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+        onClick={onCancel} // Close on backdrop click
       >
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-bg-input)] border border-[var(--color-border)]">
-           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[var(--color-text-secondary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <h3 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">
-          Better on Desktop
-        </h3>
-        <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-          For the best editing experience with all tools and features, we recommend using a larger screen.
-        </p>
-        <button
-          onClick={onDismiss}
-          className="mt-6 w-full bg-[var(--color-accent)] text-[var(--color-accent-text-strong)] font-semibold py-2.5 px-4 rounded-xl transition-opacity hover:opacity-90"
+        <motion.div
+          variants={modalVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="bg-[var(--color-panel-bg)] rounded-2xl shadow-xl w-full max-w-md flex flex-col border border-[var(--color-border)]"
+          onClick={(e) => e.stopPropagation()}
         >
-          Continue Anyway
-        </button>
+          <div className="p-6 text-center">
+            <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-yellow-100 border-2 border-yellow-200 shadow-lg mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-yellow-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+            </div>
+            <h2 className="text-2xl font-bold">Desktop Recommended</h2>
+            <p className="mt-2 text-[var(--color-text-secondary)]">
+              For the best experience, especially with complex diagrams, we recommend using a desktop browser. The mobile playground is available but may have limitations.
+            </p>
+          </div>
+           <div className="p-6 bg-[var(--color-bg-input)] border-t border-[var(--color-border)] flex flex-col-reverse sm:flex-row justify-center items-center gap-3 rounded-b-2xl">
+                <button onClick={onCancel} className="w-full sm:w-auto px-6 py-2.5 bg-[var(--color-button-bg)] text-sm font-medium text-[var(--color-text-secondary)] rounded-lg hover:bg-[var(--color-button-bg-hover)] transition-colors">
+                    Go Back
+                </button>
+                <button 
+                    onClick={onProceed} 
+                    className="w-full sm:w-auto px-6 py-2.5 bg-[var(--color-accent)] text-sm font-semibold text-[var(--color-accent-text-strong)] rounded-lg hover:opacity-90 transition-opacity"
+                >
+                    Proceed Anyway
+                </button>
+            </div>
+        </motion.div>
       </motion.div>
-    </div>
+    </AnimatePresence>
   );
 };
 

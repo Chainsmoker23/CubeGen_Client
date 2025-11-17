@@ -9,6 +9,7 @@ interface PropertiesSidebarProps {
   item: Item | null;
   onPropertyChange: (itemId: string, newProps: Partial<Item>) => void;
   selectedCount: number;
+  onClose?: () => void;
 }
 
 // ====================================================================================
@@ -132,7 +133,7 @@ const ShapeSelector: React.FC<{
 };
 
 
-const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ item, onPropertyChange, selectedCount }) => {
+const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ item, onPropertyChange, selectedCount, onClose }) => {
   const { currentUser } = useAuth();
   const plan = currentUser?.user_metadata?.plan || 'free';
   const isPremiumUser = ['hobbyist', 'pro'].includes(plan);
@@ -246,7 +247,14 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ item, onPropertyC
       animate={{ opacity: 1, x: 0 }}
       className="flex flex-col h-full glass-panel p-6 rounded-2xl overflow-y-auto"
     >
-      <h2 className="text-xl font-semibold mb-4">Properties</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Properties</h2>
+        {onClose && (
+            <button onClick={onClose} className="p-1 rounded-full text-[var(--color-text-secondary)] hover:bg-[var(--color-button-bg-hover)]">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        )}
+      </div>
       <div className="space-y-4">
         <div>
             <label htmlFor="label" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Label</label>

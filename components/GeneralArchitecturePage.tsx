@@ -17,6 +17,7 @@ import MobilePlayground from './MobilePlayground';
 import ApiKeyModal from './ApiKeyModal';
 import Logo from './Logo';
 import { useAuth } from '../contexts/AuthContext';
+import MobileWarning from './MobileWarning';
 
 type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research';
 
@@ -58,6 +59,7 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
   
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showMobileWarning, setShowMobileWarning] = useState<boolean>(false);
   const [editingTitle, setEditingTitle] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
   
@@ -408,6 +410,14 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
     setPromptIndex(nextIndex);
     setPrompt(EXAMPLE_PROMPTS_LIST[nextIndex]);
   };
+
+  const handleEnterPlayground = () => {
+    if (isMobile) {
+      setShowMobileWarning(true);
+    } else {
+      setIsPlaygroundMode(true);
+    }
+  };
   
     if (isPlaygroundMode && diagramData) {
       const playgroundProps = {
@@ -539,7 +549,7 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
                           canUndo={historyIndex > 0}
                           canRedo={historyIndex < history.length - 1}
                           onFitToScreen={handleFitToScreen}
-                          onGoToPlayground={() => setIsPlaygroundMode(true)}
+                          onGoToPlayground={handleEnterPlayground}
                           canGoToPlayground={!!diagramData}
                       />
                     </div>
@@ -629,6 +639,18 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
                   }}
                   onSave={handleSaveAndRetryApiKey}
               />
+          )}
+        </AnimatePresence>
+        
+        <AnimatePresence>
+          {showMobileWarning && (
+            <MobileWarning
+              onProceed={() => {
+                setIsPlaygroundMode(true);
+                setShowMobileWarning(false);
+              }}
+              onCancel={() => setShowMobileWarning(false)}
+            />
           )}
         </AnimatePresence>
       </div>

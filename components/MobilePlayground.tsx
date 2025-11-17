@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiagramData, ArchNode, Link, Container, IconType } from '../types';
 import DiagramCanvas from './DiagramCanvas';
@@ -7,6 +7,7 @@ import { customAlphabet } from 'nanoid';
 import { ZoomTransform, zoomIdentity } from 'd3-zoom';
 import AddNodePanel from './AddNodePanel';
 import Toast from './Toast';
+import ContextualActionBar from './ContextualActionBar';
 
 const nanoid = customAlphabet('1234567890abcdef', 10);
 
@@ -46,9 +47,13 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
     const [linkingState, setLinkingState] = useState<{ sourceNodeId: string; startPos: { x: number, y: number } } | null>(null);
     const [previewLinkTarget, setPreviewLinkTarget] = useState<{ x: number; y: number; targetNodeId?: string } | null>(null);
 
+    const [isPropertiesSheetOpen, setIsPropertiesSheetOpen] = useState(false);
+    const [actionBarPosition, setActionBarPosition] = useState<{ x: number; y: number } | null>(null);
+
     const svgRef = useRef<SVGSVGElement>(null);
     const fitScreenRef = useRef<(() => void) | null>(null);
     const moreMenuRef = useRef<HTMLDivElement>(null);
+    const canvasContainerRef = useRef<HTMLDivElement>(null);
 
     const showToast = (message: string) => {
         setToastMessage(message);
@@ -96,25 +101,45 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
         onDataChange({ ...data, nodes: newNodes, containers: newContainers, links: newLinks }, true);
     };
 
+    useEffect(() => {
+        if (selectedIds.length === 1 && data && svgRef.current && canvasContainerRef.current) {
+            const selectedItem = data.nodes.find(n => n.id === selectedIds[0]); // Action bar only for nodes
+            if (selectedItem) {
+                const [screenX, screenY] = viewTransform.apply([selectedItem.x, selectedItem.y - selectedItem.height / 2]);
+                const canvasRect = canvasContainerRef.current.getBoundingClientRect();
+                setActionBarPosition({ x: screenX, y: screenY - canvasRect.top - 60 });
+            }
+        } else {
+            setActionBarPosition(null);
+        }
+    }, [selectedIds, data, viewTransform]);
+    
     const handleDelete = () => {
         if (selectedIds.length === 0) return;
-        const newNodes = data.nodes.filter(n => !selectedIds.includes(n.id));
-        const newContainers = (data.containers || []).filter(c => !selectedIds.includes(c.id));
+        const selectedIdSet = new Set(selectedIds);
+        const newNodes = data.nodes.filter(n => !selectedIdSet.has(n.id));
+        const newContainers = (data.containers || []).filter(c => !selectedIdSet.has(c.id));
         const remainingNodeIds = new Set(newNodes.map(n => n.id));
-        const newLinks = data.links.filter(l => !selectedIds.includes(l.id) && remainingNodeIds.has((l.source as ArchNode).id || l.source as string) && remainingNodeIds.has((l.target as ArchNode).id || l.target as string));
+        const newLinks = data.links.filter(l => {
+            if (selectedIdSet.has(l.id)) return false;
+            const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+            const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+            return remainingNodeIds.has(sourceId) && remainingNodeIds.has(targetId);
+        });
         onDataChange({ ...data, nodes: newNodes, containers: newContainers, links: newLinks });
         setSelectedIds([]);
-        showToast('Item deleted');
+        showToast(`${selectedIds.length} item(s) deleted`);
     };
     
     const handleDuplicate = () => {
-        if (selectedIds.length !== 1) return;
-        const nodeToDup = data.nodes.find(n => n.id === selectedIds[0]);
-        if (!nodeToDup) return;
-        const newNode = { ...nodeToDup, id: nanoid(), x: nodeToDup.x + 20, y: nodeToDup.y + 20 };
-        onDataChange({ ...data, nodes: [...data.nodes, newNode] });
-        setSelectedIds([newNode.id]);
-        showToast('Item duplicated');
+        if (selectedIds.length === 0) return;
+        const nodesToDup = data.nodes.filter(n => selectedIds.includes(n.id));
+        if (nodesToDup.length === 0) return;
+
+        const newNodes = nodesToDup.map(n => ({...n, id: nanoid(), x: n.x + 20, y: n.y + 20}));
+        onDataChange({ ...data, nodes: [...data.nodes, ...newNodes] });
+        setSelectedIds(newNodes.map(n => n.id));
+        showToast(`${nodesToDup.length} item(s) duplicated`);
     };
 
     const handleLinkStart = useCallback(() => {
@@ -122,9 +147,9 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
         const sourceNode = data.nodes.find(n => n.id === selectedIds[0]);
         if (!sourceNode) return;
         setLinkingState({ sourceNodeId: sourceNode.id, startPos: { x: sourceNode.x, y: sourceNode.y } });
-        setSelectedIds([]); // Deselect to close the sheet
+        setSelectedIds([]); // Deselect to close the action bar
         showToast('Tap a target node to connect');
-    }, [selectedIds, data.nodes]);
+    }, [selectedIds, data.nodes, setSelectedIds]);
 
     const handleCanvasClick = (event?: PointerEvent) => {
         if (linkingState && event) {
@@ -137,7 +162,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                     onDataChange({ ...data, links: [...data.links, newLink] });
                     showToast('Nodes connected');
                 } else {
-                    showToast('Link cancelled');
+                    showToast('Link cancelled: Cannot link a node to itself.');
                 }
             } else {
                  showToast('Link cancelled');
@@ -160,7 +185,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                  <button onClick={onExit} className="text-sm font-semibold bg-[var(--color-button-bg)] px-4 py-2 rounded-lg">Exit</button>
             </header>
 
-            <main className="flex-1 relative">
+            <main className="flex-1 relative" ref={canvasContainerRef}>
                 <DiagramCanvas
                     forwardedRef={svgRef}
                     fitScreenRef={fitScreenRef}
@@ -176,6 +201,19 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                     linkingState={linkingState}
                     previewLinkTarget={previewLinkTarget}
                 />
+                 {actionBarPosition && selectedIds.length > 0 && (
+                    <ContextualActionBar
+                        position={actionBarPosition}
+                        onDelete={handleDelete}
+                        onDuplicate={handleDuplicate}
+                        selectedCount={selectedIds.length}
+                        onEditProperties={() => {
+                            setIsPropertiesSheetOpen(true);
+                            setActionBarPosition(null);
+                        }}
+                        onLink={handleLinkStart}
+                    />
+                )}
             </main>
 
             {/* Bottom Toolbar */}
@@ -222,20 +260,21 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
 
             {/* Properties Sheet */}
             <AnimatePresence>
-                {selectedItem && (
-                     <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="fixed inset-0 bg-black/50 z-40" onClick={() => setSelectedIds([])} />
+                {isPropertiesSheetOpen && selectedItem && (
+                     <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsPropertiesSheetOpen(false)} />
                 )}
-                {selectedItem && (
+                {isPropertiesSheetOpen && selectedItem && (
                     <motion.div initial={{y: "100%"}} animate={{y: 0}} exit={{y: "100%"}} transition={{type: 'spring', stiffness: 400, damping: 40}} className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[var(--color-panel-bg)] rounded-t-2xl border-t border-[var(--color-border)] shadow-2xl z-50 flex flex-col">
-                        <div className="w-12 h-1.5 bg-[var(--color-border)] rounded-full mx-auto my-3 flex-shrink-0" />
+                        
                         <div className="flex-1 overflow-y-auto">
-                             <PropertiesSidebar item={selectedItem} onPropertyChange={handlePropertyChange} selectedCount={1} />
+                             <PropertiesSidebar 
+                                item={selectedItem}
+                                onPropertyChange={handlePropertyChange}
+                                selectedCount={1}
+                                onClose={() => setIsPropertiesSheetOpen(false)}
+                             />
                         </div>
-                        <div className="flex-shrink-0 p-4 border-t border-[var(--color-border)] bg-[var(--color-panel-bg)] grid grid-cols-3 gap-2">
-                             <button onClick={handleLinkStart} className="p-2 text-sm font-semibold rounded-lg bg-[var(--color-button-bg)]">Create Link</button>
-                             <button onClick={handleDuplicate} className="p-2 text-sm font-semibold rounded-lg bg-[var(--color-button-bg)]">Duplicate</button>
-                             <button onClick={handleDelete} className="p-2 text-sm font-semibold rounded-lg bg-red-500/10 text-red-600">Delete</button>
-                        </div>
+                       
                     </motion.div>
                 )}
             </AnimatePresence>

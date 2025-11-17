@@ -45,6 +45,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewTransform, setViewTransform] = useState<ZoomTransform>(() => zoomIdentity);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: ArchNode | Link | Container; } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   const nodesById = useMemo(() => new Map(data.nodes.map(node => [node.id, node])), [data.nodes]);
 
@@ -362,6 +363,8 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                 onLinkStart={onLinkStart}
                 isLinkHoverTarget={previewLinkTarget?.targetNodeId === node.id}
                 onSelect={handleItemSelection}
+                isDragging={isDragging}
+                setIsDragging={setIsDragging}
               />
             ))}
           </g>
@@ -711,8 +714,10 @@ const DiagramNode = memo<{
   onLinkStart: (sourceNodeId: string, startPos: { x: number, y: number }) => void;
   isLinkHoverTarget: boolean;
   onSelect: (e: React.MouseEvent, id: string) => void;
+  isDragging: boolean;
+  setIsDragging: (isDragging: boolean) => void;
 } & DraggableProps>((props) => {
-  const { node, isSelected, onContextMenu, interactionMode, isEditable, resizingNodeId, onNodeDoubleClick, onLinkStart, isLinkHoverTarget, onSelect } = props;
+  const { node, isSelected, onContextMenu, interactionMode, isEditable, resizingNodeId, onNodeDoubleClick, onLinkStart, isLinkHoverTarget, onSelect, isDragging, setIsDragging } = props;
   const ref = useRef<SVGGElement>(null);
   const dataRef = useRef(props.data);
   dataRef.current = props.data;
@@ -739,6 +744,7 @@ const DiagramNode = memo<{
         return (interactionMode === 'select' || interactionMode === 'pan') && !event.button;
       })
       .on('start', (event) => {
+        setIsDragging(true);
         currentData = dataRef.current;
         selection.raise();
       })
@@ -761,6 +767,7 @@ const DiagramNode = memo<{
         props.onDataChange(currentData, true);
       })
       .on('end', () => {
+        setIsDragging(false);
         if (currentData) {
           props.onDataChange(currentData, false);
         }
@@ -768,7 +775,7 @@ const DiagramNode = memo<{
       
     selection.call(dragBehavior);
     return () => { selection.on('.drag', null); };
-  }, [props.onDataChange, props.selectedIds, isEditable, interactionMode, node.id, props.setSelectedIds]);
+  }, [props.onDataChange, props.selectedIds, isEditable, interactionMode, node.id, props.setSelectedIds, setIsDragging]);
 
   const handleResize = (dx: number, dy: number, handle: 'br' | 'bl' | 'tr' | 'tl') => {
     const { onDataChange } = props;
@@ -838,7 +845,7 @@ const DiagramNode = memo<{
       {node.description && <title>{node.description}</title>}
       <motion.g 
         animate={{ x: node.x - node.width/2, y: node.y - node.height/2 }} 
-        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        transition={isDragging ? { type: false } : { type: 'spring', stiffness: 500, damping: 30 }}
         style={{ filter: 'url(#drop-shadow)', transition: 'stroke 0.2s ease-in-out' }}
       >
         {nodeBody}
