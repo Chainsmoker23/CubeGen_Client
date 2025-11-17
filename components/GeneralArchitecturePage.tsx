@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import type { DiagramData, ArchNode, Container, Link } from '../types';
+import { DiagramData, ArchNode, Container, Link } from '../types';
 import { IconType } from '../types';
 import { generateDiagramData, explainArchitecture } from '../services/geminiService';
 import PromptInput from './PromptInput';
@@ -13,6 +13,7 @@ import { EXAMPLE_PROMPT, EXAMPLE_PROMPTS_LIST } from './content/landingContent';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import Playground from './Playground';
 import ArchitectureIcon from './ArchitectureIcon';
+import MobilePlayground from './MobilePlayground';
 import ApiKeyModal from './ApiKeyModal';
 import Logo from './Logo';
 import { useAuth } from '../contexts/AuthContext';
@@ -56,6 +57,7 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
   const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false);
   
   const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [editingTitle, setEditingTitle] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
   
@@ -67,6 +69,15 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
   });
   const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
   const [lastAction, setLastAction] = useState<{ type: 'generate' | 'explain', payload: any } | null>(null);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     try {
@@ -399,21 +410,23 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
   };
   
     if (isPlaygroundMode && diagramData) {
-      return (
-        <Playground
-          data={diagramData}
-          onDataChange={handleDiagramUpdate}
-          onExit={() => setIsPlaygroundMode(false)}
-          selectedIds={selectedIds}
-          setSelectedIds={setSelectedIds}
-          onUndo={handleUndo}
-          onRedo={handleRedo}
-          canUndo={historyIndex > 0}
-          canRedo={historyIndex < history.length - 1}
-          onExplain={handleExplain}
-          isExplaining={isExplaining}
-        />
-      );
+      const playgroundProps = {
+        data: diagramData,
+        onDataChange: handleDiagramUpdate,
+        onExit: () => setIsPlaygroundMode(false),
+        selectedIds: selectedIds,
+        setSelectedIds: setSelectedIds,
+        onUndo: handleUndo,
+        onRedo: handleRedo,
+        canUndo: historyIndex > 0,
+        canRedo: historyIndex < history.length - 1,
+        onExplain: handleExplain,
+        isExplaining: isExplaining,
+      };
+
+      return isMobile
+        ? <MobilePlayground {...playgroundProps} />
+        : <Playground {...playgroundProps} />;
     }
 
     const isPropertiesPanelOpen = selectedIds.length > 0;

@@ -8,7 +8,6 @@ import ContextualActionBar from './ContextualActionBar';
 import { customAlphabet } from 'nanoid';
 import { zoomIdentity, ZoomTransform } from 'd3-zoom';
 import AssistantWidget from './AssistantWidget';
-import MobileWarning from './MobileWarning';
 import Toast from './Toast';
 import AddNodePanel from './AddNodePanel';
 
@@ -36,7 +35,6 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
     const [interactionMode, setInteractionMode] = useState<InteractionMode>('select');
     const [actionBarPosition, setActionBarPosition] = useState<{ x: number; y: number } | null>(null);
     const [viewTransform, setViewTransform] = useState<ZoomTransform>(() => zoomIdentity);
-    const [showMobileWarning, setShowMobileWarning] = useState(false);
     const [resizingNodeId, setResizingNodeId] = useState<string | null>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     
@@ -120,12 +118,6 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleUndo, handleRedo]);
-
-    useEffect(() => {
-        if (window.innerWidth < 768) {
-            setShowMobileWarning(true);
-        }
-    }, []);
     
     const nodesAndContainersById = useMemo(() => {
         const map = new Map<string, ArchNode | Container | Link>();
@@ -463,11 +455,6 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
               {toastMessage && (
                 <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
               )}
-            </AnimatePresence>
-            <AnimatePresence>
-                {showMobileWarning && (
-                    <MobileWarning onDismiss={() => setShowMobileWarning(false)} />
-                )}
             </AnimatePresence>
 
             <div className="order-2 md:order-1 h-full flex flex-col md:flex-row">
