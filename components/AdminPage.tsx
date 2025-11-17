@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAdminConfig, updateAdminConfig } from '../services/geminiService';
 import { useAdminAuth } from '../contexts/AdminAuthContext';
@@ -76,103 +76,6 @@ const TabButton: React.FC<{name: string, isActive: boolean, onClick: () => void}
     </button>
 );
 
-const ConfigPanel: React.FC = () => {
-    const { adminToken } = useAdminAuth();
-    const [config, setConfig] = useState({
-        gemini_api_key: '',
-        dodo_secret_key: '',
-        dodo_webhook_secret: '',
-        site_url: '',
-        dodo_hobbyist_product_id: '',
-        dodo_pro_product_id: '',
-    });
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
-
-    useEffect(() => {
-        const fetchConfig = async () => {
-            if (!adminToken) {
-                setError("Authentication token is missing.");
-                setIsLoading(false);
-                return;
-            }
-            setIsLoading(true);
-            setError(null);
-            try {
-                const fetchedConfig = await getAdminConfig(adminToken);
-                setConfig(prev => ({ ...prev, ...fetchedConfig }));
-            } catch (err: any) {
-                setError(err.message || 'Failed to fetch the application configuration.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchConfig();
-    }, [adminToken]);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setConfig(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSave = async () => {
-        if (!adminToken) {
-            setError("Authentication token is missing. Cannot save.");
-            return;
-        }
-        setIsSaving(true);
-        setError(null);
-        setSuccess(null);
-        try {
-            await updateAdminConfig(config, adminToken);
-            setSuccess('Configuration updated successfully!');
-            setTimeout(() => setSuccess(null), 3000);
-        } catch (err: any) {
-            setError(err.message || 'Failed to update the configuration.');
-        } finally {
-            setIsSaving(false);
-        }
-    };
-    
-    if (isLoading) {
-        return <div className="flex justify-center items-center h-64"><Loader /></div>;
-    }
-
-    return (
-        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-            <h2 className="text-2xl font-bold mb-2">Application Configuration</h2>
-            <p className="text-gray-500 mb-6">Manage live configuration variables for the application. Changes take effect immediately.</p>
-            
-            {error && <div className="bg-red-100 border border-red-300 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
-            {success && <div className="bg-green-100 border border-green-300 text-green-700 p-3 rounded-lg mb-4 text-sm">{success}</div>}
-
-            <div className="space-y-6">
-                <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800">
-                    <h4 className="font-bold">Important Note</h4>
-                    <p className="text-sm">Core credentials like Supabase keys must be configured in the <code className="bg-yellow-100 px-1 py-0.5 rounded">.env</code> file and require a server restart.</p>
-                </div>
-                
-                <InputField name="gemini_api_key" label="Shared Gemini API Key" value={config.gemini_api_key || ''} onChange={handleInputChange} />
-                <InputField name="dodo_secret_key" label="Dodo Payments Secret Key" value={config.dodo_secret_key || ''} onChange={handleInputChange} />
-                <InputField name="dodo_webhook_secret" label="Dodo Payments Webhook Secret" value={config.dodo_webhook_secret || ''} onChange={handleInputChange} />
-                <InputField name="dodo_hobbyist_product_id" label="Dodo Hobbyist Product ID" value={config.dodo_hobbyist_product_id || ''} onChange={handleInputChange} isText={true} />
-                <InputField name="dodo_pro_product_id" label="Dodo Pro Product ID" value={config.dodo_pro_product_id || ''} onChange={handleInputChange} isText={true} />
-                <InputField name="site_url" label="Site URL" value={config.site_url || ''} onChange={handleInputChange} isText={true} />
-            </div>
-
-            <div className="mt-8 flex justify-end">
-                <button onClick={handleSave} disabled={isSaving} className="bg-pink-600 text-white font-bold py-2 px-6 rounded-full shadow-md hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-wait flex items-center justify-center">
-                    {isSaving && <svg className="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
-                    {isSaving ? 'Saving...' : 'Save Configuration'}
-                </button>
-            </div>
-        </div>
-    );
-};
-
-
 const InputField: React.FC<{name: string, label: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, isText?: boolean}> = ({ name, label, value, onChange, isText = false }) => {
     const [isVisible, setIsVisible] = useState(isText);
     return (
@@ -192,6 +95,166 @@ const InputField: React.FC<{name: string, label: string, value: string, onChange
             </div>
         </div>
     )
-}
+};
+
+const AiProviderConfigPanel: React.FC<{ config: string; onChange: (newConfig: string) => void; }> = ({ config, onChange }) => {
+    const parsedConfig = useMemo(() => {
+        try {
+            const parsed = JSON.parse(config || '{}');
+            if (!parsed.activeProvider || !parsed.providers) {
+                return { activeProvider: 'gemini', providers: { gemini: {}, openai: {}, deepseek: {} } };
+            }
+            return parsed;
+        } catch (e) {
+            return { activeProvider: 'gemini', providers: { gemini: {}, openai: {}, deepseek: {} } };
+        }
+    }, [config]);
+
+    const handleActiveProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newConfig = { ...parsedConfig, activeProvider: e.target.value };
+        onChange(JSON.stringify(newConfig, null, 2));
+    };
+
+    const handleProviderDetailChange = (provider: string, field: 'apiKey' | 'model', value: string) => {
+        const newConfig = JSON.parse(JSON.stringify(parsedConfig)); // Deep copy
+        if (!newConfig.providers[provider]) {
+            newConfig.providers[provider] = {};
+        }
+        newConfig.providers[provider][field] = value;
+        onChange(JSON.stringify(newConfig, null, 2));
+    };
+
+    const providerDetails = [
+        { id: 'gemini', name: 'Google Gemini' },
+        { id: 'openai', name: 'OpenAI (ChatGPT)' },
+        { id: 'deepseek', name: 'DeepSeek' }
+    ];
+
+    return (
+        <div className="space-y-8">
+            <div>
+                <label htmlFor="activeProvider" className="block text-sm font-medium text-gray-600">Active AI Provider</label>
+                <select
+                    id="activeProvider"
+                    value={parsedConfig.activeProvider || 'gemini'}
+                    onChange={handleActiveProviderChange}
+                    className="mt-1 w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500"
+                >
+                    <option value="gemini">Google Gemini</option>
+                    <option value="openai">OpenAI (ChatGPT)</option>
+                    <option value="deepseek">DeepSeek</option>
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Select the global AI model to use for all generation tasks.</p>
+            </div>
+
+            {providerDetails.map(p => (
+                <div key={p.id} className="p-4 border border-gray-200 rounded-lg">
+                    <h4 className="font-bold text-gray-700">{p.name}</h4>
+                    <div className="mt-4 space-y-4">
+                        <InputField 
+                            name={`${p.id}_apiKey`}
+                            label="API Key"
+                            value={parsedConfig.providers?.[p.id]?.apiKey || ''}
+                            onChange={(e) => handleProviderDetailChange(p.id, 'apiKey', e.target.value)}
+                        />
+                         <InputField 
+                            name={`${p.id}_model`}
+                            label="Model Name"
+                            value={parsedConfig.providers?.[p.id]?.model || ''}
+                            onChange={(e) => handleProviderDetailChange(p.id, 'model', e.target.value)}
+                            isText={true}
+                        />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const ConfigPanel: React.FC = () => {
+    const { adminToken } = useAdminAuth();
+    const [config, setConfig] = useState<any>({});
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchConfig = async () => {
+            if (!adminToken) return;
+            setIsLoading(true);
+            try {
+                const fetchedConfig = await getAdminConfig(adminToken);
+                setConfig(fetchedConfig);
+            } catch (err: any) {
+                setError(err.message || 'Failed to fetch config.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchConfig();
+    }, [adminToken]);
+
+    const handleValueChange = (key: string, value: string) => {
+        setConfig((prev: any) => ({ ...prev, [key]: value }));
+    };
+
+    const handleSave = async () => {
+        if (!adminToken) return;
+        setIsSaving(true);
+        setError(null);
+        setSuccess(null);
+        try {
+            await updateAdminConfig(config, adminToken);
+            setSuccess('Configuration updated successfully!');
+            setTimeout(() => setSuccess(null), 3000);
+        } catch (err: any) {
+            setError(err.message || 'Failed to update config.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-64"><Loader /></div>;
+    }
+
+    return (
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
+            <h2 className="text-2xl font-bold mb-2">Application Configuration</h2>
+            <p className="text-gray-500 mb-6">Manage live configuration variables for the application. Changes take effect immediately.</p>
+            
+            {error && <div className="bg-red-100 border border-red-300 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+            {success && <div className="bg-green-100 border border-green-300 text-green-700 p-3 rounded-lg mb-4 text-sm">{success}</div>}
+
+            <div className="space-y-8">
+                <div>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">AI Provider Settings</h3>
+                    <AiProviderConfigPanel 
+                        config={config.ai_provider_config || ''}
+                        onChange={(value) => handleValueChange('ai_provider_config', value)}
+                    />
+                </div>
+                 <div>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Payment & Site Settings</h3>
+                    <div className="space-y-6 mt-4">
+                        <InputField name="dodo_secret_key" label="Dodo Payments Secret Key" value={config.dodo_secret_key || ''} onChange={e => handleValueChange('dodo_secret_key', e.target.value)} />
+                        <InputField name="dodo_webhook_secret" label="Dodo Payments Webhook Secret" value={config.dodo_webhook_secret || ''} onChange={e => handleValueChange('dodo_webhook_secret', e.target.value)} />
+                        <InputField name="dodo_hobbyist_product_id" label="Dodo Hobbyist Product ID" value={config.dodo_hobbyist_product_id || ''} onChange={e => handleValueChange('dodo_hobbyist_product_id', e.target.value)} isText={true} />
+                        <InputField name="dodo_pro_product_id" label="Dodo Pro Product ID" value={config.dodo_pro_product_id || ''} onChange={e => handleValueChange('dodo_pro_product_id', e.target.value)} isText={true} />
+                        <InputField name="site_url" label="Site URL" value={config.site_url || ''} onChange={e => handleValueChange('site_url', e.target.value)} isText={true} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+                <button onClick={handleSave} disabled={isSaving} className="bg-pink-600 text-white font-bold py-2 px-6 rounded-full shadow-md hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-wait flex items-center justify-center">
+                    {isSaving && <svg className="animate-spin -ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
+                    {isSaving ? 'Saving...' : 'Save Configuration'}
+                </button>
+            </div>
+        </div>
+    );
+};
 
 export default AdminPage;
