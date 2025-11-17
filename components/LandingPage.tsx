@@ -9,6 +9,7 @@ import ArchitectureAnimation from './ArchitectureAnimation';
 import ApiKeyAnimation from './ApiKeyAnimation';
 import SharedFooter from './SharedFooter';
 import Logo from './Logo';
+import MultiModelIcon from './MultiModelIcon';
 
 interface LandingPageProps {
   onLaunch: () => void;
@@ -107,17 +108,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
 
   const howItWorksSteps = [
     {
-      icon: IconType.Message,
+      iconNode: <ArchitectureIcon type={IconType.Message} className="w-10 h-10 text-[#D6336C]" />,
       title: '1. Write a Prompt',
       description: 'Describe the components, technologies, and relationships of your desired architecture. Be as simple or as detailed as you like.'
     },
     {
-      icon: IconType.Sparkles,
-      title: '2. Generate with AI',
-      description: "Our AI, powered by Google's Gemini, intelligently interprets your prompt, selecting the right icons and arranging them in a clean, logical layout."
+      iconNode: <MultiModelIcon className="w-24 h-24" />,
+      title: '2. Choose Your Engine',
+      description: "Leverage leading AI models like Gemini, ChatGPT, and DeepSeek. Our multi-model engine lets you pick the best tool for the job."
     },
     {
-      icon: IconType.Edit,
+      iconNode: <ArchitectureIcon type={IconType.Edit} className="w-10 h-10 text-[#D6336C]" />,
       title: '3. Visualize & Refine',
       description: 'Your diagram appears instantly. Jump into the playground to fine-tune details, add notes, and perfect your design for any audience.'
     }
@@ -192,8 +193,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
                  <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12">
                   {howItWorksSteps.map((step, index) => (
                     <motion.div key={step.title} variants={itemVariants} className="bg-white z-10">
-                      <div className="flex items-center justify-center h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg">
-                        <ArchitectureIcon type={step.icon as IconType} className="w-10 h-10 text-[#D6336C]" />
+                      <div className={`flex items-center justify-center h-32 w-32 mx-auto rounded-full shadow-lg ${index === 1 ? 'bg-gradient-to-br from-pink-50 to-pink-100/50' : 'bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3]'}`}>
+                        {step.iconNode}
                       </div>
                       <h3 className="text-xl font-bold mt-6 mb-2">{step.title}</h3>
                       <p className="text-[#555555]">{step.description}</p>

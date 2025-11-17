@@ -76,13 +76,13 @@ const TabButton: React.FC<{name: string, isActive: boolean, onClick: () => void}
     </button>
 );
 
-const InputField: React.FC<{name: string, label: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, isText?: boolean}> = ({ name, label, value, onChange, isText = false }) => {
+const InputField: React.FC<{name: string, label: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, isText?: boolean, placeholder?: string}> = ({ name, label, value, onChange, isText = false, placeholder }) => {
     const [isVisible, setIsVisible] = useState(isText);
     return (
         <div>
             <label htmlFor={name} className="block text-sm font-medium text-gray-600">{label}</label>
             <div className="mt-1 relative">
-                <input id={name} name={name} type={isVisible ? 'text' : 'password'} value={value} onChange={onChange} className="w-full p-3 pr-10 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition font-mono"/>
+                <input id={name} name={name} type={isVisible ? 'text' : 'password'} value={value} onChange={onChange} placeholder={placeholder} className="w-full p-3 pr-10 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition font-mono"/>
                 {!isText && (
                      <button type="button" onClick={() => setIsVisible(!isVisible)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600" aria-label={isVisible ? "Hide key" : "Show key"}>
                         {isVisible ? (
@@ -101,9 +101,13 @@ const AiProviderConfigPanel: React.FC<{ config: string; onChange: (newConfig: st
     const parsedConfig = useMemo(() => {
         try {
             const parsed = JSON.parse(config || '{}');
-            if (!parsed.activeProvider || !parsed.providers) {
-                return { activeProvider: 'gemini', providers: { gemini: {}, openai: {}, deepseek: {} } };
-            }
+            const defaults = { activeProvider: 'gemini', providers: { gemini: {}, openai: {}, deepseek: {} } };
+            // Ensure providers object exists
+            if (!parsed.providers) parsed.providers = defaults.providers;
+            // Ensure each provider sub-object exists
+            Object.keys(defaults.providers).forEach(p => {
+                if (!parsed.providers[p]) parsed.providers[p] = {};
+            });
             return parsed;
         } catch (e) {
             return { activeProvider: 'gemini', providers: { gemini: {}, openai: {}, deepseek: {} } };
@@ -115,11 +119,8 @@ const AiProviderConfigPanel: React.FC<{ config: string; onChange: (newConfig: st
         onChange(JSON.stringify(newConfig, null, 2));
     };
 
-    const handleProviderDetailChange = (provider: string, field: 'apiKey' | 'model', value: string) => {
+    const handleProviderDetailChange = (provider: string, field: 'apiKey' | 'model' | 'baseURL', value: string) => {
         const newConfig = JSON.parse(JSON.stringify(parsedConfig)); // Deep copy
-        if (!newConfig.providers[provider]) {
-            newConfig.providers[provider] = {};
-        }
         newConfig.providers[provider][field] = value;
         onChange(JSON.stringify(newConfig, null, 2));
     };
@@ -127,7 +128,7 @@ const AiProviderConfigPanel: React.FC<{ config: string; onChange: (newConfig: st
     const providerDetails = [
         { id: 'gemini', name: 'Google Gemini' },
         { id: 'openai', name: 'OpenAI (ChatGPT)' },
-        { id: 'deepseek', name: 'DeepSeek' }
+        { id: 'deepseek', name: 'DeepSeek (or other compatible)' }
     ];
 
     return (
@@ -140,9 +141,7 @@ const AiProviderConfigPanel: React.FC<{ config: string; onChange: (newConfig: st
                     onChange={handleActiveProviderChange}
                     className="mt-1 w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500"
                 >
-                    <option value="gemini">Google Gemini</option>
-                    <option value="openai">OpenAI (ChatGPT)</option>
-                    <option value="deepseek">DeepSeek</option>
+                    {providerDetails.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 <p className="text-xs text-gray-500 mt-1">Select the global AI model to use for all generation tasks.</p>
             </div>
@@ -164,6 +163,16 @@ const AiProviderConfigPanel: React.FC<{ config: string; onChange: (newConfig: st
                             onChange={(e) => handleProviderDetailChange(p.id, 'model', e.target.value)}
                             isText={true}
                         />
+                        {p.id === 'deepseek' && (
+                             <InputField 
+                                name={`${p.id}_baseURL`}
+                                label="API Base URL (Optional)"
+                                value={parsedConfig.providers?.[p.id]?.baseURL || ''}
+                                onChange={(e) => handleProviderDetailChange(p.id, 'baseURL', e.target.value)}
+                                placeholder="e.g., https://openrouter.ai/api/v1"
+                                isText={true}
+                            />
+                        )}
                     </div>
                 </div>
             ))}

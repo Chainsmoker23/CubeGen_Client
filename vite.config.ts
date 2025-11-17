@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: 'https://ube-chainsmoker231978-a1y8un6p.leapcell.dev',
+          target: 'http://localhost:5173',
           changeOrigin: true,
         },
       },
