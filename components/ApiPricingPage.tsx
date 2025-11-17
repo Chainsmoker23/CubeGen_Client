@@ -39,6 +39,7 @@ const ApiPricingPage: React.FC<ApiPricingPageProps> = ({ onBack, onNavigate }) =
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
     const isTestMode = process.env.DODO_MODE === 'test';
+    const API_BASE = (process.env.VITE_BACKEND_URL || '').replace(/\/+$/, '');
 
     const codeExample = `// Example: Using fetch to call the CubeGen AI API.
 // Public API access is a Pro feature.
@@ -151,7 +152,7 @@ fetch('https://ube-chainsmoker231978-a1y8un6p.leapcell.dev/api/v1/diagrams/gener
                 throw new Error('You must be logged in to purchase a plan.');
             }
 
-            const response = await fetch('/api/checkout', {
+            const response = await fetch(`${API_BASE}/api/checkout`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -292,3 +293,4 @@ fetch('https://ube-chainsmoker231978-a1y8un6p.leapcell.dev/api/v1/diagrams/gener
 };
 
 export default ApiPricingPage;
+
