@@ -13,15 +13,14 @@ export default defineConfig(({ mode }) => {
     // We are creating a process.env object on the client-side that mirrors
     // the VITE_ prefixed variables from our .env file.
     define: {
-      'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
-      'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
-      'process.env.VITE_API_KEY': JSON.stringify(env.VITE_API_KEY),
-      
-      // Dodo Payments Mode-Switching Logic
-      'process.env.DODO_MODE': JSON.stringify(env.DODO_MODE),
-      'process.env.VITE_DODO_PUBLISHABLE_KEY': JSON.stringify(env.VITE_DODO_PUBLISHABLE_KEY),
-      'process.env.VITE_DODO_PUBLISHABLE_KEY_TEST': JSON.stringify(env.VITE_DODO_PUBLISHABLE_KEY_TEST),
-    },
+  'process.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
+  'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
+  'process.env.VITE_API_KEY': JSON.stringify(env.VITE_API_KEY),
+  'process.env.DODO_MODE': JSON.stringify(env.DODO_MODE),
+  'process.env.VITE_DODO_PUBLISHABLE_KEY': JSON.stringify(env.VITE_DODO_PUBLISHABLE_KEY),
+  'process.env.VITE_DODO_PUBLISHABLE_KEY_TEST': JSON.stringify(env.VITE_DODO_PUBLISHABLE_KEY_TEST),
+  'process.env.VITE_BACKEND_URL': JSON.stringify(env.VITE_BACKEND_URL),
+},
     server: {
       proxy: {
         '/api': {
