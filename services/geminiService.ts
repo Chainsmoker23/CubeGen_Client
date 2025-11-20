@@ -1,11 +1,11 @@
-import { DiagramData, ArchNode } from "../types";
+import { DiagramData, ArchNode, BlogPost } from "../types";
 import type { Content } from "@google/genai";
 import { supabase } from '../supabaseClient';
 
 const BACKEND_URL = 'https://ube-chainsmoker231978-a1y8un6p.leapcell.dev'; // Use Vite proxy for local development
 
 // Reusable fetch function for our backend API
-const fetchFromApi = async (endpoint: string, body?: object, method: 'POST' | 'GET' | 'DELETE' = 'POST', adminToken?: string | null) => {
+const fetchFromApi = async (endpoint: string, body?: object, method: 'POST' | 'GET' | 'DELETE' | 'PUT' = 'POST', adminToken?: string | null) => {
     const { data: { session } } = await supabase.auth.getSession();
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
     
@@ -279,6 +279,93 @@ export const adminUpdateUserPlan = async (userId: string, newPlan: string, admin
         await fetchFromApi(`/admin/users/${userId}/update-plan`, { newPlan }, 'POST', adminToken);
     } catch (error) {
         console.error("Error updating user plan via admin service:", String(error));
+        throw error;
+    }
+};
+
+// --- NEW BLOG SERVICES ---
+
+// Helper function to convert a file to a base64 string
+const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+            // result is "data:image/png;base64,iVBORw0KGgo..."
+            // we only want the part after the comma
+            const base64String = (reader.result as string).split(',')[1];
+            resolve(base64String);
+        };
+        reader.onerror = error => reject(error);
+    });
+};
+
+// --- Public Blog Services ---
+export const getPublishedBlogPosts = async (): Promise<BlogPost[]> => {
+    try {
+        return await fetchFromApi('/blog/posts', undefined, 'GET');
+    } catch (error) {
+        console.error("Error fetching published blog posts:", String(error));
+        throw error;
+    }
+};
+
+export const getBlogPostBySlug = async (slug: string): Promise<BlogPost> => {
+    try {
+        return await fetchFromApi(`/blog/posts/${slug}`, undefined, 'GET');
+    } catch (error) {
+        console.error(`Error fetching blog post with slug ${slug}:`, String(error));
+        throw error;
+    }
+};
+
+// --- Admin Blog Services ---
+export const getAdminBlogPosts = async (adminToken: string): Promise<BlogPost[]> => {
+    try {
+        return await fetchFromApi('/admin/blog/posts', undefined, 'GET', adminToken);
+    } catch (error) {
+        console.error("Error fetching admin blog posts:", String(error));
+        throw error;
+    }
+};
+
+export const createBlogPost = async (postData: Partial<BlogPost>, adminToken: string): Promise<BlogPost> => {
+    try {
+        return await fetchFromApi('/admin/blog/posts', postData, 'POST', adminToken);
+    } catch (error) {
+        console.error("Error creating blog post:", String(error));
+        throw error;
+    }
+};
+
+export const updateBlogPost = async (postId: string, postData: Partial<BlogPost>, adminToken: string): Promise<BlogPost> => {
+    try {
+        return await fetchFromApi(`/admin/blog/posts/${postId}`, postData, 'PUT', adminToken);
+    } catch (error) {
+        console.error(`Error updating blog post ${postId}:`, String(error));
+        throw error;
+    }
+};
+
+export const deleteBlogPost = async (postId: string, adminToken: string): Promise<void> => {
+    try {
+        await fetchFromApi(`/admin/blog/posts/${postId}`, undefined, 'DELETE', adminToken);
+    } catch (error) {
+        console.error(`Error deleting blog post ${postId}:`, String(error));
+        throw error;
+    }
+};
+
+export const uploadBlogImage = async (file: File, adminToken: string): Promise<{ publicUrl: string }> => {
+    try {
+        const base64Data = await fileToBase64(file);
+        return await fetchFromApi('/admin/blog/upload-image', { 
+            fileName: file.name, 
+            fileType: file.type,
+            base64Data 
+        }, 'POST', adminToken);
+    } catch (error) {
+        console.error("Error uploading blog image:", String(error));
         throw error;
     }
 };

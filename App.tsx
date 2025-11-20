@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import ContactPage from './components/ContactPage';
@@ -18,12 +19,14 @@ import AdminLoginPage from './components/AdminLoginPage';
 import Loader from './components/Loader';
 import PaymentStatusPage from './components/PaymentStatusPage'; // Import the new component
 import SdkPage from './components/SdkPage';
+import BlogListPage from './components/BlogListPage';
+import BlogPostPage from './components/BlogPostPage';
 import { useAuth } from './contexts/AuthContext';
 import { useAdminAuth } from './contexts/AdminAuthContext';
 import InstallPromptToast from './components/InstallPromptToast';
 import { AnimatePresence } from 'framer-motion';
 
-type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk';
+type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost';
 
 const getPageFromHash = (): { page: Page; subpage?: string } => {
   const hash = window.location.hash.substring(1).split('?')[0];
@@ -31,9 +34,15 @@ const getPageFromHash = (): { page: Page; subpage?: string } => {
     return { page: 'landing' };
   }
   const [mainPage, subpage] = hash.split('/');
-  const validPages: Page[] = ['landing', 'auth', 'app', 'contact', 'about', 'api', 'apiKey', 'privacy', 'terms', 'docs', 'neuralNetwork', 'careers', 'research', 'admin', 'adminLogin', 'sdk'];
+  
+  // Special handling for blog post pages like #blog/my-post-slug
+  if (mainPage === 'blog' && subpage) {
+    return { page: 'blogPost', subpage };
+  }
+  
+  const validPages: Page[] = ['landing', 'auth', 'app', 'contact', 'about', 'api', 'apiKey', 'privacy', 'terms', 'docs', 'neuralNetwork', 'careers', 'research', 'admin', 'adminLogin', 'sdk', 'blog'];
   if (validPages.includes(mainPage as Page)) {
-    return { page: mainPage as Page, subpage };
+    return { page: mainPage as Page };
   }
   return { page: 'landing' };
 };
@@ -163,56 +172,31 @@ const App: React.FC = () => {
   
   // --- Page rendering logic ---
   const renderPage = () => {
-    if (page.page === 'landing') {
-      return <LandingPage onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
+    switch (page.page) {
+      case 'landing': return <LandingPage onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
+      case 'auth': return <AuthPage onBack={() => onNavigate('landing')} />;
+      case 'admin': return <AdminPage onNavigate={onNavigate} />;
+      case 'adminLogin': return <AdminLoginPage onBack={() => onNavigate('landing')} />;
+      case 'contact': return <ContactPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
+      case 'about': return <AboutPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
+      case 'api': return <ApiPricingPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
+      case 'apiKey': return <ApiKeyPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
+      case 'privacy': return <PrivacyPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
+      case 'terms': return <TermsPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
+      case 'docs': return <DocsPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigateToApi={() => onNavigate('api')} onNavigate={onNavigate} />;
+      case 'neuralNetwork': return <NeuralNetworkPage onNavigate={onNavigate} />;
+      case 'careers': return <CareersPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
+      case 'research': return <ResearchPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
+      case 'sdk': return <SdkPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
+      case 'app': return <GeneralArchitecturePage onNavigate={onNavigate} />;
+      case 'blog': return <BlogListPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
+      case 'blogPost':
+        if (page.subpage) {
+          return <BlogPostPage slug={page.subpage} onBack={() => onNavigate('blog')} onNavigate={onNavigate} />;
+        }
+        return <LandingPage onLaunch={() => onNavigate('auth')} onNavigate={onNavigate} />; // Fallback
+      default: return <LandingPage onLaunch={() => onNavigate('auth')} onNavigate={onNavigate} />;
     }
-    if (page.page === 'auth') {
-      return <AuthPage onBack={() => onNavigate('landing')} />;
-    }
-    if (page.page === 'admin') {
-      return <AdminPage onNavigate={onNavigate} />;
-    }
-    if (page.page === 'adminLogin') {
-      return <AdminLoginPage onBack={() => onNavigate('landing')} />;
-    }
-    if (page.page === 'contact') {
-      return <ContactPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'about') {
-      return <AboutPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'api') {
-      return <ApiPricingPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'apiKey') {
-      return <ApiKeyPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'privacy') {
-      return <PrivacyPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'terms') {
-      return <TermsPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'docs') {
-      return <DocsPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigateToApi={() => onNavigate('api')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'neuralNetwork') {
-      return <NeuralNetworkPage onNavigate={onNavigate} />;
-    }
-    if (page.page === 'careers') {
-      return <CareersPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'research') {
-      return <ResearchPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'sdk') {
-      return <SdkPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
-    }
-    if (page.page === 'app') {
-      return <GeneralArchitecturePage onNavigate={onNavigate} />;
-    }
-  
-    return <LandingPage onLaunch={() => onNavigate('auth')} onNavigate={onNavigate} />;
   }
 
   return (

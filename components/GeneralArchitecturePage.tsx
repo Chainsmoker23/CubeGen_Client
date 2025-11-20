@@ -18,6 +18,8 @@ import ApiKeyModal from './ApiKeyModal';
 import Logo from './Logo';
 import { useAuth } from '../contexts/AuthContext';
 import MobileWarning from './MobileWarning';
+import Toast from './Toast';
+import ErrorModal from './ErrorModal';
 
 type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research';
 
@@ -52,6 +54,7 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isExplaining, setIsExplaining] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -287,6 +290,7 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
     setHistory([null]);
     setHistoryIndex(0);
     setSelectedIds([]);
+    setLastAction({ type: 'generate', payload: { prompt } });
 
     try {
       const apiKeyToUse = keyOverride || userApiKey;
@@ -300,31 +304,15 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
 
       setHistory([diagram]);
       setHistoryIndex(0);
+      setSuccessMessage('Diagram Generated!');
       setTimeout(() => handleFitToScreen(), 100);
     } catch (err: any) {
       console.error(String(err));
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
       
-      if (err.data && err.message.includes('GENERATION_LIMIT_EXCEEDED')) {
-          const userPlan = currentUser?.user_metadata?.plan || 'free';
-          const limit = userPlan === 'hobbyist' ? 50 : 30;
-          const planName = String(userPlan).charAt(0).toUpperCase() + String(userPlan).slice(1);
-          setError(`You've used all ${limit} generations for your ${planName} plan. Please upgrade to continue.`);
-          // Live update the UI with the correct count from the backend
-          if (typeof err.data.generationCount === 'number') {
-              updateCurrentUserMetadata({ generation_count: err.data.generationCount });
-          }
-      } else if (errorMessage.includes('SHARED_KEY_QUOTA_EXCEEDED')) {
-          const userPlan = currentUser?.user_metadata?.plan;
-          const isPremiumUser = userPlan && ['pro', 'business'].includes(String(userPlan).toLowerCase());
-
-          if (isPremiumUser) {
-            setLastAction({ type: 'generate', payload: prompt });
-            setShowApiKeyModal(true);
-            setError(null);
-          } else {
-            setError("The shared API key has reached its daily limit. Please upgrade to a Pro plan to use your own key and continue generating.");
-          }
+      if (errorMessage.includes('SHARED_KEY_QUOTA_EXCEEDED')) {
+          setShowApiKeyModal(true);
+          setError(null);
       } else {
           setError(errorMessage);
           setHistory([null]);
@@ -339,6 +327,7 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
     if (!diagramData) return;
     setIsExplaining(true);
     setError(null);
+    setLastAction({ type: 'explain', payload: { diagramData } });
     try {
       const apiKeyToUse = keyOverride || userApiKey;
       const explanation = await explainArchitecture(diagramData, apiKeyToUse || undefined);
@@ -348,23 +337,15 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
        console.error(String(err));
        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
        if (errorMessage.includes('SHARED_KEY_QUOTA_EXCEEDED')) {
-            const userPlan = currentUser?.user_metadata?.plan;
-            const isPremiumUser = userPlan && ['pro', 'business'].includes(String(userPlan).toLowerCase());
-
-            if (isPremiumUser) {
-                setLastAction({ type: 'explain', payload: diagramData });
-                setShowApiKeyModal(true);
-                setError(null);
-            } else {
-                setError("The shared API key has reached its daily limit. Please upgrade to a Pro plan to use your own key and continue generating.");
-            }
+            setShowApiKeyModal(true);
+            setError(null);
        } else {
            setError(errorMessage);
        }
     } finally {
         setIsExplaining(false);
     }
-  }, [diagramData, userApiKey, currentUser]);
+  }, [diagramData, userApiKey]);
 
   const handleSaveAndRetryApiKey = (key: string) => {
     setUserApiKey(key);
@@ -377,6 +358,15 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
       handleExplain(key);
     }
     setLastAction(null);
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    if (lastAction?.type === 'generate') {
+        handleGenerate(userApiKey || undefined);
+    } else if (lastAction?.type === 'explain') {
+        handleExplain(userApiKey || undefined);
+    }
   };
 
   const selectedItem = useMemo(() => {
@@ -567,8 +557,6 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
                   </div>
                 </motion.div>
               )}
-
-              {error && <div className="absolute bottom-4 left-4 bg-red-500/90 text-white p-3 rounded-xl text-sm shadow-lg">{error}</div>}
             </motion.section>
 
             <AnimatePresence>
@@ -592,6 +580,19 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
 
           </main>
         </motion.div>
+
+        <AnimatePresence>
+            {successMessage && (
+                <Toast message={successMessage} onDismiss={() => setSuccessMessage(null)} />
+            )}
+            {error && !showApiKeyModal && (
+                <ErrorModal
+                    message={error}
+                    onClose={() => setError(null)}
+                    onRetry={handleRetry}
+                />
+            )}
+        </AnimatePresence>
 
         <AnimatePresence>
             {isPropertiesPanelOpen && (

@@ -5,13 +5,14 @@ import { useAdminAuth } from '../contexts/AdminAuthContext';
 import Logo from './Logo';
 import Loader from './Loader';
 import UserManagement from './admin/UserManagement';
+import BlogManagement from './admin/BlogManagement';
 
 type Page = 'app';
 interface AdminPageProps {
     onNavigate: (page: Page) => void;
 }
 
-type AdminTab = 'config' | 'users';
+type AdminTab = 'config' | 'users' | 'blog';
 
 const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     const { logout } = useAdminAuth();
@@ -42,6 +43,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         <nav className="-mb-px flex space-x-6" aria-label="Tabs">
                             <TabButton name="Configuration" isActive={activeTab === 'config'} onClick={() => setActiveTab('config')} />
                             <TabButton name="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+                            <TabButton name="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />
                         </nav>
                     </div>
 
@@ -55,6 +57,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                         >
                             {activeTab === 'config' && <ConfigPanel />}
                             {activeTab === 'users' && <UserManagement />}
+                            {activeTab === 'blog' && <BlogManagement />}
                         </motion.div>
                     </AnimatePresence>
                 </div>
@@ -101,81 +104,76 @@ const AiProviderConfigPanel: React.FC<{ config: string; onChange: (newConfig: st
     const parsedConfig = useMemo(() => {
         try {
             const parsed = JSON.parse(config || '{}');
+            // Keep the default structure for backend compatibility, even if not shown in UI
             const defaults = { activeProvider: 'gemini', providers: { gemini: {}, openai: {}, deepseek: {} } };
-            // Ensure providers object exists
             if (!parsed.providers) parsed.providers = defaults.providers;
-            // Ensure each provider sub-object exists
             Object.keys(defaults.providers).forEach(p => {
                 if (!parsed.providers[p]) parsed.providers[p] = {};
             });
+            // Force active provider to gemini on load
+            parsed.activeProvider = 'gemini';
             return parsed;
         } catch (e) {
             return { activeProvider: 'gemini', providers: { gemini: {}, openai: {}, deepseek: {} } };
         }
     }, [config]);
 
-    const handleActiveProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const newConfig = { ...parsedConfig, activeProvider: e.target.value };
-        onChange(JSON.stringify(newConfig, null, 2));
-    };
-
-    const handleProviderDetailChange = (provider: string, field: 'apiKey' | 'model' | 'baseURL', value: string) => {
+    const handleProviderDetailChange = (provider: 'gemini', field: 'model', value: string) => {
         const newConfig = JSON.parse(JSON.stringify(parsedConfig)); // Deep copy
         newConfig.providers[provider][field] = value;
+        newConfig.activeProvider = 'gemini'; // Ensure it stays gemini
+        onChange(JSON.stringify(newConfig, null, 2));
+    };
+    
+    const handleApiKeyPoolChange = (index: number, value: string) => {
+        const newConfig = JSON.parse(JSON.stringify(parsedConfig));
+        // Initialize pool if it doesn't exist on gemini object
+        if (!newConfig.providers.gemini.apiKeyPool) {
+            newConfig.providers.gemini.apiKeyPool = '';
+        }
+        const pool = newConfig.providers.gemini.apiKeyPool.split(',');
+        while (pool.length < 50) {
+            pool.push('');
+        }
+        pool[index] = value;
+        newConfig.providers.gemini.apiKeyPool = pool.join(',');
+        newConfig.activeProvider = 'gemini'; // Ensure it stays gemini
         onChange(JSON.stringify(newConfig, null, 2));
     };
 
-    const providerDetails = [
-        { id: 'gemini', name: 'Google Gemini' },
-        { id: 'openai', name: 'OpenAI (ChatGPT)' },
-        { id: 'deepseek', name: 'DeepSeek (or other compatible)' }
-    ];
+    const geminiKeyPool = useMemo(() => {
+        const pool = (parsedConfig.providers?.gemini?.apiKeyPool || '').split(',');
+        return Array.from({ length: 50 }, (_, i) => pool[i] || '');
+    }, [parsedConfig.providers?.gemini?.apiKeyPool]);
 
     return (
         <div className="space-y-8">
-            <div>
-                <label htmlFor="activeProvider" className="block text-sm font-medium text-gray-600">Active AI Provider</label>
-                <select
-                    id="activeProvider"
-                    value={parsedConfig.activeProvider || 'gemini'}
-                    onChange={handleActiveProviderChange}
-                    className="mt-1 w-full p-3 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-pink-500"
-                >
-                    {providerDetails.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">Select the global AI model to use for all generation tasks.</p>
-            </div>
-
-            {providerDetails.map(p => (
-                <div key={p.id} className="p-4 border border-gray-200 rounded-lg">
-                    <h4 className="font-bold text-gray-700">{p.name}</h4>
-                    <div className="mt-4 space-y-4">
+            <div className="p-4 border border-gray-200 rounded-lg">
+                <h4 className="font-bold text-gray-700">Google Gemini Configuration</h4>
+                <p className="text-xs text-gray-500 mt-1">This is the active AI provider for all generation tasks.</p>
+                <div className="mt-4 space-y-4">
+                    <h5 className="text-md font-semibold text-gray-600">API Key Pool</h5>
+                    <p className="text-xs text-gray-500 -mt-2">The system will automatically rotate through these keys to handle high traffic and avoid rate limits. Add keys from top to bottom.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {geminiKeyPool.map((key, index) => (
                         <InputField 
-                            name={`${p.id}_apiKey`}
-                            label="API Key"
-                            value={parsedConfig.providers?.[p.id]?.apiKey || ''}
-                            onChange={(e) => handleProviderDetailChange(p.id, 'apiKey', e.target.value)}
+                            key={`gemini-key-${index}`}
+                            name={`gemini_apiKey_${index}`}
+                            label={`API Key ${index + 1}`}
+                            value={key}
+                            onChange={(e) => handleApiKeyPoolChange(index, e.target.value)}
                         />
-                         <InputField 
-                            name={`${p.id}_model`}
-                            label="Model Name"
-                            value={parsedConfig.providers?.[p.id]?.model || ''}
-                            onChange={(e) => handleProviderDetailChange(p.id, 'model', e.target.value)}
-                            isText={true}
-                        />
-                        {p.id === 'deepseek' && (
-                             <InputField 
-                                name={`${p.id}_baseURL`}
-                                label="API Base URL (Optional)"
-                                value={parsedConfig.providers?.[p.id]?.baseURL || ''}
-                                onChange={(e) => handleProviderDetailChange(p.id, 'baseURL', e.target.value)}
-                                placeholder="e.g., https://openrouter.ai/api/v1"
-                                isText={true}
-                            />
-                        )}
+                    ))}
                     </div>
+                        <InputField 
+                        name="gemini_model"
+                        label="Model Name"
+                        value={parsedConfig.providers?.gemini?.model || ''}
+                        onChange={(e) => handleProviderDetailChange('gemini', 'model', e.target.value)}
+                        isText={true}
+                    />
                 </div>
-            ))}
+            </div>
         </div>
     );
 };

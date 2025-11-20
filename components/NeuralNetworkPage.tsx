@@ -11,6 +11,8 @@ import { useTheme } from '../contexts/ThemeProvider';
 import Logo from './Logo';
 import { useAuth } from '../contexts/AuthContext';
 import SettingsSidebar from './SettingsSidebar';
+import Toast from './Toast';
+import ErrorModal from './ErrorModal';
 
 type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research';
 
@@ -23,6 +25,7 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
   const [diagramData, setDiagramData] = useState<DiagramData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { currentUser, refreshUser, updateCurrentUserMetadata } = useAuth();
 
   const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
@@ -183,20 +186,12 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
       }
       
       setDiagramData(diagram);
+      setSuccessMessage('Network Generated!');
     } catch (err: any) {
       console.error(String(err));
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
 
-      if (err.data && err.message.includes('GENERATION_LIMIT_EXCEEDED')) {
-          const userPlan = currentUser?.user_metadata?.plan || 'free';
-          const limit = userPlan === 'hobbyist' ? 50 : 30;
-          const planName = String(userPlan).charAt(0).toUpperCase() + String(userPlan).slice(1);
-          setError(`You've used all ${limit} generations for your ${planName} plan. Please upgrade to continue.`);
-          // Live update the UI with the correct count from the backend
-          if (typeof err.data.generationCount === 'number') {
-              updateCurrentUserMetadata({ generation_count: err.data.generationCount });
-          }
-      } else if (errorMessage.includes('SHARED_KEY_QUOTA_EXCEEDED')) {
+      if (errorMessage.includes('SHARED_KEY_QUOTA_EXCEEDED')) {
           setShowApiKeyModal(true);
           setError(null);
       } else {
@@ -214,9 +209,26 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
     setError(null);
     handleGenerate(key);
   };
+  
+  const handleRetry = () => {
+    setError(null);
+    handleGenerate(userApiKey || undefined);
+  };
 
   return (
     <div className="min-h-screen text-[var(--color-text-primary)] flex flex-col transition-colors duration-300 app-bg">
+       <AnimatePresence>
+            {successMessage && (
+                <Toast message={successMessage} onDismiss={() => setSuccessMessage(null)} />
+            )}
+            {error && !showApiKeyModal && (
+                <ErrorModal
+                    message={error}
+                    onClose={() => setError(null)}
+                    onRetry={handleRetry}
+                />
+            )}
+        </AnimatePresence>
       <SettingsSidebar userApiKey={userApiKey} setUserApiKey={setUserApiKey} onNavigate={onNavigate} />
       <button
             onClick={() => onNavigate('landing')}
@@ -232,8 +244,8 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
         <div className="flex items-center justify-center gap-3">
             <ArchitectureIcon type={IconType.Brain} className="w-8 h-8 text-[var(--color-accent-text)]" />
             <div>
-                <h1 className="text-xl font-bold">Neural Network Modeler</h1>
-                <p className="text-sm text-[var(--color-text-secondary)]">A dedicated canvas for perfect network diagrams.</p>
+                <h1 className="text-xl font-bold">Neural Network </h1>
+                <p className="text-sm text-[var(--color-text-secondary)]">A dedicated canvas.</p>
             </div>
         </div>
       </header>
@@ -321,7 +333,6 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
             {diagramData && (
                 <NeuralNetworkCanvas data={diagramData} forwardedRef={svgRef} />
             )}
-            {error && <div className="absolute bottom-4 left-4 bg-red-500/90 text-white p-3 rounded-xl text-sm shadow-lg">{error}</div>}
         </section>
       </div>
 

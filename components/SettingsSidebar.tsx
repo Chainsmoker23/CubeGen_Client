@@ -243,7 +243,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
                   </div>
                   
                   <div>
-                    <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">Modelers</h3>
+                    <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">Tools</h3>
                      <div className="space-y-2">
                         <button
                           onClick={() => { onNavigate('app'); setIsOpen(false); }}

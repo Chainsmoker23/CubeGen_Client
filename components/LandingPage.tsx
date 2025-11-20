@@ -13,7 +13,7 @@ import MultiModelIcon from './MultiModelIcon';
 
 interface LandingPageProps {
   onLaunch: () => void;
-  onNavigate: (page: 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'careers' | 'research' | 'sdk') => void;
+  onNavigate: (page: 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'careers' | 'research' | 'sdk' | 'blog') => void;
 }
 
 const containerVariants: Variants = {
@@ -42,12 +42,10 @@ const Header: React.FC<LandingPageProps & { isScrolled: boolean }> = ({ onLaunch
         </div>
         <nav className="hidden md:flex items-center space-x-8">
           <button onClick={() => onNavigate('about')} className={navItemClass}>About</button>
+          <button onClick={() => onNavigate('blog')} className={navItemClass}>Blog</button>
           <button onClick={() => onNavigate('api')} className={navItemClass}>API & Pricing</button>
-          <button onClick={() => onNavigate('apiKey')} className={navItemClass}>API Keys</button>
           <button onClick={() => onNavigate('research')} className={navItemClass}>Research</button>
           <button onClick={() => onNavigate('docs')} className={navItemClass}>Docs</button>
-          <button onClick={() => onNavigate('careers')} className={navItemClass}>Careers</button>
-          <button onClick={() => onNavigate('contact')} className={navItemClass}>Contact</button>
         </nav>
         <button 
           onClick={onLaunch}

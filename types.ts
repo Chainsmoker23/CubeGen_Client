@@ -70,6 +70,20 @@ export interface DiagramData {
   containers?: Container[];
 }
 
+export interface BlogPost {
+  id: string;
+  created_at: string;
+  title: string;
+  slug: string;
+  content: string;
+  feature_image_url: string;
+  author_name: string;
+  published_at: string | null;
+  is_published: boolean;
+  meta_description: string;
+  meta_keywords: string;
+}
+
 export enum IconType {
   // --- Standard AWS ---
   AwsEc2 = 'aws-ec2',
