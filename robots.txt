@@ -1,0 +1,6 @@
+# See https://www.robotstxt.org/robotstxt.html for documentation
+
+User-agent: *
+Allow: /
+
+Sitemap: https://cubegenai.com/sitemap.xml

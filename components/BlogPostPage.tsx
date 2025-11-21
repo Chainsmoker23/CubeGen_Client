@@ -19,10 +19,10 @@ const updateMetaTags = (post: BlogPost) => {
     const selectors: { selector: string, attribute: string, value: string }[] = [
         { selector: 'meta[name="description"]', attribute: 'content', value: post.meta_description },
         { selector: 'meta[name="keywords"]', attribute: 'content', value: post.meta_keywords },
-        { selector: 'link[rel="canonical"]', attribute: 'href', value: `https://cubegen.ai/#blog/${post.slug}` },
+        { selector: 'link[rel="canonical"]', attribute: 'href', value: `https://cubegenai.com/#blog/${post.slug}` },
         { selector: 'meta[property="og:title"]', attribute: 'content', value: post.title },
         { selector: 'meta[property="og:description"]', attribute: 'content', value: post.meta_description },
-        { selector: 'meta[property="og:url"]', attribute: 'content', value: `https://cubegen.ai/#blog/${post.slug}` },
+        { selector: 'meta[property="og:url"]', attribute: 'content', value: `https://cubegenai.com/#blog/${post.slug}` },
         { selector: 'meta[property="og:image"]', attribute: 'content', value: post.feature_image_url },
         { selector: 'meta[property="og:type"]', attribute: 'content', value: 'article' },
         { selector: 'meta[property="twitter:title"]', attribute: 'content', value: post.title },
@@ -54,7 +54,7 @@ const updateMetaTags = (post: BlogPost) => {
                 "name": "CubeGen AI",
                 "logo": {
                     "@type": "ImageObject",
-                    "url": "https://cubegen.ai/logo.svg" // Replace with actual logo URL
+                    "url": "https://cubegenai.com/logo.svg" // Replace with actual logo URL
                 }
             },
             "datePublished": post.published_at,
