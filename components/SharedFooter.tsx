@@ -10,7 +10,7 @@ interface SharedFooterProps {
 }
 
 const SharedFooter: React.FC<SharedFooterProps> = ({ onNavigate, activePage }) => {
-    const validPages: (Page)[] = ['about', 'blog', 'api', 'research', 'docs', 'careers', 'contact', 'privacy', 'terms'];
+    const validPages: (Page)[] = ['about', 'blog', 'api', 'research', 'docs', 'careers', 'contact', 'privacy', 'terms','apiKey'];
 
     return (
       <footer className="bg-gradient-to-t from-white to-[#FFF0F5]">
