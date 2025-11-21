@@ -46,6 +46,7 @@ const Header: React.FC<LandingPageProps & { isScrolled: boolean }> = ({ onLaunch
           <button onClick={() => onNavigate('api')} className={navItemClass}>API & Pricing</button>
           <button onClick={() => onNavigate('research')} className={navItemClass}>Research</button>
           <button onClick={() => onNavigate('docs')} className={navItemClass}>Docs</button>
+          <button onClick={() => onNavigate('apiKey')} className={navItemClass}>Api</button>
         </nav>
         <button 
           onClick={onLaunch}
