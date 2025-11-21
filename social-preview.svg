@@ -1,0 +1,17 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;800&amp;display=swap');
+    .title { font-family: 'Inter', sans-serif; font-size: 72px; font-weight: 800; text-anchor: middle; fill: #1F2937; }
+    .subtitle { font-family: 'Inter', sans-serif; font-size: 36px; font-weight: 500; text-anchor: middle; fill: #6B7280; }
+  </style>
+  <rect width="1200" height="630" fill="#FFF9FB"/>
+  <g transform="translate(520, 100) scale(2)">
+    <g fill="#D6336C" fill-rule="nonzero">
+        <path d="M79.998 21.6L1.898 67.5v93l78.1 45.9 78.1-45.9v-93L79.998 21.6zm0 11.603l68.7 40.502v82.79l-68.7 40.503-68.7-40.502v-82.79L79.998 33.203z"/>
+        <path d="M79.998 44.805L21.298 78.607v65.603l58.7 34.402 58.7-34.402V78.607L79.998 44.805zm0 11.603l49.3 28.902v54.002l-49.3 28.902-49.3-28.902V85.31l49.3-28.902z"/>
+        <path d="M79.998 68.01l-39.9 23.4v42.4l39.9 23.4 39.9-23.4v-42.4l-39.9-23.4z"/>
+    </g>
+  </g>
+  <text x="600" y="500" class="title">CubeGen AI</text>
+  <text x="600" y="560" class="subtitle">AI Software Architecture Generator</text>
+</svg>
