@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CubeGen AI — AI Software Architecture Generator</title>
+    <title>CubeGen AI: Instant AI Architecture Diagrams</title>
     
     <!-- Primary Meta Tags -->
     <meta name="description" content="Generate professional software architecture diagrams for free, instantly from a single prompt with CubeGen AI. AI-powered design for AWS, GCP, Azure, microservices, and more." />
@@ -81,7 +81,7 @@
     }
     </script>
     
-    <!-- 2. WebSite Schema: Influences site name in search and enables Sitelinks Search Box -->
+    <!-- 2. WebSite Schema: Influences site name, Sitelinks Search Box, and hints at Sitelinks -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -96,7 +96,39 @@
           "urlTemplate": "https://cubegenai.com/#app?q={search_term_string}"
         },
         "query-input": "required name=search_term_string"
-      }
+      },
+      "hasPart": [
+        {
+            "@type": "SiteNavigationElement",
+            "name": "About",
+            "url": "https://cubegenai.com/#about"
+        },
+        {
+            "@type": "SiteNavigationElement",
+            "name": "Blog",
+            "url": "https://cubegenai.com/#blog"
+        },
+        {
+            "@type": "SiteNavigationElement",
+            "name": "API & Pricing",
+            "url": "https://cubegenai.com/#api"
+        },
+        {
+            "@type": "SiteNavigationElement",
+            "name": "Docs",
+            "url": "https://cubegenai.com/#docs"
+        },
+        {
+            "@type": "SiteNavigationElement",
+            "name": "Research",
+            "url": "https://cubegenai.com/#research"
+        },
+        {
+            "@type": "SiteNavigationElement",
+            "name": "API Keys",
+            "url": "https://cubegenai.com/#apiKey"
+        }
+      ]
     }
     </script>
     

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
 import { TESTIMONIALS } from './content/landingContent';
@@ -40,13 +41,15 @@ const Header: React.FC<LandingPageProps & { isScrolled: boolean }> = ({ onLaunch
           <Logo className="h-8 w-8 text-[#D6336C]" />
           <h3 className="text-2xl font-bold">Cube<span className="text-[#D6336C]">Gen</span> AI</h3>
         </div>
-        <nav className="hidden md:flex items-center space-x-8">
-          <button onClick={() => onNavigate('about')} className={navItemClass}>About</button>
-          <button onClick={() => onNavigate('blog')} className={navItemClass}>Blog</button>
-          <button onClick={() => onNavigate('api')} className={navItemClass}>API & Pricing</button>
-          <button onClick={() => onNavigate('research')} className={navItemClass}>Research</button>
-          <button onClick={() => onNavigate('docs')} className={navItemClass}>Docs</button>
-          <button onClick={() => onNavigate('apiKey')} className={navItemClass}>Api</button>
+        <nav className="hidden md:flex items-center space-x-8" aria-label="Main Navigation">
+          <ul className="flex items-center space-x-8">
+            <li><a href="#about" onClick={(e) => { e.preventDefault(); onNavigate('about'); }} className={navItemClass}>About</a></li>
+            <li><a href="#blog" onClick={(e) => { e.preventDefault(); onNavigate('blog'); }} className={navItemClass}>Blog</a></li>
+            <li><a href="#api" onClick={(e) => { e.preventDefault(); onNavigate('api'); }} className={navItemClass}>API & Pricing</a></li>
+            <li><a href="#research" onClick={(e) => { e.preventDefault(); onNavigate('research'); }} className={navItemClass}>Research</a></li>
+            <li><a href="#docs" onClick={(e) => { e.preventDefault(); onNavigate('docs'); }} className={navItemClass}>Docs</a></li>
+            <li><a href="#apiKey" onClick={(e) => { e.preventDefault(); onNavigate('apiKey'); }} className={navItemClass}>API Keys</a></li>
+          </ul>
         </nav>
         <button 
           onClick={onLaunch}
