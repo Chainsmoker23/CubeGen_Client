@@ -204,16 +204,16 @@ try {
             
         // Highlight different parts with appropriate colors
         return highlightedCode
-            .replace(/^(# Install the CubeGen AI SDK)$/gm, `<span class="token comment">$1</span>`)
-            .replace(/^(npm install cubegen-ai)$/gm, `<span class="token command">$1</span>`)
-            .replace(/^(https:\/\/www.npmjs.com\/package\/cubegen-ai)$/gm, `<span class="token url">$1</span>`)
-            .replace(/^(# Visit our npm package)$/gm, `<span class="token comment">$1</span>`)
-            .replace(/^(# Usage)$/gm, `<span class="token comment">$1</span>`)
-            .replace(/(import|from|const|new|try|catch|await|console|error)/g, `<span class="token keyword">$1</span>`)
-            .replace(/(CubeGenAI|client|apiKey|generateDiagram)/g, `<span class="token function">$1</span>`)
-            .replace(/('([^']*)'|"[^"]*")/g, `<span class="token string">$1</span>`)
-            .replace(/(\{|\}|\(|\)|\[|\])/g, `<span class="token punctuation">$1</span>`)
-            .replace(/(\/\/.*?)/g, `<span class="token comment">$1</span>`);
+            .replace(/^(# Install the CubeGen AI SDK)$/gm, '<span class="token comment">$1</span>')
+            .replace(/^(npm install cubegen-ai)$/gm, '<span class="token command">$1</span>')
+            .replace(/^(https:\/\/www.npmjs.com\/package\/cubegen-ai)$/gm, '<span class="token url">$1</span>')
+            .replace(/^(# Visit our npm package)$/gm, '<span class="token comment">$1</span>')
+            .replace(/^(# Usage)$/gm, '<span class="token comment">$1</span>')
+            .replace(/(\b(import|from|const|new|try|catch|await|console|error)\b)/g, '<span class="token keyword">$1</span>')
+            .replace(/(\b(CubeGenAI|client|apiKey|generateDiagram)\b)/g, '<span class="token function">$1</span>')
+            .replace(/('([^']*)'|"[^"]*")/g, '<span class="token string">$1</span>')
+            .replace(/(\{|\}|\(|\)|\[|\])/g, '<span class="token punctuation">$1</span>')
+            .replace(/(\/\/.*?)/g, '<span class="token comment">$1</span>');
     };
 
     return (
@@ -387,4 +387,3 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default ApiKeyPage;
-
