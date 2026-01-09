@@ -52,7 +52,9 @@ const client = new CubeGenAI('your-api-key');
 
 // Generate a diagram from a text prompt
 try {
-  const diagram = await client.generateDiagram('A 3-tier web application on AWS with a load balancer, multiple EC2 instances in an auto-scaling group, and an RDS database.');
+  const diagram = await client.generateDiagram('A 3-tier web application on AWS with a load balancer,
+  multiple EC2 instances in an auto-scaling group, and an RDS database.');
+  
   console.log('Generated diagram:', diagram);
 } catch (error) {
   console.error('Error generating diagram:', error.message);
