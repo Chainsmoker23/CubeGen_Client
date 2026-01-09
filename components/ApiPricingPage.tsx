@@ -19,12 +19,12 @@ interface ApiPricingPageProps {
 const highlightSyntax = (code: string) => {
   let highlightedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return { __html: highlightedCode
-      .replace(/('([^']*)')/g, `<span class="token string">$1</span>`)
-      .replace(/\b(const|let|async|function|try|catch|await|new|return|if|throw|Error)\b/g, `<span class="token keyword">$&</span>`)
-      .replace(/(\.json\(\)|\.log|\.error|\.stringify|ok|message)/g, `<span class="token property-access">$&</span>`)
-      .replace(/\b(fetch|console|JSON)\b/g, `<span class="token function">$&</span>`)
-      .replace(/(\(|\{|\}|\[|\]|,|:)/g, `<span class="token punctuation">$&</span>`)
-      .replace(/(\/\/.*?)/g, `<span class="token comment">$&</span>`)
+      .replace(/('([^']*)')/g, '<span class="token string">$1</span>')
+      .replace(/\b(const|let|async|function|try|catch|await|new|return|if|throw|Error)\b/g, '<span class="token keyword">$&</span>')
+      .replace(/(\.json\(\)|\.log|\.error|\.stringify|ok|message)/g, '<span class="token property-access">$&</span>')
+      .replace(/\b(fetch|console|JSON)\b/g, '<span class="token function">$&</span>')
+      .replace(/(\(|\{|\}|\[|\]|,|:)/g, '<span class="token punctuation">$&</span>')
+      .replace(/(\/\/.*?)/g, '<span class="token comment">$&</span>')
   };
 };
 
