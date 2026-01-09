@@ -199,21 +199,49 @@ try {
   console.error('Error generating diagram:', error);
 }`;
 
-    const highlightSyntax = (code: string) => {
-        let highlightedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // Process code with advanced syntax highlighting
+    const processCode = (code: string) => {
+        // Split code into lines to process each individually
+        const lines = code.split('\n');
+        
+        // Process each line separately to highlight syntax
+        const processedLines = lines.map(line => {
+            let processedLine = line
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+                
+            // Highlight comments (lines starting with #)
+            if (processedLine.startsWith('# ')) {
+                processedLine = processedLine.replace(/^(# .*?)$/, '<span class="token comment">$1</span>');
+            }
             
-        // Highlight different parts with appropriate colors
-        return highlightedCode
-            .replace(/^(# Install the CubeGen AI SDK)$/gm, '<span class="token comment">$1</span>')
-            .replace(/^(npm install cubegen-ai)$/gm, '<span class="token command">$1</span>')
-            .replace(/^(https:\/\/www.npmjs.com\/package\/cubegen-ai)$/gm, '<span class="token url">$1</span>')
-            .replace(/^(# Visit our npm package)$/gm, '<span class="token comment">$1</span>')
-            .replace(/^(# Usage)$/gm, '<span class="token comment">$1</span>')
-            .replace(/(\b(import|from|const|new|try|catch|await|console|error)\b)/g, '<span class="token keyword">$1</span>')
-            .replace(/(\b(CubeGenAI|client|apiKey|generateDiagram)\b)/g, '<span class="token function">$1</span>')
-            .replace(/('([^']*)'|"[^"]*")/g, '<span class="token string">$1</span>')
-            .replace(/(\{|\}|\(|\)|\[|\])/g, '<span class="token punctuation">$1</span>')
-            .replace(/(\/\/.*?)/g, '<span class="token comment">$1</span>');
+            // Highlight strings
+            processedLine = processedLine.replace(/('([^']*)'|"([^"]*)")/g, '<span class="token string">$1</span>');
+            
+            // Highlight keywords
+            processedLine = processedLine.replace(/\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error|try|catch)\b/g, '<span class="token keyword">$&</span>');
+            
+            // Highlight functions
+            processedLine = processedLine.replace(/\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, '<span class="token function">$&</span>');
+            
+            // Highlight punctuation
+            processedLine = processedLine.replace(/(\{|\}|\(|\)|\[|\]|,|:|;|\.|=>|=|!)/g, '<span class="token punctuation">$&</span>');
+            
+            // Highlight npm command
+            if (processedLine.includes('npm install')) {
+                processedLine = processedLine.replace(/(npm install cubegen-ai)/g, '<span class="token command">$1</span>');
+            }
+            
+            // Highlight URL
+            if (processedLine.includes('https://')) {
+                processedLine = processedLine.replace(/(https:\/\/www.npmjs.com\/package\/cubegen-ai)/g, '<span class="token url">$1</span>');
+            }
+            
+            return processedLine;
+        });
+        
+        return processedLines.join('\n');
     };
 
     return (
@@ -229,7 +257,7 @@ try {
                 </div>
             </div>
             <pre>
-                <code dangerouslySetInnerHTML={{ __html: highlightSyntax(codeSnippet) }} />
+                <code dangerouslySetInnerHTML={{ __html: processCode(codeSnippet) }} />
             </pre>
         </div>
     );
@@ -387,3 +415,4 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default ApiKeyPage;
+
