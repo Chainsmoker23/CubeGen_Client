@@ -274,9 +274,10 @@ export const getAdminUsers = async (adminToken: string, email?: string): Promise
     }
 };
 
-export const adminUpdateUserPlan = async (userId: string, newPlan: string, adminToken: string): Promise<void> => {
+export const adminUpdateUserPlan = async (userId: string, newPlan: string, adminToken: string): Promise<{ requiresRefresh?: boolean }> => {
     try {
-        await fetchFromApi(`/admin/users/${userId}/update-plan`, { newPlan }, 'POST', adminToken);
+        const response = await fetchFromApi(`/admin/users/${userId}/update-plan`, { newPlan }, 'POST', adminToken);
+        return response;
     } catch (error) {
         console.error("Error updating user plan via admin service:", String(error));
         throw error;
@@ -369,3 +370,4 @@ export const uploadBlogImage = async (file: File, adminToken: string): Promise<{
         throw error;
     }
 };
+
