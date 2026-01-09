@@ -61,6 +61,18 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
               <p className="text-lg text-[#555555] max-w-3xl mx-auto mb-16">
                 In just three simple steps, you can connect your personal Gemini key and bypass all shared usage limits.
               </p>
+              <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-800 p-4 rounded-r-lg max-w-3xl mx-auto mb-12">
+                <h3 className="font-bold text-lg flex items-center gap-2"><ArchitectureIcon type={IconType.FileCode} className="w-5 h-5" /> Programmatic Access with CubeGen AI SDK</h3>
+                <p className="text-sm mt-2">
+                  Pro users can also integrate CubeGen AI programmatically using our official SDK. Install it with npm:
+                </p>
+                <div className="mt-3 bg-gray-800 text-gray-100 p-3 rounded-lg font-mono text-sm overflow-x-auto">
+                  npm install cubegen-ai
+                </div>
+                <p className="text-xs mt-2 text-blue-600">
+                  Get your personal API key from your dashboard after subscribing to a Pro plan to use the SDK.
+                </p>
+              </div>
             </div>
             <div className="relative">
               <div className="hidden md:block absolute top-12 left-0 right-0 h-0.5 bg-gray-200" />
@@ -111,3 +123,4 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
 };
 
 export default SdkPage;
+
