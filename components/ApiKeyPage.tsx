@@ -177,65 +177,38 @@ const ConfettiBurst: React.FC<{ isBursting: boolean }> = ({ isBursting }) => {
 };
 
 const IDECodeBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
-    const [activeTab, setActiveTab] = useState('curl');
-    
-    const codeSnippets = {
-        curl: `curl 'https://cubegen.ai/api/v1/diagrams/generate' \\
-  -X POST \\
-  -H 'Authorization: Bearer ${apiKey}' \\
-  -H 'Content-Type: application/json' \\
-  --data-raw '{
-    "prompt": "A simple 3-tier web app on AWS"
-  }'`,
-        javascript: `const apiKey = '${apiKey}';
-const promptText = 'A simple 3-tier web app on AWS';
+    const codeSnippet = `# Install the CubeGen AI SDK
+npm install cubegen-ai
 
-async function generateDiagram() {
-  try {
-    const response = await fetch('https://cubegen.ai/api/v1/diagrams/generate', {
-      method: 'POST',
-      headers: {
-        'Authorization': \`Bearer \${apiKey}\`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ prompt: promptText }),
-    });
+# Usage
+import { CubeGenAI } from 'cubegen-ai';
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'API request failed');
-    }
+const client = new CubeGenAI({
+  apiKey: '${apiKey}'
+});
 
-    const { diagram } = await response.json();
-    console.log('Generated Diagram:', diagram);
-    return diagram;
+try {
+  const diagram = await client.generateDiagram(
+    'A simple 3-tier web app on AWS'
+  );
+  console.log(diagram);
+} catch (error) {
+  console.error('Error generating diagram:', error);
+}`;
 
-  } catch (error) {
-    console.error('Error generating diagram:', error);
-  }
-}
-
-generateDiagram();`
-    };
-
-    const highlightSyntax = (code: string, lang: 'curl' | 'javascript') => {
+    const highlightSyntax = (code: string) => {
         let highlightedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         
-        if (lang === 'curl') {
-            return highlightedCode
-                .replace(/'([^']*)'/g, `<span class="token string">'$1'</span>`)
-                .replace(/"([^"]*)"/g, `<span class="token string">"$1"</span>`)
-                .replace(/\b(curl|POST|GET|Authorization|Bearer|Content-Type|application\/json)\b/g, `<span class="token keyword">${'$&'}</span>`)
-                .replace(/(-X|-H|--data-raw)/g, `<span class="token property-access">${'$&'}</span>`);
-        }
-        // Javascript
+        // Highlight different parts with appropriate colors
         return highlightedCode
-            .replace(/'([^']*)'/g, `<span class="token string">'$1'</span>`)
-            .replace(/\b(const|let|async|function|try|catch|await|new|return|if|throw|Error)\b/g, `<span class="token keyword">${'$&'}</span>`)
-            .replace(/(\.json\(\)|\.log|\.error|\.stringify|ok|message)/g, `<span class="token property-access">${'$&'}</span>`)
-            .replace(/\b(fetch|console|JSON)\b/g, `<span class="token function">${'$&'}</span>`)
-            .replace(/(\(|\{|\}|\[|\]|,|:)/g, `<span class="token punctuation">${'$&'}</span>`)
-            .replace(/(\/\/.*)/g, `<span class="token comment">${'$&'}</span>`);
+            .replace(/^(# Install the CubeGen AI SDK)$/gm, `<span class="token comment">$1</span>`)
+            .replace(/^(npm install cubegen-ai)$/gm, `<span class="token command">$1</span>`)
+            .replace(/^(# Usage)$/gm, `<span class="token comment">$1</span>`)
+            .replace(/(import|from|const|new|try|catch|await|console|error)/g, `<span class="token keyword">$1</span>`)
+            .replace(/(CubeGenAI|client|apiKey|generateDiagram)/g, `<span class="token function">$1</span>`)
+            .replace(/('([^']*)'|"[^"]*")/g, `<span class="token string">$1</span>`)
+            .replace(/(\{|\}|\(|\)|\[|\])/g, `<span class="token punctuation">$1</span>`)
+            .replace(/(\/\/.*)/g, `<span class="token comment">$1</span>`);
     };
 
     return (
@@ -247,12 +220,11 @@ generateDiagram();`
                     <div className="ide-control-dot bg-green-500"></div>
                 </div>
                 <div className="ide-tabs">
-                     <button onClick={() => setActiveTab('curl')} className={`ide-tab ${activeTab === 'curl' ? 'active' : ''}`}>cURL</button>
-                     <button onClick={() => setActiveTab('javascript')} className={`ide-tab ${activeTab === 'javascript' ? 'active' : ''}`}>JavaScript</button>
+                     <button className="ide-tab active">NPM Package</button>
                 </div>
             </div>
             <pre>
-                <code dangerouslySetInnerHTML={{ __html: highlightSyntax(codeSnippets[activeTab as 'curl' | 'javascript'], activeTab as 'curl' | 'javascript') }} />
+                <code dangerouslySetInnerHTML={{ __html: highlightSyntax(codeSnippet) }} />
             </pre>
         </div>
     );
@@ -410,3 +382,4 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default ApiKeyPage;
+
