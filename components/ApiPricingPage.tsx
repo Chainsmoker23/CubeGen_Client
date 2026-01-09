@@ -17,54 +17,38 @@ interface ApiPricingPageProps {
 }
 
 const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
-    // Process the entire code string with a state machine approach
-    let result = '';
-    let i = 0;
-    
+    // Process code with proper syntax highlighting
     // First, escape HTML entities
     let escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     
-    // Split into tokens based on syntax
-    // Use a more careful approach to avoid nested replacements
+    // Define syntax patterns in order of precedence (longest/most specific first)
+    const patterns = [
+        // Comments
+        { regex: /(\/\/[^\n\r]*)/g, className: 'token comment' },
+        // Strings
+        { regex: /('[^']*?'|"[^"]*?")/g, className: 'token string' },
+        // Keywords
+        { regex: /\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error)\b/g, className: 'token keyword' },
+        // Functions
+        { regex: /\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, className: 'token function' },
+        // NPM Command
+        { regex: /(npm install cubegen-ai)/g, className: 'token command' },
+        // Punctuation
+        { regex: /([{}()[\]\],:;.=!\-+<>])/g, className: 'token punctuation' },
+    ];
     
-    // Split by newlines to process line by line
-    const lines = escapedCode.split('\n');
+    let highlightedCode = escapedCode;
     
-    for (let line of lines) {
-        // Process each line for different syntax elements
-        let processedLine = line;
-        
-        // Handle comments (lines starting with //)
-        processedLine = processedLine.replace(/(\/\/.*?)(?=$|&lt;)/g, '<span class="token comment">$1</span>');
-        
-        // Handle strings - use a more careful approach
-        processedLine = processedLine.replace(/('[^']*?'|"[^"]*?")/g, (match) => {
-            return `<span class="token string">${match}</span>`;
+    // Apply patterns in sequence
+    for (const pattern of patterns) {
+        highlightedCode = highlightedCode.replace(pattern.regex, (match) => {
+            return `<span class="${pattern.className}">${match}</span>`;
         });
-        
-        // Handle keywords
-        processedLine = processedLine.replace(/\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error)\b/g, '<span class="token keyword">$&</span>');
-        
-        // Handle functions
-        processedLine = processedLine.replace(/\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, '<span class="token function">$&</span>');
-        
-        // Handle punctuation
-        processedLine = processedLine.replace(/(\{|\}|\(|\)|\[|\]|,|:|;|\.|=>|=|!)/g, '<span class="token punctuation">$&</span>');
-        
-        // Handle npm command
-        if (processedLine.includes('npm install')) {
-            processedLine = processedLine.replace(/(npm install cubegen-ai)/g, '<span class="token command">$1</span>');
-        }
-        
-        result += processedLine + '\n';
     }
-    
-    // Remove the last newline
-    result = result.slice(0, -1);
     
     return (
         <pre className="p-4 text-sm text-gray-300 bg-[#1e1e1e] rounded-xl overflow-x-auto">
-            <code dangerouslySetInnerHTML={{ __html: result }} />
+            <code dangerouslySetInnerHTML={{ __html: highlightedCode }} />
         </pre>
     );
 };
@@ -318,4 +302,3 @@ try {
 };
 
 export default ApiPricingPage;
-
