@@ -199,39 +199,10 @@ try {
   console.error('Error generating diagram:', error);
 }`;
 
-    // Process code with proper syntax highlighting
+    // Simple approach: just escape HTML and return without syntax highlighting
     const processCode = (code: string) => {
-        // First, escape HTML entities
-        let escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            
-        // Define syntax patterns in order of precedence (longest/most specific first)
-        const patterns = [
-            // Comments (lines starting with #)
-            { regex: /^(# .*)$/gm, className: 'token comment' },
-            // URLs
-            { regex: /(https:\/\/www.npmjs.com\/package\/cubegen-ai)/g, className: 'token url' },
-            // Strings
-            { regex: /('[^']*?'|"[^"]*?")/g, className: 'token string' },
-            // Keywords
-            { regex: /\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error)\b/g, className: 'token keyword' },
-            // Functions
-            { regex: /\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, className: 'token function' },
-            // NPM Command
-            { regex: /(npm install cubegen-ai)/g, className: 'token command' },
-            // Punctuation
-            { regex: /([{}()[\]\],:;.=!\-+<>])/g, className: 'token punctuation' },
-        ];
-            
-        let highlightedCode = escapedCode;
-            
-        // Apply patterns in sequence
-        for (const pattern of patterns) {
-            highlightedCode = highlightedCode.replace(pattern.regex, (match) => {
-                return `<span class="${pattern.className}">${match}</span>`;
-            });
-        }
-            
-        return highlightedCode;
+        // Just escape HTML entities
+        return code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     };
 
     return (
@@ -405,4 +376,3 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default ApiKeyPage;
-
