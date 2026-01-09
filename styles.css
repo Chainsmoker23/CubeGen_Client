@@ -121,6 +121,8 @@
       .token.plain-text { color: #E5E5E5; }
       .token.comment { color: #64748b; }
 
+      .token.command { color: #0a78f7; font-weight: bold; } /* yellow-400 */
+      .token.url { color: #58a6ff; font-weight: bold; text-decoration: underline; } /* blue-400 */
 
     
 
