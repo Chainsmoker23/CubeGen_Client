@@ -347,7 +347,7 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
                                 <div className="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">
                                     <h4 className="font-bold">Two Ways to Use Keys</h4>
                                     <p className="text-sm mt-1">
-                                        This key is for our Public API. To bypass generation limits <strong>within this web app</strong>, add your personal Google Gemini key in the <strong className="font-semibold">Settings sidebar</strong>.
+                                        This key is for our Public API. To use in your own application
                                     </p>
                                 </div>
                                 <IDECodeBlock apiKey={apiKey} />
