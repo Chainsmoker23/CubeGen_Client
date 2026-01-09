@@ -180,6 +180,9 @@ const IDECodeBlock: React.FC<{ apiKey: string }> = ({ apiKey }) => {
     const codeSnippet = `# Install the CubeGen AI SDK
 npm install cubegen-ai
 
+# Visit our npm package
+https://www.npmjs.com/package/cubegen-ai
+
 # Usage
 import { CubeGenAI } from 'cubegen-ai';
 
@@ -198,17 +201,19 @@ try {
 
     const highlightSyntax = (code: string) => {
         let highlightedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        
+            
         // Highlight different parts with appropriate colors
         return highlightedCode
             .replace(/^(# Install the CubeGen AI SDK)$/gm, `<span class="token comment">$1</span>`)
             .replace(/^(npm install cubegen-ai)$/gm, `<span class="token command">$1</span>`)
+            .replace(/^(https:\/\/www.npmjs.com\/package\/cubegen-ai)$/gm, `<span class="token url">$1</span>`)
+            .replace(/^(# Visit our npm package)$/gm, `<span class="token comment">$1</span>`)
             .replace(/^(# Usage)$/gm, `<span class="token comment">$1</span>`)
             .replace(/(import|from|const|new|try|catch|await|console|error)/g, `<span class="token keyword">$1</span>`)
             .replace(/(CubeGenAI|client|apiKey|generateDiagram)/g, `<span class="token function">$1</span>`)
             .replace(/('([^']*)'|"[^"]*")/g, `<span class="token string">$1</span>`)
             .replace(/(\{|\}|\(|\)|\[|\])/g, `<span class="token punctuation">$1</span>`)
-            .replace(/(\/\/.*)/g, `<span class="token comment">$1</span>`);
+            .replace(/(\/\/.*?)/g, `<span class="token comment">$1</span>`);
     };
 
     return (
@@ -347,7 +352,7 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
                                 <div className="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">
                                     <h4 className="font-bold">Two Ways to Use Keys</h4>
                                     <p className="text-sm mt-1">
-                                        This key is for our Public API. To use in your own application
+                                        This key is for our Public API. To bypass generation limits <strong>within this web app</strong>, add your personal Google Gemini key in the <strong className="font-semibold">Settings sidebar</strong>.
                                     </p>
                                 </div>
                                 <IDECodeBlock apiKey={apiKey} />
