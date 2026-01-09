@@ -61,6 +61,8 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
               <p className="text-lg text-[#555555] max-w-3xl mx-auto mb-16">
                 In just three simple steps, you can connect your personal Gemini key and bypass all shared usage limits.
               </p>
+            </div>
+            <div className="text-center">
               <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-800 p-4 rounded-r-lg max-w-3xl mx-auto mb-12">
                 <h3 className="font-bold text-lg flex items-center gap-2"><ArchitectureIcon type={IconType.FileCode} className="w-5 h-5" /> Programmatic Access with CubeGen AI SDK</h3>
                 <p className="text-sm mt-2">
@@ -91,11 +93,7 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
                     </div>
                     <h3 className="text-xl font-bold mt-6 mb-2">{step.title}</h3>
                     <p className="text-[#555555]">{step.description}</p>
-                    {index === 0 && (
-                      <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block bg-[#F9D7E3] text-[#A61E4D] font-bold py-2 px-6 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
-                        Go to Google AI Studio
-                      </a>
-                    )}
+
                   </motion.div>
                 ))}
               </div>
