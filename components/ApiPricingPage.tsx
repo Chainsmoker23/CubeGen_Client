@@ -42,31 +42,21 @@ const ApiPricingPage: React.FC<ApiPricingPageProps> = ({ onBack, onNavigate }) =
     const API_BASE = (process.env.VITE_BACKEND_URL || '').replace(/\/+$/, '');
 
     const codeExample = `// Example: Using fetch to call the CubeGen AI API.
-// Public API access is a Pro feature.
+// npm install cubegen-ai
 
-const apiKey = 'YOUR_API_KEY'; // Get this from your dashboard
-const prompt = 'A serverless API on GCP using Cloud Functions and Firestore.';
+import CubeGenAI from 'cubegen-ai';
 
-fetch('https://ube-chainsmoker231978-a1y8un6p.leapcell.dev/api/v1/diagrams/generate', {
-  method: 'POST',
-  headers: {
-    'Authorization': \`Bearer \${apiKey}\`,
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({ prompt }),
-})
-.then(res => {
-  if (!res.ok) {
-    throw new Error('Network response was not ok');
-  }
-  return res.json();
-})
-.then(data => {
-  console.log('Generated Diagram:', data.diagram);
-})
-.catch(error => {
-  console.error('Error:', error);
-});
+// Initialize the client with your API key
+// Get your API key from your CubeGen AI dashboard after subscribing to a Pro plan
+const client = new CubeGenAI('your-api-key');
+
+// Generate a diagram from a text prompt
+try {
+  const diagram = await client.generateDiagram('A 3-tier web application on AWS with a load balancer, multiple EC2 instances in an auto-scaling group, and an RDS database.');
+  console.log('Generated diagram:', diagram);
+} catch (error) {
+  console.error('Error generating diagram:', error.message);
+}
 `;
     
     useEffect(() => {
