@@ -199,55 +199,39 @@ try {
   console.error('Error generating diagram:', error);
 }`;
 
-    // Process code with advanced syntax highlighting
+    // Process code with proper syntax highlighting
     const processCode = (code: string) => {
         // First, escape HTML entities
         let escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        
-        // Split by newlines to process line by line
-        const lines = escapedCode.split('\n');
-        let result = '';
-        
-        for (let line of lines) {
-            // Process each line for different syntax elements
-            let processedLine = line;
             
-            // Handle comments (lines starting with #)
-            if (processedLine.startsWith('# ')) {
-                processedLine = processedLine.replace(/^(# .*?)$/, '<span class="token comment">$1</span>');
-            }
+        // Define syntax patterns in order of precedence (longest/most specific first)
+        const patterns = [
+            // Comments (lines starting with #)
+            { regex: /^(# .*)$/gm, className: 'token comment' },
+            // URLs
+            { regex: /(https:\/\/www.npmjs.com\/package\/cubegen-ai)/g, className: 'token url' },
+            // Strings
+            { regex: /('[^']*?'|"[^"]*?")/g, className: 'token string' },
+            // Keywords
+            { regex: /\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error)\b/g, className: 'token keyword' },
+            // Functions
+            { regex: /\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, className: 'token function' },
+            // NPM Command
+            { regex: /(npm install cubegen-ai)/g, className: 'token command' },
+            // Punctuation
+            { regex: /([{}()[\]\],:;.=!\-+<>])/g, className: 'token punctuation' },
+        ];
             
-            // Handle strings - use a more careful approach
-            processedLine = processedLine.replace(/('([^']*)'|"([^"]*)")/g, (match) => {
-                return `<span class="token string">${match}</span>`;
+        let highlightedCode = escapedCode;
+            
+        // Apply patterns in sequence
+        for (const pattern of patterns) {
+            highlightedCode = highlightedCode.replace(pattern.regex, (match) => {
+                return `<span class="${pattern.className}">${match}</span>`;
             });
-            
-            // Handle keywords
-            processedLine = processedLine.replace(/\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error)\b/g, '<span class="token keyword">$&</span>');
-            
-            // Handle functions
-            processedLine = processedLine.replace(/\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, '<span class="token function">$&</span>');
-            
-            // Handle punctuation
-            processedLine = processedLine.replace(/(\{|\}|\(|\)|\[|\]|,|:|;|\.|=>|=|!)/g, '<span class="token punctuation">$&</span>');
-            
-            // Handle npm command
-            if (processedLine.includes('npm install')) {
-                processedLine = processedLine.replace(/(npm install cubegen-ai)/g, '<span class="token command">$1</span>');
-            }
-            
-            // Handle URL
-            if (processedLine.includes('https://')) {
-                processedLine = processedLine.replace(/(https:\/\/www.npmjs.com\/package\/cubegen-ai)/g, '<span class="token url">$1</span>');
-            }
-            
-            result += processedLine + '\n';
         }
-        
-        // Remove the last newline
-        result = result.slice(0, -1);
-        
-        return result;
+            
+        return highlightedCode;
     };
 
     return (
