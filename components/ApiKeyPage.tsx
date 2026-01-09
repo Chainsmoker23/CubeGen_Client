@@ -201,47 +201,53 @@ try {
 
     // Process code with advanced syntax highlighting
     const processCode = (code: string) => {
-        // Split code into lines to process each individually
-        const lines = code.split('\n');
+        // First, escape HTML entities
+        let escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         
-        // Process each line separately to highlight syntax
-        const processedLines = lines.map(line => {
-            let processedLine = line
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-                
-            // Highlight comments (lines starting with #)
+        // Split by newlines to process line by line
+        const lines = escapedCode.split('\n');
+        let result = '';
+        
+        for (let line of lines) {
+            // Process each line for different syntax elements
+            let processedLine = line;
+            
+            // Handle comments (lines starting with #)
             if (processedLine.startsWith('# ')) {
                 processedLine = processedLine.replace(/^(# .*?)$/, '<span class="token comment">$1</span>');
             }
             
-            // Highlight strings
-            processedLine = processedLine.replace(/('([^']*)'|"([^"]*)")/g, '<span class="token string">$1</span>');
+            // Handle strings - use a more careful approach
+            processedLine = processedLine.replace(/('([^']*)'|"([^"]*)")/g, (match) => {
+                return `<span class="token string">${match}</span>`;
+            });
             
-            // Highlight keywords
-            processedLine = processedLine.replace(/\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error|try|catch)\b/g, '<span class="token keyword">$&</span>');
+            // Handle keywords
+            processedLine = processedLine.replace(/\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error)\b/g, '<span class="token keyword">$&</span>');
             
-            // Highlight functions
+            // Handle functions
             processedLine = processedLine.replace(/\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, '<span class="token function">$&</span>');
             
-            // Highlight punctuation
+            // Handle punctuation
             processedLine = processedLine.replace(/(\{|\}|\(|\)|\[|\]|,|:|;|\.|=>|=|!)/g, '<span class="token punctuation">$&</span>');
             
-            // Highlight npm command
+            // Handle npm command
             if (processedLine.includes('npm install')) {
                 processedLine = processedLine.replace(/(npm install cubegen-ai)/g, '<span class="token command">$1</span>');
             }
             
-            // Highlight URL
+            // Handle URL
             if (processedLine.includes('https://')) {
                 processedLine = processedLine.replace(/(https:\/\/www.npmjs.com\/package\/cubegen-ai)/g, '<span class="token url">$1</span>');
             }
             
-            return processedLine;
-        });
+            result += processedLine + '\n';
+        }
         
-        return processedLines.join('\n');
+        // Remove the last newline
+        result = result.slice(0, -1);
+        
+        return result;
     };
 
     return (
