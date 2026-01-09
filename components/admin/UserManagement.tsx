@@ -65,12 +65,18 @@ const UserManagement: React.FC = () => {
         setUpdateError(null);
         setUpdateSuccess(null);
         try {
-            await adminUpdateUserPlan(userId, selectedPlanForUpdate, adminToken);
+            const response = await adminUpdateUserPlan(userId, selectedPlanForUpdate, adminToken);
             setUpdateSuccess(`User plan successfully updated to ${selectedPlanForUpdate}. Refreshing list...`);
             setTimeout(async () => {
                 await fetchUsers();
                 setExpandedUserId(null);
                 setUpdateSuccess(null);
+                
+                // If the response indicates that the user needs to refresh their session,
+                // we should notify the admin to inform the user
+                if (response.requiresRefresh) {
+                    alert('User plan updated successfully! Please inform the user to refresh their session in the main application to access their new plan features immediately.');
+                }
             }, 2000);
         } catch (err: any) {
             setUpdateError(err.message || 'Failed to update plan.');
