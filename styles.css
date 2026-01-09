@@ -121,8 +121,8 @@
       .token.plain-text { color: #E5E5E5; }
       .token.comment { color: #64748b; }
 
-/* Additional Token Classes for NPM Package Code */
-      .token.command { color: #0a78f7; font-weight: bold; } /* yellow-400 */
+
+    
 
       /* --- NEW CREATIVE STYLES FOR APP PAGE --- */
       .app-bg {
