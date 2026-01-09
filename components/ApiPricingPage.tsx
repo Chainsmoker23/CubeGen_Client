@@ -17,38 +17,12 @@ interface ApiPricingPageProps {
 }
 
 const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
-    // Process code with proper syntax highlighting
-    // First, escape HTML entities
-    let escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    
-    // Define syntax patterns in order of precedence (longest/most specific first)
-    const patterns = [
-        // Comments
-        { regex: /(\/\/[^\n\r]*)/g, className: 'token comment' },
-        // Strings
-        { regex: /('[^']*?'|"[^"]*?")/g, className: 'token string' },
-        // Keywords
-        { regex: /\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error)\b/g, className: 'token keyword' },
-        // Functions
-        { regex: /\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, className: 'token function' },
-        // NPM Command
-        { regex: /(npm install cubegen-ai)/g, className: 'token command' },
-        // Punctuation
-        { regex: /([{}()[\]\],:;.=!\-+<>])/g, className: 'token punctuation' },
-    ];
-    
-    let highlightedCode = escapedCode;
-    
-    // Apply patterns in sequence
-    for (const pattern of patterns) {
-        highlightedCode = highlightedCode.replace(pattern.regex, (match) => {
-            return `<span class="${pattern.className}">${match}</span>`;
-        });
-    }
+    // Simple approach: just escape HTML and return without syntax highlighting
+    const escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     
     return (
         <pre className="p-4 text-sm text-gray-300 bg-[#1e1e1e] rounded-xl overflow-x-auto">
-            <code dangerouslySetInnerHTML={{ __html: highlightedCode }} />
+            <code dangerouslySetInnerHTML={{ __html: escapedCode }} />
         </pre>
     );
 };
