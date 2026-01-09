@@ -48,7 +48,6 @@ const DocsSection: React.FC<{ id: string; title: string; children: React.ReactNo
 const SectionSeparator = () => (
     <div className="my-16 flex justify-center items-center" aria-hidden="true">
         <div className="w-1/3 border-t border-pink-200" />
-        <ArchitectureIcon type={IconType.Sparkles} className="w-6 h-6 text-pink-300 mx-4" />
         <div className="w-1/3 border-t border-pink-200" />
     </div>
 );
@@ -65,7 +64,7 @@ const DocsPage: React.FC<DocsPageProps> = ({ onBack, onLaunch, onNavigateToApi, 
       description: 'Use the prompt input to describe your system. Be as simple or detailed as you like.'
     },
     {
-      icon: IconType.Sparkles,
+      icon: IconType.Gemini,
       title: '2. Generate',
       description: "Our AI will interpret your prompt and create a diagram with the right components and connections."
     },
@@ -104,8 +103,9 @@ const DocsPage: React.FC<DocsPageProps> = ({ onBack, onLaunch, onNavigateToApi, 
                     <div className="max-w-4xl mx-auto">
                         <article>
                             <DocsSection id="introduction" title="Introduction">
-                                <p>Welcome to the CubeGen AI documentation! Our goal is to provide the fastest way to visualize, design, and share software architecture. This tool leverages generative AI to build beautiful, intelligent diagrams directly from natural language.</p>
-                                <p>Whether you're a software architect mapping out a complex system, a developer needing a quick visualization, or a student learning about cloud infrastructure, CubeGen AI is designed to streamline your workflow.</p>
+                                <p>Welcome to the CubeGen AI documentation! CubeGen AI is a revolutionary platform that transforms how software architects, engineers, and teams visualize, design, and share software architecture. Our goal is to provide the fastest way to convert natural language descriptions into professional, intelligent diagrams.</p>
+                                <p>Founded as a non-profit organization in 2025 by Divesh and Manish Sarkar, CubeGen AI leverages cutting-edge generative AI technology to build beautiful, intelligent diagrams directly from your text descriptions.</p>
+                                <p>Whether you're a software architect mapping out a complex system, a developer needing a quick visualization, or a student learning about cloud infrastructure, CubeGen AI is designed to streamline your workflow and democratize design.</p>
                             </DocsSection>
 
                             <SectionSeparator />
@@ -127,6 +127,42 @@ const DocsPage: React.FC<DocsPageProps> = ({ onBack, onLaunch, onNavigateToApi, 
                                             <p className="text-[#555555]">{step.description}</p>
                                         </motion.div>
                                     ))}
+                                </div>
+                            </DocsSection>
+
+                            <SectionSeparator />
+                            
+                            <DocsSection id="features" title="Features & Capabilities">
+                                <p>CubeGen AI offers a comprehensive suite of features to help you create professional architecture diagrams:</p>
+                                <div className="grid md:grid-cols-2 gap-6 mt-8 not-prose">
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100">
+                                        <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
+                                            <ArchitectureIcon type={IconType.Gemini} className="w-8 h-8 text-[#D6336C]" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-center mb-2">AI-Powered Generation</h3>
+                                        <p className="text-[#555555]">Describe your system in plain English and watch as a detailed architecture diagram is generated in seconds.</p>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100">
+                                        <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
+                                            <ArchitectureIcon type={IconType.Cloud} className="w-8 h-8 text-[#D6336C]" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-center mb-2">Multi-Cloud & Generic Icons</h3>
+                                        <p className="text-[#555555]">Supports AWS, GCP, Azure, Kubernetes, and a wide array of generic components for any system.</p>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100">
+                                        <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
+                                            <ArchitectureIcon type={IconType.Playground} className="w-8 h-8 text-[#D6336C]" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-center mb-2">Interactive Playground</h3>
+                                        <p className="text-[#555555]">Drag, drop, connect, and customize every element. Your diagram is a living document, not a static image.</p>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100">
+                                        <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
+                                            <ArchitectureIcon type={IconType.FileCode} className="w-8 h-8 text-[#D6336C]" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-center mb-2">Export & Share</h3>
+                                        <p className="text-[#555555]">Export your designs to PNG, SVG, or JSON to integrate with your documentation and presentations.</p>
+                                    </div>
                                 </div>
                             </DocsSection>
 
@@ -157,16 +193,135 @@ const DocsPage: React.FC<DocsPageProps> = ({ onBack, onLaunch, onNavigateToApi, 
                             <DocsSection id="api-access" title="API Access">
                                 <p>Want to automate diagram generation? CubeGen AI offers a simple REST API to integrate into your own applications and workflows.</p>
                                 <p>Generate diagrams from your CI/CD pipeline, build custom internal tools, or create automated documentation. Our API provides the flexibility you need.</p>
-                                <CodeBlock code={`curl 'https://ube-chainsmoker231978-a1y8un6p.leapcell.dev/api/v1/diagrams/generate' \\
-  -X POST \\
-  -H 'Authorization: Bearer YOUR_API_KEY' \\
-  -H 'Content-Type: application/json' \\
-  --data-raw '{
-    "prompt": "${goodPrompt}"
-  }'`} />
+                                
+                                <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 p-4 rounded-r-lg">
+                                    <h4 className="font-bold flex items-center gap-2"><ArchitectureIcon type={IconType.FileCode} className="w-5 h-5" /> Install the CubeGen AI SDK</h4>
+                                    <p className="text-sm mt-2">Install our official SDK to easily integrate with your applications:</p>
+                                    <div className="mt-2 p-3 bg-blue-100 rounded-lg">
+                                        <code className="text-blue-900 font-mono text-sm">npm install cubegen-ai</code>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-6 bg-gray-50 p-4 rounded-lg">
+                                    <h5 className="font-bold text-gray-800 mb-2">Usage Example:</h5>
+                                    <pre className="bg-gray-800 text-gray-200 p-4 rounded-lg overflow-x-auto text-sm">
+{`import { CubeGenAI } from 'cubegen-ai';
+
+const client = new CubeGenAI({
+  apiKey: 'YOUR_API_KEY'
+});
+
+try {
+  const diagram = await client.generateDiagram(
+    'A 3-tier web application on AWS with a load balancer, multiple EC2 instances in an auto-scaling group, and an RDS database.'
+  );
+  console.log(diagram);
+} catch (error) {
+  console.error('Error generating diagram:', error);
+}`}                                    </pre>
+                                </div>
+                                
                                 <button onClick={onNavigateToApi} className="mt-4 bg-[#F9D7E3] text-[#A61E4D] font-bold py-2 px-6 rounded-full shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
                                     View Full API Docs & Pricing
                                 </button>
+                            </DocsSection>
+
+                            <SectionSeparator />
+                            
+                            <DocsSection id="our-team" title="Our Team & Mission">
+                                <p>CubeGen AI was founded by a passionate team dedicated to democratizing design and making professional architecture tools accessible to everyone:</p>
+                                
+                                <div className="grid md:grid-cols-2 gap-8 mt-8 not-prose">
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100 text-center">
+                                        <div className="w-20 h-20 mx-auto rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-2xl mb-4">DS</div>
+                                        <h3 className="text-xl font-bold">Divesh Sarkar</h3>
+                                        <p className="text-[#D6336C] font-semibold mb-3">Principal Engineer</p>
+                                        <p className="text-[#555555] text-sm">The visionary behind CubeGen AI, Divesh leads the project with a passion for making complex system design accessible to everyone through the power of AI.</p>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100 text-center">
+                                        <div className="w-20 h-20 mx-auto rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-2xl mb-4">MS</div>
+                                        <h3 className="text-xl font-bold">Manish Sarkar</h3>
+                                        <p className="text-[#D6336C] font-semibold mb-3">Co-Founder & Engineer</p>
+                                        <p className="text-[#555555] text-sm">Manish is the core engineer turning prompts into pixels. He's dedicated to optimizing the AI's performance and ensuring a seamless user experience.</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-8">
+                                    <h4 className="text-xl font-bold text-[#333] mb-4">Our Mission: Democratize Design</h4>
+                                    <p>Founded as a non-profit organization in 2025, CubeGen AI is dedicated to making professional design tools accessible to all. Our mission is simple: great software architecture shouldn't be a bottleneck.</p>
+                                </div>
+                            </DocsSection>
+
+                            <SectionSeparator />
+                            
+                            <DocsSection id="research" title="Research & Innovation">
+                                <p>At CubeGen AI, we're pioneering the next generation of AI-driven design. Our key research initiatives are shaping the future of software architecture:</p>
+                                
+                                <div className="space-y-6 mt-8 not-prose">
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg">
+                                            <ArchitectureIcon type={IconType.Brain} className="w-6 h-6 text-[#D6336C]" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold">Next-Gen LLMs</h4>
+                                            <p className="text-[#555555]">We are researching and fine-tuning language models specifically for the domain of software architecture. Our goal is to improve spatial reasoning, enhance layout algorithms, and develop models that understand nuanced architectural patterns to produce even more intelligent and aesthetic diagrams.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg">
+                                            <ArchitectureIcon type={IconType.BlockchainNode} className="w-6 h-6 text-[#D6336C]" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold">Decentralized Architectures</h4>
+                                            <p className="text-[#555555]">The future is decentralized. Our research in this area focuses on expanding our understanding of Web3, blockchain, and distributed ledger technologies. We're developing capabilities to accurately model complex P2P networks, smart contract interactions, and dApp infrastructures.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-start gap-4">
+                                        <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg">
+                                            <ArchitectureIcon type={IconType.Playground} className="w-6 h-6 text-[#D6336C]" />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-lg font-bold">Intelligent Tooling</h4>
+                                            <p className="text-[#555555]">A diagram is just the beginning. We're exploring the frontier of "diagram-as-code," researching how to generate Infrastructure-as-Code (like Terraform) directly from your designs, enabling real-time collaboration, and creating a version control system for visual architecture.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </DocsSection>
+
+                            <SectionSeparator />
+                            
+                            <DocsSection id="business-model" title="Our Sustainable Model">
+                                <p>As a non-profit organization, our focus is on impact, not profit. Our sustainable model ensures the longevity of the project while keeping it accessible to all users:</p>
+                                
+                                <div className="grid md:grid-cols-3 gap-6 mt-8 not-prose">
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100">
+                                        <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
+                                            <ArchitectureIcon type={IconType.WebServer} className="w-8 h-8 text-[#D6336C]" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-center mb-2">Service Maintenance</h3>
+                                        <p className="text-[#555555] text-sm">Keeping the servers running, the APIs responsive, and the service reliable for all users.</p>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100">
+                                        <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
+                                            <ArchitectureIcon type={IconType.User} className="w-8 h-8 text-[#D6336C]" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-center mb-2">Team Support</h3>
+                                        <p className="text-[#555555] text-sm">Fairly compensating our small, dedicated team for their ongoing work and innovation.</p>
+                                    </div>
+                                    <div className="bg-white p-6 rounded-2xl shadow-md border border-pink-100">
+                                        <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
+                                            <ArchitectureIcon type={IconType.Brain} className="w-8 h-8 text-[#D6336C]" />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-center mb-2">Future Research</h3>
+                                        <p className="text-[#555555] text-sm">Investing in R&D to explore new features and work towards an open-source model.</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-8">
+                                    <p>API charges from our API and power-users with personal keys directly fund our mission, allowing us to continue improving CubeGen AI for everyone.</p>
+                                </div>
                             </DocsSection>
                         </article>
                     </div>
