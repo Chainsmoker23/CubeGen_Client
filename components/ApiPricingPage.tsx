@@ -19,12 +19,12 @@ interface ApiPricingPageProps {
 const highlightSyntax = (code: string) => {
   let highlightedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return { __html: highlightedCode
-      .replace(/'([^']*)'/g, `<span class="token string">'${'$1'}'</span>`)
-      .replace(/\b(const|let|async|function|try|catch|await|new|return|if|throw|Error)\b/g, `<span class="token keyword">${'$&'}</span>`)
-      .replace(/(\.json\(\)|\.log|\.error|\.stringify|ok|message)/g, `<span class="token property-access">${'$&'}</span>`)
-      .replace(/\b(fetch|console|JSON)\b/g, `<span class="token function">${'$&'}</span>`)
-      .replace(/(\(|\{|\}|\[|\]|,|:)/g, `<span class="token punctuation">${'$&'}</span>`)
-      .replace(/(\/\/.*)/g, `<span class="token comment">${'$&'}</span>`)
+      .replace(/('([^']*)')/g, `<span class="token string">$1</span>`)
+      .replace(/\b(const|let|async|function|try|catch|await|new|return|if|throw|Error)\b/g, `<span class="token keyword">$&</span>`)
+      .replace(/(\.json\(\)|\.log|\.error|\.stringify|ok|message)/g, `<span class="token property-access">$&</span>`)
+      .replace(/\b(fetch|console|JSON)\b/g, `<span class="token function">$&</span>`)
+      .replace(/(\(|\{|\}|\[|\]|,|:)/g, `<span class="token punctuation">$&</span>`)
+      .replace(/(\/\/.*?)/g, `<span class="token comment">$&</span>`)
   };
 };
 
@@ -52,9 +52,7 @@ const client = new CubeGenAI('your-api-key');
 
 // Generate a diagram from a text prompt
 try {
-  const diagram = await client.generateDiagram('A 3-tier web application on AWS with a load balancer,
-  multiple EC2 instances in an auto-scaling group, and an RDS database.');
-  
+  const diagram = await client.generateDiagram('A 3-tier web application on AWS with a load balancer, multiple EC2 instances in an auto-scaling group, and an RDS database.');
   console.log('Generated diagram:', diagram);
 } catch (error) {
   console.error('Error generating diagram:', error.message);
@@ -251,11 +249,11 @@ try {
                                 transition={{ duration: 0.6, ease: 'easeOut' }}
                             >
                                 <h2 className="text-4xl font-bold mb-4">Simple, Powerful Integration</h2>
-                                <p className="text-[#555555] mb-6">Our Pro plan allows you to generate a personal API key. Use this key within the your own applications.</p>
+                                <p className="text-[#555555] mb-6">Our Pro plan allows you to generate a personal API key. Use this key within the app settings to bypass the shared usage limits and enjoy unlimited diagram generation, ensuring your workflow is never interrupted.</p>
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Sparkles} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Unlimited Generations:</strong> Create as many diagrams as you need without hitting daily quotas.</p></div>
-                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Gear} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Personal Key:</strong> Your dedicated key for use within your own application.</p></div>
-                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Cloud} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Public API:</strong> Your plan will grant you access to our future public API and SDK for full automation.</p></div>
+                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Gear} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Personal Key:</strong> Your own dedicated key for use within the CubeGen AI application.</p></div>
+                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Cloud} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Public API (Coming Soon):</strong> Your plan will grant you access to our future public API and SDK for full automation.</p></div>
                                 </div>
                             </motion.div>
                              <motion.div
