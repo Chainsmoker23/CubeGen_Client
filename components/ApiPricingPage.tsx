@@ -16,23 +16,53 @@ interface ApiPricingPageProps {
   onNavigate: (page: Page) => void;
 }
 
-const highlightSyntax = (code: string) => {
-  let highlightedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return { __html: highlightedCode
-      .replace(/('([^']*)')/g, '<span class="token string">$1</span>')
-      .replace(/\b(const|let|async|function|try|catch|await|new|return|if|throw|Error)\b/g, '<span class="token keyword">$&</span>')
-      .replace(/(\.json\(\)|\.log|\.error|\.stringify|ok|message)/g, '<span class="token property-access">$&</span>')
-      .replace(/\b(fetch|console|JSON)\b/g, '<span class="token function">$&</span>')
-      .replace(/(\(|\{|\}|\[|\]|,|:)/g, '<span class="token punctuation">$&</span>')
-      .replace(/(\/\/.*?)/g, '<span class="token comment">$&</span>')
-  };
+const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
+    // Split code into lines to process each individually
+    const lines = code.split('\n');
+    
+    // Process each line separately to highlight syntax
+    const processedLines = lines.map(line => {
+        let processedLine = line
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+            
+        // Highlight comments
+        processedLine = processedLine.replace(/(\/\/.*?)(?=<|$)/g, '<span class="token comment">$1</span>');
+        
+        // Highlight strings
+        processedLine = processedLine.replace(/('([^']*)'|"([^"]*)")/g, '<span class="token string">$1</span>');
+        
+        // Highlight keywords
+        processedLine = processedLine.replace(/\b(import|from|const|let|var|async|function|try|catch|await|new|return|if|else|throw|Error|try|catch)\b/g, '<span class="token keyword">$&</span>');
+        
+        // Highlight functions
+        processedLine = processedLine.replace(/\b(console|JSON|fetch|log|error|stringify|ok|message|CubeGenAI|client|apiKey|generateDiagram)\b/g, '<span class="token function">$&</span>');
+        
+        // Highlight punctuation
+        processedLine = processedLine.replace(/(\{|\}|\(|\)|\[|\]|,|:|;|\.|=>|=|!)/g, '<span class="token punctuation">$&</span>');
+        
+        // Highlight npm command
+        if (processedLine.includes('npm install')) {
+            processedLine = processedLine.replace(/(npm install cubegen-ai)/g, '<span class="token command">$1</span>');
+        }
+        
+        // Highlight URL
+        if (processedLine.includes('https://')) {
+            processedLine = processedLine.replace(/(https:\/\/www.npmjs.com\/package\/cubegen-ai)/g, '<span class="token url">$1</span>');
+        }
+        
+        return processedLine;
+    });
+    
+    const highlightedCode = processedLines.join('\n');
+    
+    return (
+        <pre className="p-4 text-sm text-gray-300 bg-[#1e1e1e] rounded-xl overflow-x-auto">
+            <code dangerouslySetInnerHTML={{ __html: highlightedCode }} />
+        </pre>
+    );
 };
-
-const CodeBlock: React.FC<{ code: string }> = ({ code }) => (
-    <pre className="p-4 text-sm text-gray-300 bg-[#1e1e1e] rounded-xl overflow-x-auto">
-        <code dangerouslySetInnerHTML={highlightSyntax(code)} />
-    </pre>
-);
 
 const ApiPricingPage: React.FC<ApiPricingPageProps> = ({ onBack, onNavigate }) => {
     const { currentUser } = useAuth();
