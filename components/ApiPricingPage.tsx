@@ -251,10 +251,10 @@ try {
                                 transition={{ duration: 0.6, ease: 'easeOut' }}
                             >
                                 <h2 className="text-4xl font-bold mb-4">Simple, Powerful Integration</h2>
-                                <p className="text-[#555555] mb-6">Our Pro plan allows you to generate a personal API key. Use this key within the app settings to bypass the shared usage limits and enjoy unlimited diagram generation, ensuring your workflow is never interrupted.</p>
+                                <p className="text-[#555555] mb-6">Our Pro plan allows you to generate a personal API key. Use this key within the your own applications.</p>
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Sparkles} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Unlimited Generations:</strong> Create as many diagrams as you need without hitting daily quotas.</p></div>
-                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Gear} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Personal Key:</strong> Your own dedicated key for use within the CubeGen AI application.</p></div>
+                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Gear} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Personal Key:</strong> Your dedicated key for use within your own application.</p></div>
                                     <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Cloud} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Public API:</strong> Your plan will grant you access to our future public API and SDK for full automation.</p></div>
                                 </div>
                             </motion.div>
