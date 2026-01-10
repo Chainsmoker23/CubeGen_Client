@@ -401,6 +401,8 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
     setPrompt(EXAMPLE_PROMPTS_LIST[nextIndex]);
   };
 
+  const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false);
+  
   const handleEnterPlayground = () => {
     if (isMobile) {
       setShowMobileWarning(true);
@@ -409,9 +411,6 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
       setIsPlaygroundMode(true);
     }
   };
-  
-  // Handle playground mode for admin panel context
-  const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false);
   
   if (isPlaygroundMode && diagramData) {
     const playgroundProps = {
