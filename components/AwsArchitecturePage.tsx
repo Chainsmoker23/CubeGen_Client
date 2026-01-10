@@ -405,14 +405,33 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
     if (isMobile) {
       setShowMobileWarning(true);
     } else {
-      // Instead of switching to playground mode within the admin panel,
-      // we'll navigate to the standalone AWS architecture page
-      onNavigate('awsArchitecture' as Page);
+      // Enable playground mode within the admin panel
+      setIsPlaygroundMode(true);
     }
   };
   
-  // Note: We don't render the playground directly in the admin panel context
-  // The playground is accessed through the main app navigation, not within the admin panel
+  // Handle playground mode for admin panel context
+  const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false);
+  
+  if (isPlaygroundMode && diagramData) {
+    const playgroundProps = {
+      data: diagramData,
+      onDataChange: handleDiagramUpdate,
+      onExit: () => setIsPlaygroundMode(false),
+      selectedIds: selectedIds,
+      setSelectedIds: setSelectedIds,
+      onUndo: handleUndo,
+      onRedo: handleRedo,
+      canUndo: historyIndex > 0,
+      canRedo: historyIndex < history.length - 1,
+      onExplain: handleExplain,
+      isExplaining: isExplaining,
+    };
+
+    return isMobile
+      ? <MobilePlayground {...playgroundProps} />
+      : <Playground {...playgroundProps} />;
+  }
 
   const selectedItem = useMemo(() => {
     if (!diagramData || selectedIds.length !== 1) return null;
@@ -641,8 +660,7 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
         {showMobileWarning && (
           <MobileWarning
             onProceed={() => {
-              // Navigate to the standalone AWS architecture page
-              onNavigate('awsArchitecture' as Page);
+              setIsPlaygroundMode(true);
               setShowMobileWarning(false);
             }}
             onCancel={() => setShowMobileWarning(false)}
