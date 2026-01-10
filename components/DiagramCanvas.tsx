@@ -268,6 +268,16 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
     setContextMenu(null);
   }
   
+  const handleEditLinkLabel = (link: Link) => {
+    const newLabel = prompt('Enter link label:', link.label || '');
+    if (newLabel !== null) {
+      const updatedLink = { ...link, label: newLabel || undefined };
+      const newLinks = data.links.map(l => l.id === link.id ? updatedLink : l);
+      onDataChange({ ...data, links: newLinks });
+    }
+    setContextMenu(null);
+  }
+  
   const getCursor = () => {
     if (!isEditable) return 'default';
     if (linkingState) return 'crosshair';
@@ -318,7 +328,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           
           {/* Link Paths Layer */}
           <g>
-            {renderableLinks.map(({ link, pathD, isNeuronLink }) => {
+            {renderableLinks.map(({ link, pathD, labelPos, isNeuronLink }) => {
               const selected = isSelected(link.id);
               const thicknessMap = { thin: isNeuronLink ? 0.5 : 1.5, medium: 2.5, thick: 4 };
               const thicknessPx = thicknessMap[link.thickness || 'medium'];
@@ -342,6 +352,44 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                     markerEnd={isNeuronLink ? undefined : `url(#arrowhead)`}
                     markerStart={link.bidirectional ? `url(#arrowhead-reverse)` : undefined}
                   />
+                  {/* Interactive label area for adding/editing link labels */}
+                  {labelPos && (
+                    <g onClick={(e) => {
+                      e.stopPropagation();
+                      // Open a prompt to edit the link label
+                      const newLabel = prompt('Enter link label:', link.label || '');
+                      if (newLabel !== null) {
+                        const updatedLink = { ...link, label: newLabel || undefined };
+                        const newLinks = data.links.map(l => l.id === link.id ? updatedLink : l);
+                        onDataChange({ ...data, links: newLinks });
+                      }
+                    }}>
+                      <circle
+                        cx={labelPos.x}
+                        cy={labelPos.y}
+                        r="10"
+                        fill="transparent"
+                        stroke="transparent"
+                        strokeWidth="2"
+                        className="cursor-pointer hover:fill-[var(--color-accent-soft)]"
+                      />
+                    </g>
+                  )}
+                  {/* Alternative click area for adding labels if no label exists yet */}
+                  {!labelPos && (
+                    <g onClick={(e) => {
+                      e.stopPropagation();
+                      // Open a prompt to add a link label
+                      const newLabel = prompt('Enter link label:', '');
+                      if (newLabel !== null && newLabel.trim() !== '') {
+                        const updatedLink = { ...link, label: newLabel };
+                        const newLinks = data.links.map(l => l.id === link.id ? updatedLink : l);
+                        onDataChange({ ...data, links: newLinks });
+                      }
+                    }}>
+                      <path d={pathD} stroke="transparent" strokeWidth={15} fill="none" className="cursor-pointer" />
+                    </g>
+                  )}
                 </g>
               );
             })}
@@ -428,7 +476,14 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
         <ContextMenu
           x={contextMenu.x}
           y={contextMenu.y}
-          options={[{ label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }]}
+          options={
+            contextMenu.item.type === 'link' 
+              ? [
+                  { label: 'Edit Label', onClick: () => handleEditLinkLabel(contextMenu.item as Link) },
+                  { label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }
+                ]
+              : [{ label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }]
+          }
           onClose={() => setContextMenu(null)}
         />
       )}
