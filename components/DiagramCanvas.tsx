@@ -172,10 +172,13 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       'var(--color-tier-1)', 'var(--color-tier-2)', 'var(--color-tier-3)',
       'var(--color-tier-4)', 'var(--color-tier-5)', 'var(--color-tier-6)',
     ];
-    const tiers = data.containers?.filter(c => c.type === 'tier').sort((a, b) => a.y - b.y) || [];
+    // Filter containers that should get tier coloring - including AWS containers
+    const tierContainers = data.containers?.filter(c => 
+      c.type === 'tier' || c.type === 'vpc' || c.type === 'subnet' || c.type === 'region' || c.type === 'availability-zone'
+    ).sort((a, b) => a.y - b.y) || [];
     const colorMap = new Map<string, string>();
-    tiers.forEach((tier, index) => {
-      colorMap.set(tier.id, colors[index % colors.length]);
+    tierContainers.forEach((container, index) => {
+      colorMap.set(container.id, colors[index % colors.length]);
     });
     return colorMap;
   }, [data.containers]);
@@ -305,7 +308,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                 setSelectedIds={setSelectedIds}
                 onContextMenu={handleItemContextMenu}
                 selectedIds={selectedIds}
-                fillColor={container.color || (container.type === 'tier' ? tierColors.get(container.id) || 'var(--color-tier-default)' : 'var(--color-tier-default)')}
+                fillColor={container.color || tierColors.get(container.id) || 'var(--color-tier-default)'}
                 interactionMode={interactionMode}
                 isEditable={isEditable}
                 onSelect={handleItemSelection}
