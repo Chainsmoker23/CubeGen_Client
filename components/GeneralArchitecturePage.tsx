@@ -21,7 +21,7 @@ import MobileWarning from './MobileWarning';
 import Toast from './Toast';
 import ErrorModal from './ErrorModal';
 
-type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research';
+type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'awsArchitecture' | 'careers' | 'research';
 
 interface GeneralArchitecturePageProps {
     onNavigate: (page: Page) => void;
@@ -139,15 +139,15 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
     clonedElements.unshift(svgClone);
 
     originalElements.forEach((sourceEl, index) => {
-        const targetEl = clonedElements[index] as SVGElement;
-        if (targetEl && targetEl.style) {
-            const computedStyle = window.getComputedStyle(sourceEl);
+        const targetEl = clonedElements[index] as Element;
+        if (targetEl && (targetEl as SVGElement).style) {
+            const computedStyle = window.getComputedStyle(sourceEl as Element);
             let cssText = '';
             for (let i = 0; i < computedStyle.length; i++) {
                 const prop = computedStyle[i];
                 cssText += `${prop}: ${computedStyle.getPropertyValue(prop)};`;
             }
-            targetEl.style.cssText = cssText;
+            (targetEl as SVGElement).style.cssText = cssText;
         }
     });
     
