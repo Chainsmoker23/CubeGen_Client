@@ -64,7 +64,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
       }
     }, [canRedo, onRedo]);
 
-    const handleAddContainer = (containerType: 'tier' | 'vpc' | 'region' | 'availability-zone' | 'subnet' = 'tier') => {
+    const handleAddContainer = (containerType: 'tier' | 'vpc' | 'region' | 'availability-zone' | 'subnet' = 'availability-zone') => {
         if (!canvasContainerRef.current) return;
         const canvasRect = canvasContainerRef.current.getBoundingClientRect();
         
@@ -121,16 +121,13 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                 setInteractionMode(prev => prev === 'addNode' ? 'select' : 'addNode');
             } else if (e.key.toLowerCase() === 'b') {
                 e.preventDefault();
-                handleAddContainer(); // Default to 'tier'
-            } else if (e.key.toLowerCase() === 't') {
+                handleAddContainer('availability-zone'); // Default to AZ
+            } else if (e.key.toLowerCase() === 'a') {
                 e.preventDefault();
-                handleAddContainer('tier');
-            } else if (e.key.toLowerCase() === 'r') {
+                handleAddContainer('availability-zone');
+            } else if (e.key.toLowerCase() === 's') {
                 e.preventDefault();
-                handleAddContainer('region');
-            } else if (e.key.toLowerCase() === 'v' && e.shiftKey) {
-                e.preventDefault();
-                handleAddContainer('vpc');
+                handleAddContainer('subnet');
             }
         };
         window.addEventListener('keydown', handleKeyDown);
