@@ -6,6 +6,7 @@ import { generateDiagramData, generateAwsArchitectureData } from '../services/ge
 import Loader from './Loader';
 import ArchitectureIcon from './ArchitectureIcon';
 import DiagramCanvas from './DiagramCanvas';
+import AwsArchitectureCanvas from './AwsArchitectureCanvas';
 import ApiKeyModal from './ApiKeyModal';
 import { useTheme } from '../contexts/ThemeProvider';
 import Logo from './Logo';
@@ -427,8 +428,8 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
     };
 
     return isMobile
-      ? <MobilePlayground {...playgroundProps} />
-      : <Playground {...playgroundProps} />;
+      ? <MobilePlayground {...playgroundProps} canvasType="aws" />
+      : <Playground {...playgroundProps} canvasType="aws" />;
   }
 
   const selectedItem = useMemo(() => {
@@ -556,7 +557,7 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
                   </div>
                 </div>
                 <div className="flex-1 relative">
-                  <DiagramCanvas 
+                  <AwsArchitectureCanvas 
                     forwardedRef={svgRef}
                     fitScreenRef={fitScreenRef}
                     data={diagramData} 
