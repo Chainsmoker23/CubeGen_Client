@@ -66,6 +66,7 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileWarning, setShowMobileWarning] = useState<boolean>(false);
@@ -400,8 +401,6 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
     setPromptIndex(nextIndex);
     setPrompt(EXAMPLE_PROMPTS_LIST[nextIndex]);
   };
-
-  const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false);
   
   const handleEnterPlayground = () => {
     if (isMobile) {
