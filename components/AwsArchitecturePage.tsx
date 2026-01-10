@@ -65,7 +65,6 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
   const [summary, setSummary] = useState<string | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -406,29 +405,14 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
     if (isMobile) {
       setShowMobileWarning(true);
     } else {
-      setIsPlaygroundMode(true);
+      // Instead of switching to playground mode within the admin panel,
+      // we'll navigate to the standalone AWS architecture page
+      onNavigate('awsArchitecture' as Page);
     }
   };
   
-  if (isPlaygroundMode && diagramData) {
-    const playgroundProps = {
-      data: diagramData,
-      onDataChange: handleDiagramUpdate,
-      onExit: () => setIsPlaygroundMode(false),
-      selectedIds: selectedIds,
-      setSelectedIds: setSelectedIds,
-      onUndo: handleUndo,
-      onRedo: handleRedo,
-      canUndo: historyIndex > 0,
-      canRedo: historyIndex < history.length - 1,
-      onExplain: handleExplain,
-      isExplaining: isExplaining,
-    };
-
-    return isMobile
-      ? <MobilePlayground {...playgroundProps} />
-      : <Playground {...playgroundProps} />;
-  }
+  // Note: We don't render the playground directly in the admin panel context
+  // The playground is accessed through the main app navigation, not within the admin panel
 
   const selectedItem = useMemo(() => {
     if (!diagramData || selectedIds.length !== 1) return null;
@@ -657,7 +641,8 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
         {showMobileWarning && (
           <MobileWarning
             onProceed={() => {
-              setIsPlaygroundMode(true);
+              // Navigate to the standalone AWS architecture page
+              onNavigate('awsArchitecture' as Page);
               setShowMobileWarning(false);
             }}
             onCancel={() => setShowMobileWarning(false)}
