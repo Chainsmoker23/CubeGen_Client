@@ -26,7 +26,7 @@ interface PlaygroundProps {
     canRedo: boolean;
     onExplain: () => void;
     isExplaining: boolean;
-    canvasType?: 'general' | 'aws' | 'neural-network';
+    canvasType?: 'general' | 'neural-network';
 }
 
 type HandleType = 'top' | 'right' | 'bottom' | 'left';
@@ -497,43 +497,23 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                         <ContextualActionBar position={actionBarPosition} onDelete={handleDeleteSelected} onDuplicate={handleDuplicateSelected} selectedCount={selectedIds.length} />
                     )}
                 </div>
-                {props.canvasType === 'aws' ? (
-                    <AwsArchitectureCanvas
-                        forwardedRef={svgRef}
-                        fitScreenRef={fitScreenRef}
-                        data={data}
-                        onDataChange={onDataChange}
-                        selectedIds={selectedIds}
-                        setSelectedIds={setSelectedIds}
-                        isEditable={true}
-                        interactionMode={interactionMode}
-                        onTransformChange={setViewTransform}
-                        resizingNodeId={resizingNodeId}
-                        onNodeDoubleClick={handleNodeDoubleClick}
-                        onCanvasClick={handleCanvasClick}
-                        onLinkStart={handleLinkStart}
-                        linkingState={linkingState}
-                        previewLinkTarget={previewLinkTarget}
-                    />
-                ) : (
-                    <DiagramCanvas
-                        forwardedRef={svgRef}
-                        fitScreenRef={fitScreenRef}
-                        data={data}
-                        onDataChange={onDataChange}
-                        selectedIds={selectedIds}
-                        setSelectedIds={setSelectedIds}
-                        isEditable={true}
-                        interactionMode={interactionMode}
-                        onTransformChange={setViewTransform}
-                        resizingNodeId={resizingNodeId}
-                        onNodeDoubleClick={handleNodeDoubleClick}
-                        onCanvasClick={handleCanvasClick}
-                        onLinkStart={handleLinkStart}
-                        linkingState={linkingState}
-                        previewLinkTarget={previewLinkTarget}
-                    />
-                )}
+                <DiagramCanvas
+                    forwardedRef={svgRef}
+                    fitScreenRef={fitScreenRef}
+                    data={data}
+                    onDataChange={onDataChange}
+                    selectedIds={selectedIds}
+                    setSelectedIds={setSelectedIds}
+                    isEditable={true}
+                    interactionMode={interactionMode}
+                    onTransformChange={setViewTransform}
+                    resizingNodeId={resizingNodeId}
+                    onNodeDoubleClick={handleNodeDoubleClick}
+                    onCanvasClick={handleCanvasClick}
+                    onLinkStart={handleLinkStart}
+                    linkingState={linkingState}
+                    previewLinkTarget={previewLinkTarget}
+                />
             </main>
 
             <AnimatePresence>
@@ -560,3 +540,4 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 };
 
 export default Playground;
+
