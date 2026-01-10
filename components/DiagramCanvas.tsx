@@ -172,7 +172,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       'var(--color-tier-1)', 'var(--color-tier-2)', 'var(--color-tier-3)',
       'var(--color-tier-4)', 'var(--color-tier-5)', 'var(--color-tier-6)',
     ];
-    // Filter containers that should get tier coloring - including AWS containers
+    // Filter containers that should get tier coloring - including all container types
     const tierContainers = data.containers?.filter(c => 
       c.type === 'tier' || c.type === 'vpc' || c.type === 'subnet' || c.type === 'region' || c.type === 'availability-zone'
     ).sort((a, b) => a.y - b.y) || [];
@@ -650,7 +650,7 @@ const DiagramContainer = memo<{
     }, [handle]);
 
     const getCoords = () => {
-      const size = 10;
+      const size = 14; // Increased size for better usability
       let x = container.x - size/2;
       let y = container.y - size/2;
       if (handle.includes('r')) x += container.width;
@@ -664,15 +664,51 @@ const DiagramContainer = memo<{
       return 'default';
     }
 
-    return <rect ref={handleRef} data-handle="true" {...getCoords()} width={10} height={10} fill="var(--color-accent-text)" stroke="var(--color-node-bg)" strokeWidth={2} cursor={getCursor()} />;
+    return <rect ref={handleRef} data-handle="true" {...getCoords()} width={14} height={14} fill="var(--color-accent-text)" stroke="var(--color-node-bg)" strokeWidth={2} cursor={getCursor()} className="hover:brightness-125 transition-all duration-150" rx={2} ry={2} />;
   };
   
+  // Add a function to determine stroke dasharray based on container type
+  const getStrokeDasharray = () => {
+    switch(container.type) {
+      case 'availability-zone':
+        return '6 4'; // Dashed border for availability zones
+      case 'subnet':
+        return '4 2'; // Different dash for subnets
+      case 'vpc':
+        return '8 4'; // Different dash for VPCs
+      case 'region':
+        return '10 6'; // Different dash for regions
+      case 'tier':
+      default:
+        return 'none'; // Solid border for tiers and defaults
+    }
+  };
+
+  // Enhanced visual feedback for tier boxes
+  const getVisualFeedback = () => {
+    const baseStyle = {
+      filter: props.isSelected ? 'drop-shadow(0 0 10px rgba(0, 0, 0, 0.25))' : 'none',
+      transition: 'all 0.2s ease',
+    };
+    
+    // Add animation when container is selected
+    if (props.isSelected) {
+      return {
+        ...baseStyle,
+        strokeWidth: 3, // Thicker border when selected
+      };
+    }
+    
+    return baseStyle;
+  };
+
   return (
     <g
       ref={ref}
       onClick={(e) => onSelect(e, container.id)}
       onContextMenu={(e) => onContextMenu(e, container)}
       style={{ cursor: isEditable ? 'move' : 'default' }}
+      className={props.isSelected ? 'selected-container' : ''}
     >
       <rect
         x={container.x}
@@ -683,14 +719,29 @@ const DiagramContainer = memo<{
         ry={16}
         fill={fillColor}
         stroke={props.isSelected ? "var(--color-accent-text)" : "var(--color-border)"}
-        strokeWidth={props.isSelected ? 2 : 1}
-        strokeDasharray={container.type === 'availability-zone' ? '6 4' : 'none'}
+        strokeWidth={props.isSelected ? 2.5 : 1.5} // Thicker stroke when selected
+        strokeDasharray={getStrokeDasharray()}
+        className={props.isSelected ? 'selected-element' : ''}
+        style={getVisualFeedback()}
       />
-      <foreignObject x={container.x + 12} y={container.y + 8} width={container.width - 24} height={30} style={{ pointerEvents: 'none' }}>
-        <div className="font-semibold text-[var(--color-text-secondary)]">
+      <foreignObject x={container.x + 12} y={container.y + 8} width={container.width - 24} height={36} style={{ pointerEvents: 'none' }}>
+        <div className="font-semibold text-[var(--color-text-secondary)] truncate px-1" title={container.label}>
           {container.label}
         </div>
       </foreignObject>
+      {/* Interactive label area for selection */}
+      <rect
+        x={container.x + 8}
+        y={container.y + 8}
+        width={container.width - 16}
+        height={36}
+        fill="transparent"
+        stroke="transparent"
+        strokeWidth={0}
+        className="cursor-pointer"
+        onClick={(e) => onSelect(e, container.id)}
+        style={{ pointerEvents: 'all' }}
+      />
       {props.isSelected && isEditable && interactionMode === 'select' && (
         <>
           <ResizeHandle handle="tl" />
