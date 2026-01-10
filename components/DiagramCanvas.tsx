@@ -674,7 +674,7 @@ const DiagramContainer = memo<{
 
     const dragBehavior = drag<SVGGElement, unknown>()
       .filter(event => {
-        const isHandle = (event.sourceEvent.target as SVGElement)?.dataset?.handle === 'true';
+        const isHandle = (event.target as SVGElement)?.dataset?.handle === 'true';
         return !isHandle && (interactionMode === 'select' || interactionMode === 'pan') && !event.button;
       })
       .on('start', (event) => {
@@ -827,7 +827,7 @@ const DiagramContainer = memo<{
       ref={ref}
       onClick={(e) => onSelect(e, container.id)}
       onContextMenu={(e) => onContextMenu(e, container)}
-      style={{ cursor: isEditable ? 'move' : 'default' }}
+      style={{ cursor: isEditable ? 'move' : 'default', pointerEvents: 'all' }}
       className={props.isSelected ? 'selected-container' : ''}
     >
       <rect
@@ -849,7 +849,7 @@ const DiagramContainer = memo<{
           {container.label}
         </div>
       </foreignObject>
-      {/* Interactive label area for selection */}
+      {/* Interactive label area for selection - but allow dragging on main container */}
       <rect
         x={container.x + 8}
         y={container.y + 8}
