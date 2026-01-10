@@ -52,7 +52,7 @@ export interface Link {
 export interface Container {
   id:string;
   label: string;
-  type: 'region' | 'availability-zone' | 'tier';
+  type: 'region' | 'availability-zone' | 'tier' | 'vpc' | 'subnet';
   x: number;
   y: number;
   width: number;
