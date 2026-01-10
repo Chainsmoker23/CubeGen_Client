@@ -266,7 +266,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
                           >
                             <ArchitectureIcon type={IconType.Cloud} className={`w-6 h-6 flex-shrink-0 ${activeModeler === 'awsArchitecture' ? 'text-[var(--color-accent-text)]' : 'text-[var(--color-text-secondary)]'}`} />
                             <span className={`font-semibold text-sm ${activeModeler === 'awsArchitecture' ? 'text-[var(--color-text-primary)]' : ''}`}>AWS Architecture</span>
-                            <span className="ml-2 px-2 py-0.5 text-xs font-bold bg-blue-500 text-white rounded-full">NEW</span>
+                            <span className="ml-2 px-2 py-0.5 text-xs font-bold bg-blue-500 text-white rounded-full">LIVE UPDATING</span>
                           </button>
                         )}
                     </div>
