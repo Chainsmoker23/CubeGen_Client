@@ -18,6 +18,9 @@ import Toolbar from './Toolbar';
 import PropertiesSidebar from './PropertiesSidebar';
 import PromptInput from './PromptInput';
 import { nanoid } from 'nanoid';
+import Playground from './Playground';
+import MobilePlayground from './MobilePlayground';
+import MobileWarning from './MobileWarning';
 
 type Page = 'contact' | 'about' | 'api' | 'privacy' | 'terms' | 'docs' | 'apiKey' | 'careers' | 'research' | 'sdk' | 'blog' | 'generalArchitecture' | 'neuralNetwork' | 'awsArchitecture';
 
@@ -62,11 +65,15 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
   const [summary, setSummary] = useState<string | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false);
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showMobileWarning, setShowMobileWarning] = useState<boolean>(false);
   const [editingTitle, setEditingTitle] = useState('');
   const titleInputRef = useRef<HTMLInputElement>(null);
+
+  const isPropertiesPanelOpen = selectedIds.length > 0;
 
   const svgRef = useRef<SVGSVGElement>(null);
   const fitScreenRef = useRef<(() => void) | null>(null);
@@ -332,8 +339,10 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
     setError(null);
     setLastAction({ type: 'explain', payload: { diagramData } });
     try {
-      // Assuming we have an explain function
-      const explanation = "This is a placeholder for the AWS architecture explanation. In the full implementation, this would call the explain API endpoint.";
+      const apiKeyToUse = keyOverride || userApiKey;
+      // For now, we'll use the same function as generation since we're explaining AWS architecture
+      const { diagram } = await generateAwsArchitectureData(prompt, apiKeyToUse || undefined);
+      const explanation = diagram.title + ' explained'; // Placeholder for actual explanation
       setSummary(explanation);
       setShowSummaryModal(true);
     } catch (err) {
@@ -348,7 +357,7 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
     } finally {
         setIsExplaining(false);
     }
-  }, [diagramData]);
+  }, [diagramData, userApiKey, prompt]);
 
   const handleSaveAndRetryApiKey = (key: string) => {
     setUserApiKey(key);
@@ -392,6 +401,34 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
     setPromptIndex(nextIndex);
     setPrompt(EXAMPLE_PROMPTS_LIST[nextIndex]);
   };
+
+  const handleEnterPlayground = () => {
+    if (isMobile) {
+      setShowMobileWarning(true);
+    } else {
+      setIsPlaygroundMode(true);
+    }
+  };
+  
+  if (isPlaygroundMode && diagramData) {
+    const playgroundProps = {
+      data: diagramData,
+      onDataChange: handleDiagramUpdate,
+      onExit: () => setIsPlaygroundMode(false),
+      selectedIds: selectedIds,
+      setSelectedIds: setSelectedIds,
+      onUndo: handleUndo,
+      onRedo: handleRedo,
+      canUndo: historyIndex > 0,
+      canRedo: historyIndex < history.length - 1,
+      onExplain: handleExplain,
+      isExplaining: isExplaining,
+    };
+
+    return isMobile
+      ? <MobilePlayground {...playgroundProps} />
+      : <Playground {...playgroundProps} />;
+  }
 
   const selectedItem = useMemo(() => {
     if (!diagramData || selectedIds.length !== 1) return null;
@@ -445,7 +482,7 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
           
           <motion.section 
               variants={pageItemVariants} 
-              className="rounded-2xl shadow-sm flex flex-col relative min-h-[60vh] lg:min-h-0 glass-panel"
+              className={`rounded-2xl shadow-sm flex flex-col relative min-h-[60vh] lg:min-h-0 glass-panel transition-all duration-300 ${isPropertiesPanelOpen ? 'lg:col-span-6' : 'lg:col-span-9'}`}
           >
             <AnimatePresence>
               {isLoading && (
@@ -512,7 +549,7 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
                         canUndo={historyIndex > 0}
                         canRedo={historyIndex < history.length - 1}
                         onFitToScreen={handleFitToScreen}
-                        onGoToPlayground={() => {}}
+                        onGoToPlayground={handleEnterPlayground}
                         canGoToPlayground={!!diagramData}
                     />
                   </div>
@@ -531,6 +568,26 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
               </motion.div>
             )}
           </motion.section>
+
+          <AnimatePresence>
+              {isPropertiesPanelOpen && (
+                  <motion.aside 
+                      key="properties-sidebar-desktop"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ duration: 0.3, ease: 'easeOut' }}
+                      className="lg:col-span-3 h-full flex-col hidden lg:flex"
+                  >
+                    <PropertiesSidebar 
+                      item={selectedItem}
+                      onPropertyChange={handlePropertyChange}
+                      selectedCount={selectedIds.length}
+                    />
+                  </motion.aside>
+              )}
+          </AnimatePresence>
+
         </main>
       </motion.div>
 
@@ -544,6 +601,36 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
                   onClose={() => setError(null)}
                   onRetry={handleRetry}
               />
+          )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+          {isPropertiesPanelOpen && (
+              <motion.div
+                  key="properties-backdrop"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+                  onClick={() => setSelectedIds([])}
+              />
+          )}
+      </AnimatePresence>
+      <AnimatePresence>
+          {isPropertiesPanelOpen && (
+              <motion.div
+                  key="properties-sheet"
+                  initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+                  className="fixed bottom-0 left-0 right-0 h-[60vh] bg-[var(--color-panel-bg)] rounded-t-2xl border-t border-[var(--color-border)] shadow-2xl p-4 z-40 lg:hidden"
+              >
+                  <div className="w-12 h-1.5 bg-[var(--color-border)] rounded-full mx-auto mb-4" />
+                  <div className="overflow-y-auto h-[calc(60vh-40px)] px-2">
+                      <PropertiesSidebar
+                          item={selectedItem}
+                          onPropertyChange={handlePropertyChange}
+                          selectedCount={selectedIds.length}
+                      />
+                  </div>
+              </motion.div>
           )}
       </AnimatePresence>
 
@@ -563,6 +650,18 @@ const AwsArchitecturePage: React.FC<AwsArchitecturePageProps> = ({ onNavigate })
                 }}
                 onSave={handleSaveAndRetryApiKey}
             />
+        )}
+      </AnimatePresence>
+      
+      <AnimatePresence>
+        {showMobileWarning && (
+          <MobileWarning
+            onProceed={() => {
+              setIsPlaygroundMode(true);
+              setShowMobileWarning(false);
+            }}
+            onCancel={() => setShowMobileWarning(false)}
+          />
         )}
       </AnimatePresence>
     </div>
