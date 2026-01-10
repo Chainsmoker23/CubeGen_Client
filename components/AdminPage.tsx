@@ -6,14 +6,14 @@ import Logo from './Logo';
 import Loader from './Loader';
 import UserManagement from './admin/UserManagement';
 import BlogManagement from './admin/BlogManagement';
-import AwsArchitecturePage from './AwsArchitecturePage';
+
 
 type Page = 'app';
 interface AdminPageProps {
     onNavigate: (page: Page) => void;
 }
 
-type AdminTab = 'config' | 'users' | 'blog' | 'aws';
+type AdminTab = 'config' | 'users' | 'blog';
 
 const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
     const { logout } = useAdminAuth();
@@ -45,7 +45,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                             <TabButton name="Configuration" isActive={activeTab === 'config'} onClick={() => setActiveTab('config')} />
                             <TabButton name="User Management" isActive={activeTab === 'users'} onClick={() => setActiveTab('users')} />
                             <TabButton name="Blog Management" isActive={activeTab === 'blog'} onClick={() => setActiveTab('blog')} />
-                            <TabButton name="AWS Architecture" isActive={activeTab === 'aws'} onClick={() => setActiveTab('aws')} />
+
                         </nav>
                     </div>
 
@@ -60,7 +60,7 @@ const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
                             {activeTab === 'config' && <ConfigPanel />}
                             {activeTab === 'users' && <UserManagement />}
                             {activeTab === 'blog' && <BlogManagement />}
-                            {activeTab === 'aws' && <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200"><AwsArchitecturePage onNavigate={onNavigate} /></div>}
+
                         </motion.div>
                     </AnimatePresence>
                 </div>
