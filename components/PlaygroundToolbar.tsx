@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { DiagramData, ArchNode, Link, Container, IconType } from '../types';
 import { InteractionMode } from './DiagramCanvas';
 
 interface PlaygroundToolbarProps {
     interactionMode: InteractionMode;
     onSetInteractionMode: (mode: InteractionMode) => void;
-    onAddContainer: () => void;
+    onAddContainer: (containerType?: 'tier' | 'vpc' | 'region' | 'availability-zone' | 'subnet') => void;
     onFitToScreen: () => void;
     onUndo: () => void;
     onRedo: () => void;
@@ -15,18 +17,22 @@ interface PlaygroundToolbarProps {
     onExport: (format: 'png' | 'html' | 'json') => void;
 }
 
-const ToolButton: React.FC<{ 'aria-label': string; onClick?: () => void; isActive?: boolean; isDisabled?: boolean; children: React.ReactNode; className?: string }> =
- ({ 'aria-label': ariaLabel, title, onClick, isActive = false, isDisabled = false, children, className }) => (
+// Define ToolButton component
+const ToolButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    children: React.ReactNode;
+    isActive?: boolean;
+    isDisabled?: boolean;
+}> = ({ children, isActive, isDisabled = false, ...props }) => (
     <button
-        aria-label={ariaLabel}
-        title={title}
-        onClick={onClick}
-        disabled={isDisabled}
-        className={`flex items-center justify-center rounded-xl transition-colors
-            ${isActive ? 'bg-[var(--color-accent)] text-[var(--color-accent-text-strong)]' : 'bg-transparent md:bg-[var(--color-button-bg)] text-[var(--color-text-secondary)] hover:bg-[var(--color-button-bg-hover)]'}
-            ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
-            ${className}
+        {...props}
+        className={`p-2 rounded-lg transition-colors flex flex-col items-center justify-center
+            ${isActive
+                ? 'bg-[var(--color-button-bg-selected)] text-[var(--color-text-primary)] border border-[var(--color-accent-text)]'
+                : 'bg-[var(--color-button-bg)] text-[var(--color-text-secondary)] hover:bg-[var(--color-button-bg-hover)]'}
+            ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+            ${props.className || ''}
         `}
+        disabled={isDisabled}
     >
         {children}
     </button>
@@ -40,6 +46,8 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
     const exportMenuRef = useRef<HTMLDivElement>(null);
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
     const moreMenuRef = useRef<HTMLDivElement>(null);
+    const [isContainerMenuOpen, setIsContainerMenuOpen] = useState(false);
+    const containerMenuRef = useRef<HTMLDivElement>(null);
     
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -49,36 +57,55 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
             setIsExportMenuOpen(false);
           }
+          if (containerMenuRef.current && !containerMenuRef.current.contains(event.target as Node)) {
+            setIsContainerMenuOpen(false);
+          }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-     const handleExportClick = (format: 'png' | 'html' | 'json') => {
+    const handleExportClick = (format: 'png' | 'html' | 'json') => {
         onExport(format);
         setIsExportMenuOpen(false);
-        setIsMoreMenuOpen(false);
     };
 
-    const mobileMenu = (
-        <div className="relative" ref={moreMenuRef}>
-            <ToolButton aria-label="More" title="More" onClick={() => setIsMoreMenuOpen(p => !p)} className="w-14 h-14 md:w-12 md:h-12">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
+    const containerMenu = (
+        <div className="relative" ref={containerMenuRef}>
+            <ToolButton aria-label="Add Container" title="Add Container (B)" onClick={() => setIsContainerMenuOpen(p => !p)} className="w-14 h-14 md:w-12 md:h-12">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 3" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                </svg>
             </ToolButton>
-            {isMoreMenuOpen && (
-                 <div className="absolute bottom-full mb-2 right-0 w-40 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
-                    <a onClick={() => { onFitToScreen(); setIsMoreMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Fit to Screen</a>
-                    <div className="h-px bg-[var(--color-border)] my-1" />
-                    <a onClick={() => handleExportClick('png')} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Export PNG</a>
-                    <a onClick={() => handleExportClick('html')} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Export HTML</a>
-                    <a onClick={() => handleExportClick('json')} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Export JSON</a>
-                    <div className="h-px bg-[var(--color-border)] my-1" />
-                    <a onClick={() => { onExplain(); setIsMoreMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Explain</a>
+            {isContainerMenuOpen && (
+                <div className="absolute bottom-full mb-2 right-0 w-48 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
+                    <a onClick={() => { onAddContainer('tier'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add Tier (T)</a>
+                    <a onClick={() => { onAddContainer('vpc'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add VPC (Shift+V)</a>
+                    <a onClick={() => { onAddContainer('region'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add Region (R)</a>
+                    <a onClick={() => { onAddContainer('availability-zone'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add AZ</a>
+                    <a onClick={() => { onAddContainer('subnet'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add Subnet</a>
                 </div>
             )}
         </div>
     );
-    
+
+    const mobileMenu = (
+        <div className="relative" ref={moreMenuRef}>
+            <ToolButton aria-label="More Options" onClick={() => setIsMoreMenuOpen(p => !p)}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
+                <span className="text-xs mt-1">More</span>
+            </ToolButton>
+            <AnimatePresence>
+                {isMoreMenuOpen && (
+                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
+                        <button onClick={onFitToScreen} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Fit to Screen</button>
+                        <button onClick={onExplain} disabled={isExplaining} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Explain</button>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+
     return (
         <div className="
             fixed bottom-0 left-0 right-0 z-20 
@@ -97,11 +124,7 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
                 </svg>
             </ToolButton>
 
-             <ToolButton aria-label="Add Container (B)" title="Add Container (B)" onClick={onAddContainer} className="w-14 h-14 md:w-12 md:h-12">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 3" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-                </svg>
-            </ToolButton>
+            {containerMenu}
             
             <div className="flex-grow hidden md:block" />
             
