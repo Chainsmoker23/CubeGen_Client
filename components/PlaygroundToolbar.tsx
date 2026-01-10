@@ -79,9 +79,6 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
             </ToolButton>
             {isContainerMenuOpen && (
                 <div className="absolute bottom-full mb-2 left-0 w-48 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
-                    <a onClick={() => { onAddContainer('tier'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add Tier (T)</a>
-                    <a onClick={() => { onAddContainer('vpc'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add VPC (Shift+V)</a>
-                    <a onClick={() => { onAddContainer('region'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add Region (R)</a>
                     <a onClick={() => { onAddContainer('availability-zone'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add AZ</a>
                     <a onClick={() => { onAddContainer('subnet'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add Subnet</a>
                 </div>
