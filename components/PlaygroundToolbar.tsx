@@ -78,7 +78,7 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
                 </svg>
             </ToolButton>
             {isContainerMenuOpen && (
-                <div className="absolute bottom-full mb-2 right-0 w-48 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
+                <div className="absolute bottom-full mb-2 left-0 w-48 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
                     <a onClick={() => { onAddContainer('tier'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add Tier (T)</a>
                     <a onClick={() => { onAddContainer('vpc'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add VPC (Shift+V)</a>
                     <a onClick={() => { onAddContainer('region'); setIsContainerMenuOpen(false); }} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">Add Region (R)</a>
@@ -92,12 +92,12 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
     const mobileMenu = (
         <div className="relative" ref={moreMenuRef}>
             <ToolButton aria-label="More Options" onClick={() => setIsMoreMenuOpen(p => !p)}>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 01-2 0 1 1 0 012 0zm7 0a1 1 0 01-2 0 1 1 0 012 0z" /></svg>
                 <span className="text-xs mt-1">More</span>
             </ToolButton>
             <AnimatePresence>
                 {isMoreMenuOpen && (
-                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
+                    <div className="absolute bottom-full left-0 mb-2 w-40 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
                         <button onClick={onFitToScreen} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Fit to Screen</button>
                         <button onClick={onExplain} disabled={isExplaining} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Explain</button>
                     </div>
@@ -145,7 +145,7 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     </ToolButton>
                      {isExportMenuOpen && (
-                        <div className="absolute left-full ml-2 top-0 w-32 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-20">
+                        <div className="absolute bottom-full left-0 mb-2 w-32 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-20">
                             <a onClick={() => handleExportClick('png')} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">PNG</a>
                             <a onClick={() => handleExportClick('html')} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">HTML</a>
                             <a onClick={() => handleExportClick('json')} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">JSON</a>
