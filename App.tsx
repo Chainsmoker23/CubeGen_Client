@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import ContactPage from './components/ContactPage';
@@ -14,7 +12,6 @@ import NeuralNetworkPage from './components/NeuralNetworkPage';
 import CareersPage from './components/CareersPage';
 import ResearchPage from './components/ResearchPage';
 import GeneralArchitecturePage from './components/GeneralArchitecturePage';
-import AwsArchitecturePage from './components/AwsArchitecturePage';
 import AdminPage from './components/AdminPage';
 import AdminLoginPage from './components/AdminLoginPage';
 import Loader from './components/Loader';
@@ -27,7 +24,7 @@ import { useAdminAuth } from './contexts/AdminAuthContext';
 import InstallPromptToast from './components/InstallPromptToast';
 import { AnimatePresence } from 'framer-motion';
 
-type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'awsArchitecture' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost';
+type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost';
 
 const getPageFromHash = (): { page: Page; subpage?: string } => {
   const hash = window.location.hash.substring(1).split('?')[0];
@@ -41,7 +38,7 @@ const getPageFromHash = (): { page: Page; subpage?: string } => {
     return { page: 'blogPost', subpage };
   }
   
-  const validPages: Page[] = ['landing', 'auth', 'app', 'contact', 'about', 'api', 'apiKey', 'privacy', 'terms', 'docs', 'neuralNetwork', 'awsArchitecture', 'careers', 'research', 'admin', 'adminLogin', 'sdk', 'blog'];
+  const validPages: Page[] = ['landing', 'auth', 'app', 'contact', 'about', 'api', 'apiKey', 'privacy', 'terms', 'docs', 'neuralNetwork', 'careers', 'research', 'admin', 'adminLogin', 'sdk', 'blog'];
   if (validPages.includes(mainPage as Page)) {
     return { page: mainPage as Page };
   }
@@ -186,7 +183,6 @@ const App: React.FC = () => {
       case 'terms': return <TermsPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
       case 'docs': return <DocsPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigateToApi={() => onNavigate('api')} onNavigate={onNavigate} />;
       case 'neuralNetwork': return <NeuralNetworkPage onNavigate={onNavigate} />;
-      case 'awsArchitecture': return <AwsArchitecturePage onNavigate={onNavigate} />;
       case 'careers': return <CareersPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
       case 'research': return <ResearchPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
       case 'sdk': return <SdkPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
