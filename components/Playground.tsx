@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiagramData, ArchNode, Link, Container, IconType } from '../types';
 import DiagramCanvas, { InteractionMode } from './DiagramCanvas';
+import AwsArchitectureCanvas from './AwsArchitectureCanvas';
 import PropertiesSidebar from './PropertiesSidebar';
 import PlaygroundToolbar from './PlaygroundToolbar';
 import ContextualActionBar from './ContextualActionBar';
@@ -25,6 +26,7 @@ interface PlaygroundProps {
     canRedo: boolean;
     onExplain: () => void;
     isExplaining: boolean;
+    canvasType?: 'general' | 'aws' | 'neural-network';
 }
 
 type HandleType = 'top' | 'right' | 'bottom' | 'left';
@@ -346,19 +348,19 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 
         const originalElements = Array.from(svgElement.querySelectorAll('*'));
         originalElements.unshift(svgElement);
-        const clonedElements = Array.from(svgClone.querySelectorAll('*'));
+        const clonedElements = Array.from(svgClone.querySelectorAll<SVGElement | Element>('*')); 
         clonedElements.unshift(svgClone);
 
         originalElements.forEach((sourceEl, index) => {
-            const targetEl = clonedElements[index] as SVGElement;
-            if (targetEl && targetEl.style) {
-                const computedStyle = window.getComputedStyle(sourceEl);
+            const targetEl = clonedElements[index];
+            if (targetEl && 'style' in targetEl && (targetEl as any).style) {
+                const computedStyle = window.getComputedStyle(sourceEl as Element);
                 let cssText = '';
                 for (let i = 0; i < computedStyle.length; i++) {
                     const prop = computedStyle[i];
                     cssText += `${prop}: ${computedStyle.getPropertyValue(prop)};`;
                 }
-                targetEl.style.cssText = cssText;
+                (targetEl as any).style.cssText = cssText;
             }
         });
 
@@ -495,23 +497,43 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                         <ContextualActionBar position={actionBarPosition} onDelete={handleDeleteSelected} onDuplicate={handleDuplicateSelected} selectedCount={selectedIds.length} />
                     )}
                 </div>
-                <DiagramCanvas
-                    forwardedRef={svgRef}
-                    fitScreenRef={fitScreenRef}
-                    data={data}
-                    onDataChange={onDataChange}
-                    selectedIds={selectedIds}
-                    setSelectedIds={setSelectedIds}
-                    isEditable={true}
-                    interactionMode={interactionMode}
-                    onTransformChange={setViewTransform}
-                    resizingNodeId={resizingNodeId}
-                    onNodeDoubleClick={handleNodeDoubleClick}
-                    onCanvasClick={handleCanvasClick}
-                    onLinkStart={handleLinkStart}
-                    linkingState={linkingState}
-                    previewLinkTarget={previewLinkTarget}
-                />
+                {props.canvasType === 'aws' ? (
+                    <AwsArchitectureCanvas
+                        forwardedRef={svgRef}
+                        fitScreenRef={fitScreenRef}
+                        data={data}
+                        onDataChange={onDataChange}
+                        selectedIds={selectedIds}
+                        setSelectedIds={setSelectedIds}
+                        isEditable={true}
+                        interactionMode={interactionMode}
+                        onTransformChange={setViewTransform}
+                        resizingNodeId={resizingNodeId}
+                        onNodeDoubleClick={handleNodeDoubleClick}
+                        onCanvasClick={handleCanvasClick}
+                        onLinkStart={handleLinkStart}
+                        linkingState={linkingState}
+                        previewLinkTarget={previewLinkTarget}
+                    />
+                ) : (
+                    <DiagramCanvas
+                        forwardedRef={svgRef}
+                        fitScreenRef={fitScreenRef}
+                        data={data}
+                        onDataChange={onDataChange}
+                        selectedIds={selectedIds}
+                        setSelectedIds={setSelectedIds}
+                        isEditable={true}
+                        interactionMode={interactionMode}
+                        onTransformChange={setViewTransform}
+                        resizingNodeId={resizingNodeId}
+                        onNodeDoubleClick={handleNodeDoubleClick}
+                        onCanvasClick={handleCanvasClick}
+                        onLinkStart={handleLinkStart}
+                        linkingState={linkingState}
+                        previewLinkTarget={previewLinkTarget}
+                    />
+                )}
             </main>
 
             <AnimatePresence>
