@@ -64,17 +64,25 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
       }
     }, [canRedo, onRedo]);
 
-    const handleAddContainer = () => {
+    const handleAddContainer = (containerType: 'tier' | 'vpc' | 'region' | 'availability-zone' | 'subnet' = 'tier') => {
         if (!canvasContainerRef.current) return;
         const canvasRect = canvasContainerRef.current.getBoundingClientRect();
         
         // Calculate center of the current view
         const [viewX, viewY] = viewTransform.invert([canvasRect.width / 2, canvasRect.height / 2]);
 
+        const containerLabels: Record<string, string> = {
+            'tier': 'New Tier',
+            'vpc': 'Virtual Private Cloud',
+            'region': 'Region',
+            'availability-zone': 'Availability Zone',
+            'subnet': 'Subnet'
+        };
+
         const newContainer: Container = {
             id: nanoid(),
-            label: 'New Tier',
-            type: 'tier',
+            label: containerLabels[containerType],
+            type: containerType,
             x: viewX - 200, // Center it
             y: viewY - 150,
             width: 400,
@@ -85,9 +93,8 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         const newData = { ...data, containers: newContainers };
         onDataChange(newData);
         setSelectedIds([newContainer.id]);
-        setToastMessage('Container added');
+        setToastMessage(`${containerLabels[containerType]} added`);
     };
-
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -114,7 +121,16 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                 setInteractionMode(prev => prev === 'addNode' ? 'select' : 'addNode');
             } else if (e.key.toLowerCase() === 'b') {
                 e.preventDefault();
-                handleAddContainer();
+                handleAddContainer(); // Default to 'tier'
+            } else if (e.key.toLowerCase() === 't') {
+                e.preventDefault();
+                handleAddContainer('tier');
+            } else if (e.key.toLowerCase() === 'r') {
+                e.preventDefault();
+                handleAddContainer('region');
+            } else if (e.key.toLowerCase() === 'v' && e.shiftKey) {
+                e.preventDefault();
+                handleAddContainer('vpc');
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -540,4 +556,3 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 };
 
 export default Playground;
-
