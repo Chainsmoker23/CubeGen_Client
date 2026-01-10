@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiagramData, ArchNode, Link, Container, IconType } from '../types';
 import DiagramCanvas from './DiagramCanvas';
+import AwsArchitectureCanvas from './AwsArchitectureCanvas';
 import PropertiesSidebar from './PropertiesSidebar';
 import { customAlphabet } from 'nanoid';
 import { ZoomTransform, zoomIdentity } from 'd3-zoom';
@@ -23,6 +24,7 @@ interface MobilePlaygroundProps {
     canRedo: boolean;
     onExplain: () => void;
     isExplaining: boolean;
+    canvasType?: 'general' | 'aws' | 'neural-network';
 }
 
 const MobileToolbarButton: React.FC<{ 'aria-label': string; onClick?: () => void; isDisabled?: boolean; children: React.ReactNode; }> =
@@ -186,21 +188,39 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
             </header>
 
             <main className="flex-1 relative" ref={canvasContainerRef}>
-                <DiagramCanvas
-                    forwardedRef={svgRef}
-                    fitScreenRef={fitScreenRef}
-                    data={data}
-                    onDataChange={onDataChange}
-                    selectedIds={selectedIds}
-                    setSelectedIds={setSelectedIds}
-                    isEditable={true}
-                    interactionMode="select" // Simplified for mobile
-                    onTransformChange={setViewTransform}
-                    onCanvasClick={handleCanvasClick}
-                    onLinkStart={() => {}} // Use custom linking logic
-                    linkingState={linkingState}
-                    previewLinkTarget={previewLinkTarget}
-                />
+                {props.canvasType === 'aws' ? (
+                    <AwsArchitectureCanvas
+                        forwardedRef={svgRef}
+                        fitScreenRef={fitScreenRef}
+                        data={data}
+                        onDataChange={onDataChange}
+                        selectedIds={selectedIds}
+                        setSelectedIds={setSelectedIds}
+                        isEditable={true}
+                        interactionMode="select" // Simplified for mobile
+                        onTransformChange={setViewTransform}
+                        onCanvasClick={handleCanvasClick}
+                        onLinkStart={() => {}} // Use custom linking logic
+                        linkingState={linkingState}
+                        previewLinkTarget={previewLinkTarget}
+                    />
+                ) : (
+                    <DiagramCanvas
+                        forwardedRef={svgRef}
+                        fitScreenRef={fitScreenRef}
+                        data={data}
+                        onDataChange={onDataChange}
+                        selectedIds={selectedIds}
+                        setSelectedIds={setSelectedIds}
+                        isEditable={true}
+                        interactionMode="select" // Simplified for mobile
+                        onTransformChange={setViewTransform}
+                        onCanvasClick={handleCanvasClick}
+                        onLinkStart={() => {}} // Use custom linking logic
+                        linkingState={linkingState}
+                        previewLinkTarget={previewLinkTarget}
+                    />
+                )}
                  {actionBarPosition && selectedIds.length > 0 && (
                     <ContextualActionBar
                         position={actionBarPosition}
