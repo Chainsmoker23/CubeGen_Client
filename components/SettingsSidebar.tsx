@@ -9,7 +9,7 @@ import BillingPanel from './BillingPanel'; // Import the new component
 import { FREE_GENERATION_LIMIT } from './constants';
 
 
-type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'awsArchitecture' | 'careers' | 'research' | 'sdk';
+type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'sdk';
 
 
 interface SettingsSidebarProps {
@@ -31,7 +31,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
   useEffect(() => {
     const updateActiveModeler = () => {
       const hash = window.location.hash.substring(1);
-      if (hash === 'neuralNetwork' || hash === 'apiKey' || hash === 'awsArchitecture') {
+      if (hash === 'neuralNetwork' || hash === 'apiKey') {
         setActiveModeler(hash.split('/')[0]);
       } else {
         setActiveModeler('app');
@@ -259,16 +259,6 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
                           <ArchitectureIcon type={IconType.Brain} className={`w-6 h-6 flex-shrink-0 ${activeModeler === 'neuralNetwork' ? 'text-[var(--color-accent-text)]' : 'text-[var(--color-text-secondary)]'}`} />
                            <span className={`font-semibold text-sm ${activeModeler === 'neuralNetwork' ? 'text-[var(--color-text-primary)]' : ''}`}>Neural Network Modeler</span>
                         </button>
-                        {isPremiumUser && (
-                          <button
-                            onClick={() => { onNavigate('awsArchitecture'); setIsOpen(false); }}
-                            className={modelerButtonClasses('awsArchitecture')}
-                          >
-                            <ArchitectureIcon type={IconType.Cloud} className={`w-6 h-6 flex-shrink-0 ${activeModeler === 'awsArchitecture' ? 'text-[var(--color-accent-text)]' : 'text-[var(--color-text-secondary)]'}`} />
-                            <span className={`font-semibold text-sm ${activeModeler === 'awsArchitecture' ? 'text-[var(--color-text-primary)]' : ''}`}>AWS Architecture</span>
-                            <span className="ml-2 px-2 py-0.5 text-xs font-bold bg-blue-500 text-white rounded-full">LIVE UPDATING</span>
-                          </button>
-                        )}
                     </div>
                   </div>
 
