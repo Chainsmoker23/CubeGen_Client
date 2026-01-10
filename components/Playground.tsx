@@ -281,18 +281,10 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 
     const handleLinkEnd = useCallback((targetNodeId?: string) => {
         if (linkingState && targetNodeId && linkingState.sourceNodeId !== targetNodeId) {
-            // Ask user if they want to add a label to the link
-            const addLabel = confirm('Would you like to add a label to this link?');
-            let label: string | undefined = undefined;
-            if (addLabel) {
-                label = prompt('Enter link label:') || undefined;
-            }
-            
             const newLink: Link = {
                 id: nanoid(),
                 source: linkingState.sourceNodeId,
                 target: targetNodeId,
-                ...(label && { label }), // Only add label if it's defined
             };
             onDataChange({ ...data, links: [...data.links, newLink] });
         }
