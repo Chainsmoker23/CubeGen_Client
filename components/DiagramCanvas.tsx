@@ -46,6 +46,22 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   const [viewTransform, setViewTransform] = useState<ZoomTransform>(() => zoomIdentity);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; item: ArchNode | Link | Container; } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
+  const [labelInputValue, setLabelInputValue] = useState<string>('');
+  
+  const saveLinkLabel = (linkId: string, newLabel: string) => {
+    if (!linkId) return;
+    
+    const updatedLink = { 
+      ...data.links.find(l => l.id === linkId), 
+      label: newLabel.trim() || undefined 
+    } as Link;
+    
+    const newLinks = data.links.map(l => l.id === linkId ? updatedLink : l);
+    onDataChange({ ...data, links: newLinks });
+    setEditingLinkId(null);
+    setLabelInputValue('');
+  };
   
   const nodesById = useMemo(() => new Map(data.nodes.map(node => [node.id, node])), [data.nodes]);
 
@@ -269,12 +285,8 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   }
   
   const handleEditLinkLabel = (link: Link) => {
-    const newLabel = prompt('Enter link label:', link.label || '');
-    if (newLabel !== null) {
-      const updatedLink = { ...link, label: newLabel || undefined };
-      const newLinks = data.links.map(l => l.id === link.id ? updatedLink : l);
-      onDataChange({ ...data, links: newLinks });
-    }
+    setEditingLinkId(link.id);
+    setLabelInputValue(link.label || '');
     setContextMenu(null);
   }
   
@@ -338,7 +350,14 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
               return (
                 <g
                   key={link.id}
-                  onClick={(e) => handleItemSelection(e, link.id)}
+                  onClick={(e) => {
+                    handleItemSelection(e, link.id);
+                    // Set this link as the one being edited for label
+                    if (!editingLinkId) {
+                      setEditingLinkId(link.id);
+                      setLabelInputValue(link.label || '');
+                    }
+                  }}
                   onContextMenu={(e) => handleItemContextMenu(e, link)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -356,13 +375,9 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                   {labelPos && (
                     <g onClick={(e) => {
                       e.stopPropagation();
-                      // Open a prompt to edit the link label
-                      const newLabel = prompt('Enter link label:', link.label || '');
-                      if (newLabel !== null) {
-                        const updatedLink = { ...link, label: newLabel || undefined };
-                        const newLinks = data.links.map(l => l.id === link.id ? updatedLink : l);
-                        onDataChange({ ...data, links: newLinks });
-                      }
+                      // Set this link as the one being edited for label
+                      setEditingLinkId(link.id);
+                      setLabelInputValue(link.label || '');
                     }}>
                       <circle
                         cx={labelPos.x}
@@ -379,13 +394,9 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                   {!labelPos && (
                     <g onClick={(e) => {
                       e.stopPropagation();
-                      // Open a prompt to add a link label
-                      const newLabel = prompt('Enter link label:', '');
-                      if (newLabel !== null && newLabel.trim() !== '') {
-                        const updatedLink = { ...link, label: newLabel };
-                        const newLinks = data.links.map(l => l.id === link.id ? updatedLink : l);
-                        onDataChange({ ...data, links: newLinks });
-                      }
+                      // Set this link as the one being edited for label
+                      setEditingLinkId(link.id);
+                      setLabelInputValue('');
                     }}>
                       <path d={pathD} stroke="transparent" strokeWidth={15} fill="none" className="cursor-pointer" />
                     </g>
@@ -486,6 +497,60 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           }
           onClose={() => setContextMenu(null)}
         />
+      )}
+      {/* Overlay for editing link labels */}
+      {editingLinkId && (
+        <foreignObject
+          x={0}
+          y={0}
+          width="100%"
+          height="100%"
+          style={{ pointerEvents: 'none' }}
+        >
+          <div 
+            className="absolute inset-0 flex items-center justify-center pointer-events-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div 
+              className="bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-lg shadow-xl p-4 w-64"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="text"
+                value={labelInputValue}
+                onChange={(e) => setLabelInputValue(e.target.value)}
+                autoFocus
+                className="w-full px-3 py-2 bg-[var(--color-input-bg)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-text)]"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    saveLinkLabel(editingLinkId, labelInputValue);
+                  } else if (e.key === 'Escape') {
+                    setEditingLinkId(null);
+                    setLabelInputValue('');
+                  }
+                }}
+                placeholder="Enter link label..."
+              />
+              <div className="flex gap-2 mt-2 justify-end">
+                <button
+                  onClick={() => {
+                    setEditingLinkId(null);
+                    setLabelInputValue('');
+                  }}
+                  className="px-3 py-1 text-sm bg-[var(--color-button-bg)] text-[var(--color-text-primary)] rounded-md hover:bg-[var(--color-button-bg-hover)]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => saveLinkLabel(editingLinkId, labelInputValue)}
+                  className="px-3 py-1 text-sm bg-[var(--color-accent-text)] text-white rounded-md hover:bg-opacity-90"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </foreignObject>
       )}
     </div>
   );
