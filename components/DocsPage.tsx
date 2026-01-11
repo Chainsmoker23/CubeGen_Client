@@ -191,15 +191,16 @@ const DocsPage: React.FC<DocsPageProps> = ({ onBack, onLaunch, onNavigateToApi, 
                             <SectionSeparator />
 
                             <DocsSection id="api-access" title="API Access">
-                                <p>Want to automate diagram generation? CubeGen AI offers a simple REST API to integrate into your own applications and workflows.</p>
+                                <p>Want to automate diagram generation? CubeGen AI offers a simple REST API and SDK to integrate into your own applications and workflows.</p>
                                 <p>Generate diagrams from your CI/CD pipeline, build custom internal tools, or create automated documentation. Our API provides the flexibility you need.</p>
                                 
                                 <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 p-4 rounded-r-lg">
                                     <h4 className="font-bold flex items-center gap-2"><ArchitectureIcon type={IconType.FileCode} className="w-5 h-5" /> Install the CubeGen AI SDK</h4>
-                                    <p className="text-sm mt-2">Install our official SDK to easily integrate with your applications:</p>
+                                    <p className="text-sm mt-2">Install our official SDK to integrate CubeGen AI into your applications:</p>
                                     <div className="mt-2 p-3 bg-blue-100 rounded-lg">
                                         <code className="text-blue-900 font-mono text-sm">npm install cubegen-ai</code>
                                     </div>
+                                    <p className="text-xs mt-2 text-blue-700">Note: Use your personal API key (from your Pro dashboard) to authenticate SDK requests.</p>
                                 </div>
                                 
                                 <div className="mt-6 bg-gray-50 p-4 rounded-lg">
