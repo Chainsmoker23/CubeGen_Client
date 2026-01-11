@@ -60,6 +60,11 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
         node.height = isFinite(node.height) && node.height > 10 ? node.height : 80;
         if (node.locked === undefined) node.locked = false;
         
+        // Set default border properties if not defined
+        if (node.borderStyle === undefined) node.borderStyle = 'solid';
+        if (node.borderWidth === undefined) node.borderWidth = 'medium';
+        if (node.borderColor === undefined) node.borderColor = '#000000';
+        
         // Auto-sizing safety net to prevent text truncation
         if (node.label && node.type !== 'neuron' && node.type !== 'layer-label') {
             const labelLength = node.label.length;
@@ -83,6 +88,11 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
         container.y = isFinite(container.y) ? container.y : 100;
         container.width = isFinite(container.width) && container.width > 20 ? container.width : 500;
         container.height = isFinite(container.height) && container.height > 20 ? container.height : 500;
+        
+        // Set default border properties if not defined
+        if (container.borderStyle === undefined) container.borderStyle = 'solid';
+        if (container.borderWidth === undefined) container.borderWidth = 'medium';
+        if (container.borderColor === undefined) container.borderColor = '#000000';
     });
 
     return { diagram: parsedData as DiagramData, newGenerationCount: responseData.newGenerationCount };
@@ -118,56 +128,7 @@ export const generateNeuralNetworkData = async (prompt: string, userApiKey?: str
     }
 };
 
-export const generateAwsArchitectureData = async (prompt: string, userApiKey?: string): Promise<{ diagram: DiagramData; newGenerationCount: number | null; }> => {
-    try {
-        const responseData = await fetchFromApi('/generate-aws-architecture', { prompt, userApiKey });
-        const parsedData = responseData.diagram;
-        
-        // Sanitize node and container data to prevent rendering issues from invalid values
-        (parsedData.nodes || []).forEach((node: ArchNode) => {
-            node.x = parseFloat(String(node.x));
-            node.y = parseFloat(String(node.y));
-            node.width = parseFloat(String(node.width));
-            node.height = parseFloat(String(node.height));
 
-            node.x = isFinite(node.x) ? node.x : 600;
-            node.y = isFinite(node.y) ? node.y : 400;
-            node.width = isFinite(node.width) && node.width > 10 ? node.width : 150;
-            node.height = isFinite(node.height) && node.height > 10 ? node.height : 80;
-            if (node.locked === undefined) node.locked = false;
-            
-            // Auto-sizing safety net to prevent text truncation
-            if (node.label && node.type !== 'neuron' && node.type !== 'layer-label') {
-                const labelLength = node.label.length;
-                // Heuristic to ensure nodes are large enough for their labels.
-                if (labelLength > 25) { // For very long labels
-                    if (node.width < 180) node.width = 180;
-                    if (node.height < 90) node.height = 90;
-                } else if (labelLength > 18) { // For moderately long labels
-                    if (node.width < 160) node.width = 160;
-                }
-            }
-        });
-
-        (parsedData.containers || []).forEach((container: any) => {
-            container.x = parseFloat(container.x);
-            container.y = parseFloat(container.y);
-            container.width = parseFloat(container.width);
-            container.height = parseFloat(container.height);
-
-            container.x = isFinite(container.x) ? container.x : 100;
-            container.y = isFinite(container.y) ? container.y : 100;
-            container.width = isFinite(container.width) && container.width > 20 ? container.width : 500;
-            container.height = isFinite(container.height) && container.height > 20 ? container.height : 500;
-        });
-
-        return { diagram: parsedData as DiagramData, newGenerationCount: responseData.newGenerationCount };
-    } catch (error) {
-        console.error("Error fetching AWS architecture data from backend:", String(error));
-        // Re-throw to be caught by the component
-        throw error;
-    }
-};
 
 export const explainArchitecture = async (diagramData: DiagramData, userApiKey?: string): Promise<string> => {
     try {
