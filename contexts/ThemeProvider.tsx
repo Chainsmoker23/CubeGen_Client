@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
 
-type Theme = 'light' | 'slate' | 'midnight';
+type Theme = 'light' | 'midnight';
 
 interface ThemeContextType {
   theme: Theme;
@@ -43,39 +43,7 @@ const themes = {
     '--color-aurora-2': 'rgba(147, 197, 253, 0.8)',
     '--color-aurora-3': 'rgba(221, 214, 254, 0.7)',
   },
-  slate: {
-    '--color-bg': '#1A202C',
-    '--color-panel-bg': '#2D3748',
-    '--color-panel-bg-translucent': 'rgba(45, 55, 72, 0.7)',
-    '--color-canvas-bg': '#1A202C',
-    '--color-node-bg': '#2D3748',
-    '--color-button-bg': '#4A5568',
-    '--color-button-bg-hover': '#718096',
-    '--color-bg-input': '#4A5568',
-    '--color-text-primary': '#F7FAFC',
-    '--color-text-secondary': '#A0AEC0',
-    '--color-text-tertiary': '#4A5568',
-    '--color-border': '#4A5568',
-    '--color-border-translucent': 'rgba(74, 85, 104, 0.7)',
-    '--color-link': '#A0AEC0',
-    '--color-grid-dot': 'rgba(113, 128, 150, 0.3)',
-    '--color-accent': '#06B6D4',
-    '--color-accent-soft': 'rgba(6, 182, 212, 0.1)',
-    '--color-accent-text': '#06B6D4',
-    '--color-accent-text-strong': '#FFFFFF',
-    '--color-shadow': '#000000',
-    '--color-tier-1': 'rgba(6, 182, 212, 0.05)',
-    '--color-tier-2': 'rgba(59, 130, 246, 0.05)',
-    '--color-tier-3': 'rgba(16, 185, 129, 0.05)',
-    '--color-tier-4': 'rgba(245, 158, 11, 0.05)',
-    '--color-tier-5': 'rgba(139, 92, 246, 0.05)',
-    '--color-tier-6': 'rgba(107, 114, 128, 0.08)',
-    '--color-tier-default': 'rgba(107, 114, 128, 0.08)',
-    '--color-glow-highlight': 'rgba(255, 255, 255, 0.05)',
-    '--color-aurora-1': 'rgba(6, 182, 212, 0.5)',
-    '--color-aurora-2': 'rgba(59, 130, 246, 0.4)',
-    '--color-aurora-3': 'rgba(16, 185, 129, 0.4)',
-  },
+
   midnight: {
     '--color-bg': '#0B0F19',
     '--color-panel-bg': '#171E2C',
