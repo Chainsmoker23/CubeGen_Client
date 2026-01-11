@@ -2,7 +2,6 @@ import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiagramData, ArchNode, Link, Container, IconType } from '../types';
 import DiagramCanvas from './DiagramCanvas';
-import AwsArchitectureCanvas from './AwsArchitectureCanvas';
 import PropertiesSidebar from './PropertiesSidebar';
 import { customAlphabet } from 'nanoid';
 import { ZoomTransform, zoomIdentity } from 'd3-zoom';
@@ -82,6 +81,9 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
             y: viewY,
             width: 140,
             height: 70,
+            borderStyle: 'solid',
+            borderWidth: 'medium',
+            borderColor: '#000000',
         };
         const newData = { ...data, nodes: [...data.nodes, newNode] };
         onDataChange(newData);
