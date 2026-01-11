@@ -36,7 +36,6 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
   const { theme, setTheme } = useTheme();
   const themeOptions = [
     { value: 'light', label: 'Light' },
-    { value: 'slate', label: 'Slate' },
     { value: 'midnight', label: 'Midnight' },
   ] as const;
 
