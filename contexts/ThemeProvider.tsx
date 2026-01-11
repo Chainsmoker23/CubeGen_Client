@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useMemo } from 'react';
 
-type Theme = 'light' | 'midnight';
+type Theme = 'light';
 
 interface ThemeContextType {
   theme: Theme;
@@ -44,39 +44,6 @@ const themes = {
     '--color-aurora-3': 'rgba(221, 214, 254, 0.7)',
   },
 
-  midnight: {
-    '--color-bg': '#0B0F19',
-    '--color-panel-bg': '#171E2C',
-    '--color-panel-bg-translucent': 'rgba(23, 30, 44, 0.7)',
-    '--color-canvas-bg': '#0B0F19',
-    '--color-node-bg': '#171E2C',
-    '--color-button-bg': '#252E42',
-    '--color-button-bg-hover': '#343F56',
-    '--color-bg-input': '#252E42',
-    '--color-text-primary': '#E2E8F0',
-    '--color-text-secondary': '#94A3B8',
-    '--color-text-tertiary': '#334155',
-    '--color-border': '#334155',
-    '--color-border-translucent': 'rgba(51, 65, 85, 0.7)',
-    '--color-link': '#94A3B8',
-    '--color-grid-dot': 'rgba(148, 163, 184, 0.2)',
-    '--color-accent': '#8B5CF6',
-    '--color-accent-soft': 'rgba(139, 92, 246, 0.1)',
-    '--color-accent-text': '#A78BFA',
-    '--color-accent-text-strong': '#FFFFFF',
-    '--color-shadow': '#000000',
-    '--color-tier-1': 'rgba(139, 92, 246, 0.05)',
-    '--color-tier-2': 'rgba(59, 130, 246, 0.05)',
-    '--color-tier-3': 'rgba(217, 70, 239, 0.05)',
-    '--color-tier-4': 'rgba(245, 158, 11, 0.05)',
-    '--color-tier-5': 'rgba(20, 184, 166, 0.05)',
-    '--color-tier-6': 'rgba(100, 116, 139, 0.08)',
-    '--color-tier-default': 'rgba(100, 116, 139, 0.08)',
-    '--color-glow-highlight': 'rgba(255, 255, 255, 0.05)',
-    '--color-aurora-1': 'rgba(45, 2, 89, 0.5)',   // Deep Indigo/Purple
-    '--color-aurora-2': 'rgba(217, 70, 239, 0.4)', // Vibrant Magenta/Fuchsia
-    '--color-aurora-3': 'rgba(20, 184, 166, 0.3)', // Ethereal Teal
-  }
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
