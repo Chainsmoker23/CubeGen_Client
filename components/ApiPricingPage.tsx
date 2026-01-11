@@ -34,16 +34,16 @@ const ApiPricingPage: React.FC<ApiPricingPageProps> = ({ onBack, onNavigate }) =
     const isTestMode = process.env.DODO_MODE === 'test';
     const API_BASE = (process.env.VITE_BACKEND_URL || '').replace(/\/+$/, '');
 
-    const codeExample = `// Example: Using fetch to call the CubeGen AI API.
+    const codeExample = `// Example: Using CubeGen AI SDK in your own application.
 // npm install cubegen-ai
 
 import CubeGenAI from 'cubegen-ai';
 
-// Initialize the client with your API key
+// Initialize the client with your personal API key
 // Get your API key from your CubeGen AI dashboard after subscribing to a Pro plan
-const client = new CubeGenAI('your-api-key');
+const client = new CubeGenAI('your-personal-api-key');
 
-// Generate a diagram from a text prompt
+// Generate a diagram from a text prompt in your application
 try {
   const diagram = await client.generateDiagram('A 3-tier web application on AWS with a load balancer, multiple EC2 instances in an auto-scaling group, and an RDS database.');
   console.log('Generated diagram:', diagram);
@@ -107,8 +107,8 @@ try {
             features: [
               { name: 'Unlimited diagram generations', icon: 'check', iconColor: 'text-green-500' },
               { name: 'Custom icons', icon: 'check', iconColor: 'text-purple-500' },
-              { name: 'Generate a personal API key', icon: 'check', iconColor: 'text-blue-500' },
-              { name: 'Use your own key in-app', icon: 'check', iconColor: 'text-orange-500' },
+              { name: 'Generate a personal API key for in-app usage', icon: 'check', iconColor: 'text-blue-500' },
+              { name: 'Use your personal key with our SDK in your own applications', icon: 'check', iconColor: 'text-orange-500' },
               { name: 'Priority support', icon: 'check', iconColor: 'text-purple-500' },
             ]
           }
@@ -199,7 +199,7 @@ try {
                                 Plans & Pricing
                             </h1>
                             <p className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-[#555555]">
-                                Integrate the power of CubeGen AI into your workflow. Find a plan that's right for you.
+                                Choose a plan that suits your needs: either use CubeGen AI within our application with unlimited access, or integrate our SDK into your own projects.
                             </p>
                         </motion.div>
                     </div>
@@ -223,6 +223,27 @@ try {
                             </div>
                         </motion.div>
                     )}
+                    <div className="container mx-auto px-6 mb-12">
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 max-w-4xl mx-auto">
+                            <h3 className="text-xl font-semibold text-blue-800 mb-3">Two Ways to Use Our Service</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="p-4 bg-white rounded-lg border border-blue-100">
+                                    <h4 className="font-medium text-blue-700 mb-2 flex items-center gap-2">
+                                        <ArchitectureIcon type={IconType.Gear} className="w-5 h-5 text-blue-600" />
+                                        In-App Usage
+                                    </h4>
+                                    <p className="text-gray-700 text-sm">Add your personal key in the app settings to bypass shared usage limits and enjoy unlimited diagram generation within CubeGen AI.</p>
+                                </div>
+                                <div className="p-4 bg-white rounded-lg border border-blue-100">
+                                    <h4 className="font-medium text-blue-700 mb-2 flex items-center gap-2">
+                                        <ArchitectureIcon type={IconType.FileCode} className="w-5 h-5 text-blue-600" />
+                                        SDK Integration
+                                    </h4>
+                                    <p className="text-gray-700 text-sm">Use your personal key with our SDK to integrate diagram generation into your own applications and workflows.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <PricingTableOne
                         title="Plans for Every Scale"
                         description="From solo developers to enterprise teams, choose a plan that fits your needs."
@@ -242,11 +263,11 @@ try {
                                 transition={{ duration: 0.6, ease: 'easeOut' }}
                             >
                                 <h2 className="text-4xl font-bold mb-4">Simple, Powerful Integration</h2>
-                                <p className="text-[#555555] mb-6">Our Pro plan allows you to generate a personal API key. Use this key within the app settings to bypass the shared usage limits and enjoy unlimited diagram generation, ensuring your workflow is never interrupted.</p>
+                                <p className="text-[#555555] mb-6">Our Pro plan allows you to generate a personal API key for two purposes: Use this key within the app settings to bypass the shared usage limits and enjoy unlimited diagram generation, or use it with our SDK in your own applications for diagram generation.</p>
                                 <div className="space-y-4">
-                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Sparkles} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Unlimited Generations:</strong> Create as many diagrams as you need without hitting daily quotas.</p></div>
-                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Gear} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Personal Key:</strong> Your own dedicated key for use within the CubeGen AI application.</p></div>
-                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Cloud} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Public API (Coming Soon):</strong> Your plan will grant you access to our future public API and SDK for full automation.</p></div>
+                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Sparkles} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>In-App Usage:</strong> Add your personal key in app settings to bypass shared usage limits and enjoy unlimited diagram generation.</p></div>
+                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Gear} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>SDK Access:</strong> Use your personal key with our SDK for diagram generation in your own applications.</p></div>
+                                    <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Cloud} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Public API:</strong> Access to our public API and SDK for full automation in your projects.</p></div>
                                 </div>
                             </motion.div>
                              <motion.div
