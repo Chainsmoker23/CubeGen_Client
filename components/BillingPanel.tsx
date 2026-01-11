@@ -9,7 +9,6 @@ interface BillingPanelProps {
 
 const BillingPanel: React.FC<BillingPanelProps> = ({ isPremiumUser, refreshUser, isOpen }) => {
     const [activeSubs, setActiveSubs] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
     const [isCancelling, setIsCancelling] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const lastFetchRef = useRef<number>(0);
@@ -78,9 +77,7 @@ const BillingPanel: React.FC<BillingPanelProps> = ({ isPremiumUser, refreshUser,
         <div>
             <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">Billing &amp; Subscriptions</h3>
             <div className="p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-input)]">
-                {isLoading ? (
-                    <p className="text-xs text-center text-[var(--color-text-secondary)]">Loading subscriptions...</p>
-                ) : error ? (
+                {error ? (
                      <p className="text-xs text-center text-red-500">{error}</p>
                 ) : activeSubs.length === 0 ? (
                     <p className="text-xs text-center text-[var(--color-text-secondary)]">No active subscriptions found.</p>
