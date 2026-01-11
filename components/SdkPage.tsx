@@ -17,17 +17,17 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
     {
       icon: IconType.Google,
       title: '1. Get Your API Key',
-      description: "Visit Google AI Studio to generate your own free Gemini API key. This key connects directly to Google's powerful models."
+      description: "For in-app usage: Visit Google AI Studio to generate your own free Gemini API key. For SDK usage: Get your personal API key from your Pro dashboard."
     },
     {
       icon: IconType.Gear,
       title: '2. Add to Settings',
-      description: "Launch the CubeGen AI app, open the Settings sidebar, and paste your new key into the 'In-App Personal Key' section."
+      description: "To bypass limits in CubeGen AI app: Add your Gemini key in the Settings sidebar. To use SDK: Authenticate with your personal API key in your application."
     },
     {
       icon: IconType.Sparkles,
       title: '3. Enjoy Unlimited Access',
-      description: "That's it! The app will now use your personal key, bypassing all shared usage limits for truly uninterrupted design sessions."
+      description: "For in-app: Bypass all shared usage limits. For SDK: Integrate diagram generation into your own applications."
     }
   ];
 
@@ -45,10 +45,10 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
           <div className="container mx-auto px-6 z-10 text-center">
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
               <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
-                Bring Your <span className="animated-gradient-text text-transparent bg-clip-text">Own Key</span>
+                CubeGen AI SDK & API Keys
               </h1>
               <p className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-[#555555]">
-                Unlock unlimited diagram generations within the CubeGen AI app by using your own Google Gemini API key. It's free, easy, and gives you complete control.
+                Two ways to enhance your CubeGen AI experience: Use our SDK in your own applications or add a personal key to bypass usage limits in our app.
               </p>
             </motion.div>
           </div>
@@ -59,20 +59,20 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
             <div className="text-center">
               <h2 className="text-4xl font-bold mb-4">How It Works</h2>
               <p className="text-lg text-[#555555] max-w-3xl mx-auto mb-16">
-                In just three simple steps, you can connect your personal Gemini key and bypass all shared usage limits.
+                Two ways to enhance your experience: Connect your personal key for in-app usage or use our SDK in your own applications.
               </p>
             </div>
             <div className="text-center">
               <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-800 p-4 rounded-r-lg max-w-3xl mx-auto mb-12">
                 <h3 className="font-bold text-lg flex items-center gap-2"><ArchitectureIcon type={IconType.FileCode} className="w-5 h-5" /> Programmatic Access with CubeGen AI SDK</h3>
                 <p className="text-sm mt-2">
-                  Pro users can also integrate CubeGen AI programmatically using our official SDK. Install it with npm:
+                  Integrate CubeGen AI into your own applications using our official SDK. Install it with npm:
                 </p>
                 <div className="mt-3 bg-gray-800 text-gray-100 p-3 rounded-lg font-mono text-sm overflow-x-auto">
                   npm install cubegen-ai
                 </div>
                 <p className="text-xs mt-2 text-blue-600">
-                  Get your personal API key from your dashboard after subscribing to a Pro plan to use the SDK.
+                  Use your personal API key (from your Pro dashboard) to authenticate requests to the SDK.
                 </p>
               </div>
             </div>
@@ -110,6 +110,9 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
                 className="mt-8 shimmer-button text-[#A61E4D] font-bold py-4 px-10 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
                 Launch the App
               </button>
+              <p className="mt-4 text-sm text-[#555555]">
+                For SDK integration in your own applications, visit our <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('api'); }} className="text-[#A61E4D] underline">API & SDK Documentation</a>.
+              </p>
             </motion.div>
           </div>
         </section>
@@ -121,4 +124,3 @@ const SdkPage: React.FC<SdkPageProps> = ({ onBack, onLaunch, onNavigate }) => {
 };
 
 export default SdkPage;
-
