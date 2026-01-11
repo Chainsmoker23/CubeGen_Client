@@ -3,8 +3,7 @@ export const EXAMPLE_PROMPT = "Design a RAG (Retrieval-Augmented Generation) sys
 export const EXAMPLE_PROMPTS_LIST = [
     EXAMPLE_PROMPT,
     "A 3-tier web application on AWS with a load balancer, multiple EC2 instances in an auto-scaling group, and an RDS database.",
-    "A serverless API on GCP using Cloud Functions, API Gateway, and Firestore for the database.",
-    "A simple neural network with 2 input neurons, one hidden layer of 3 neurons, and 1 output neuron."
+    "A serverless API on GCP using Cloud Functions, API Gateway, and Firestore for the database."
 ];
 
 export const TESTIMONIALS = [
