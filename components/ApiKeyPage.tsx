@@ -307,7 +307,7 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
                             Developer API Keys
                         </h1>
                         <p className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-[#555555]">
-                            Integrate CubeGen AI into your own applications, scripts, and CI/CD pipelines with a personal access key.
+                            Integrate CubeGen AI into your own applications, scripts, and CI/CD pipelines with our Public API and SDK.
                         </p>
                     </motion.div>
                 </div>
@@ -339,9 +339,13 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
                                     onRevoke={handleRevokeKey}
                                 />
                                 <div className="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">
-                                    <h4 className="font-bold">Two Ways to Use Keys</h4>
+                                    <h4 className="font-bold">Two Different Use Cases</h4>
                                     <p className="text-sm mt-1">
-                                        This key is for our Public API. To bypass generation limits <strong>within this web app</strong>, add your personal Google Gemini key in the <strong className="font-semibold">Settings sidebar</strong>.
+                                        This key is for the <strong>Public API and SDK</strong> to integrate CubeGen AI into your own applications. To bypass generation limits <strong>within this web app</strong>, add your personal Google Gemini key in the <strong className="font-semibold">Settings sidebar</strong>.
+                                    </p>
+                                    <p className="text-sm mt-2">
+                                        <strong>Public API/SDK:</strong> For integrating diagram generation into your own apps and services.
+                                        <strong>In-App Key:</strong> For bypassing usage limits within the CubeGen AI web application.
                                     </p>
                                 </div>
                                 <IDECodeBlock apiKey={apiKey} />
@@ -376,3 +380,4 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
 };
 
 export default ApiKeyPage;
+
