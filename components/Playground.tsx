@@ -2,7 +2,6 @@ import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion';
 import { DiagramData, ArchNode, Link, Container, IconType } from '../types';
 import DiagramCanvas, { InteractionMode } from './DiagramCanvas';
-import AwsArchitectureCanvas from './AwsArchitectureCanvas';
 import PropertiesSidebar from './PropertiesSidebar';
 import PlaygroundToolbar from './PlaygroundToolbar';
 import ContextualActionBar from './ContextualActionBar';
@@ -88,6 +87,9 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
             width: 400,
             height: 300,
             childNodeIds: [],
+            borderStyle: 'solid',
+            borderWidth: 'medium',
+            borderColor: '#000000',
         };
         const newContainers = [...(data.containers || []), newContainer];
         const newData = { ...data, containers: newContainers };
@@ -265,6 +267,9 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
             y: viewY,
             width: 150,
             height: 80,
+            borderStyle: 'solid',
+            borderWidth: 'medium',
+            borderColor: '#000000',
         };
         const newData = { ...data, nodes: [...data.nodes, newNode] };
         onDataChange(newData);
