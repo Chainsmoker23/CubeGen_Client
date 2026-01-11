@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getActiveUserPlans, cancelSubscription } from '../services/geminiService';
 
 interface BillingPanelProps {
@@ -12,26 +12,46 @@ const BillingPanel: React.FC<BillingPanelProps> = ({ isPremiumUser, refreshUser,
     const [isLoading, setIsLoading] = useState(false);
     const [isCancelling, setIsCancelling] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const lastFetchRef = useRef<number>(0);
+    const FETCH_INTERVAL = 30000; // 30 seconds between fetches
 
     useEffect(() => {
         if (!isOpen || !isPremiumUser) {
-            setActiveSubs([]);
+            if (!isPremiumUser) {
+                setActiveSubs([]);
+            }
             return;
         }
 
         const fetchSubs = async () => {
-            setIsLoading(true);
-            setError(null);
+            const now = Date.now();
+            if (now - lastFetchRef.current < FETCH_INTERVAL) {
+                return; // Skip if we fetched recently
+            }
+            
+            lastFetchRef.current = now;
+            
             try {
                 const plans = await getActiveUserPlans();
-                setActiveSubs(plans.filter(p => p.plan_name !== 'free' && p.plan_name !== 'hobbyist'));
+                const filteredPlans = plans.filter(p => p.plan_name !== 'free' && p.plan_name !== 'hobbyist');
+                // Only update state if subscriptions have changed
+                if (JSON.stringify(activeSubs) !== JSON.stringify(filteredPlans)) {
+                    setActiveSubs(filteredPlans);
+                }
             } catch (err: any) {
                 setError(err.message || "Failed to load subscriptions.");
-            } finally {
-                setIsLoading(false);
             }
         };
+        
+        // Initial fetch
         fetchSubs();
+        
+        // Set up interval for background refresh
+        const intervalId = setInterval(fetchSubs, FETCH_INTERVAL);
+        
+        return () => {
+            clearInterval(intervalId);
+        };
     }, [isOpen, isPremiumUser]);
 
     const handleCancel = async (subId: string, planName: string) => {
