@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getActiveUserPlans, switchUserPlan } from '../services/geminiService';
 
 interface UserPlansPanelProps {
@@ -11,23 +11,43 @@ const UserPlansPanel: React.FC<UserPlansPanelProps> = ({ plan, refreshUser, isOp
     const [activePlans, setActivePlans] = useState<any[]>([]);
     const [isFetchingPlans, setIsFetchingPlans] = useState(false);
     const [isSwitchingPlan, setIsSwitchingPlan] = useState<string | null>(null);
+    const lastFetchRef = useRef<number>(0);
+    const FETCH_INTERVAL = 30000; // 30 seconds between fetches
 
+    // Fetch plans in the background when sidebar is open
     useEffect(() => {
         if (!isOpen) {
-            return; // Don't fetch if the sidebar is closed to save resources
+            return; // Don't fetch if the sidebar is closed
         }
+        
         const fetchPlans = async () => {
-            setIsFetchingPlans(true);
+            const now = Date.now();
+            if (now - lastFetchRef.current < FETCH_INTERVAL) {
+                return; // Skip if we fetched recently
+            }
+            
+            lastFetchRef.current = now;
+            
             try {
                 const plans = await getActiveUserPlans();
-                setActivePlans(plans);
+                // Only update state if plans have changed
+                if (JSON.stringify(activePlans) !== JSON.stringify(plans)) {
+                    setActivePlans(plans);
+                }
             } catch (error) {
                 console.error("Failed to fetch active plans:", error);
-            } finally {
-                setIsFetchingPlans(false);
             }
         };
+        
+        // Initial fetch
         fetchPlans();
+        
+        // Set up interval for background refresh
+        const intervalId = setInterval(fetchPlans, FETCH_INTERVAL);
+        
+        return () => {
+            clearInterval(intervalId);
+        };
     }, [isOpen, plan]); // Refetch when the sidebar is opened or the primary plan changes
 
     const handleSwitchPlan = async (subscriptionId: string) => {
@@ -35,6 +55,9 @@ const UserPlansPanel: React.FC<UserPlansPanelProps> = ({ plan, refreshUser, isOp
         try {
             await switchUserPlan(subscriptionId);
             await refreshUser(); // Force a refresh to get the new user metadata
+            // Update plans after switching
+            const plans = await getActiveUserPlans();
+            setActivePlans(plans);
         } catch (error) {
             console.error("Failed to switch plan:", error);
         } finally {
