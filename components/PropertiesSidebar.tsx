@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ArchNode, Container, Link, NodeShape } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { BorderStyle, BorderStyleSelector, BorderWidthSelector } from './BorderOptions';
 
 type Item = ArchNode | Container | Link;
 
@@ -145,6 +146,9 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ item, onPropertyC
   const [linkThickness, setLinkThickness] = useState<'thin' | 'medium' | 'thick'>('medium');
   const [nodeShape, setNodeShape] = useState<NodeShape>('rectangle');
   const [customIconSize, setCustomIconSize] = useState(80);
+  const [borderStyle, setBorderStyle] = useState<BorderStyle>('solid');
+  const [borderWidth, setBorderWidth] = useState<'thin' | 'medium' | 'thick'>('medium');
+  const [borderColor, setBorderColor] = useState('#000000');
 
   useEffect(() => {
     if (item) {
@@ -176,12 +180,38 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ item, onPropertyC
       } else {
         setCustomIconSize(80); // Default
       }
+      if ('borderStyle' in item && item.borderStyle) {
+        setBorderStyle(item.borderStyle);
+      } else {
+        setBorderStyle('solid');
+      }
+      if ('borderWidth' in item && item.borderWidth) {
+        setBorderWidth(item.borderWidth);
+      } else {
+        setBorderWidth('medium');
+      }
+      if ('borderColor' in item && item.borderColor) {
+        setBorderColor(item.borderColor);
+      } else {
+        setBorderColor('#000000');
+      }
     }
   }, [item]);
   
   const handlePropertyUpdate = (props: Partial<Item>) => {
     if (item) {
       onPropertyChange(item.id, props);
+    }
+  };
+
+  const handleBorderPropertyUpdate = () => {
+    if (item && !isLink) {
+      const borderProps: Partial<ArchNode | Container> = {
+        borderStyle,
+        borderWidth,
+        borderColor,
+      };
+      onPropertyChange(item.id, borderProps);
     }
   };
 
@@ -351,6 +381,49 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ item, onPropertyC
                 />
             </div>
         </div>
+
+        {!isLink && (
+          <>
+            <div>
+                <label htmlFor="borderStyle" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Border Style</label>
+                <BorderStyleSelector
+                    selectedStyle={borderStyle}
+                    onSelectStyle={(newStyle) => {
+                        setBorderStyle(newStyle);
+                        const borderProps: Partial<ArchNode | Container> = { borderStyle: newStyle };
+                        handlePropertyUpdate(borderProps);
+                    }}
+                />
+            </div>
+            <div>
+                <label htmlFor="borderWidth" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Border Width</label>
+                <BorderWidthSelector
+                    selectedWidth={borderWidth}
+                    onSelectWidth={(newWidth) => {
+                        setBorderWidth(newWidth);
+                        const borderProps: Partial<ArchNode | Container> = { borderWidth: newWidth };
+                        handlePropertyUpdate(borderProps);
+                    }}
+                />
+            </div>
+            <div>
+                <label htmlFor="borderColor" className="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Border Color</label>
+                <div className="relative">
+                    <input
+                        id="borderColor"
+                        type="color"
+                        value={borderColor}
+                        onChange={(e) => {
+                            setBorderColor(e.target.value);
+                            const borderProps: Partial<ArchNode | Container> = { borderColor: e.target.value };
+                            handlePropertyUpdate(borderProps);
+                        }}
+                        className="w-full p-1 h-10 bg-[var(--color-bg-input)] border border-[var(--color-border)] rounded-xl cursor-pointer"
+                    />
+                </div>
+            </div>
+          </>
+        )}
 
         {isLink && (
           <>
