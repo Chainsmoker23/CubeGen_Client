@@ -191,22 +191,6 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
                 )}
 
                 <div className="flex-1 flex flex-col space-y-6">
-                  <div>
-                      <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">Theme</h3>
-                      <div className="flex items-center space-x-2 bg-[var(--color-bg-input)] p-1 rounded-xl border border-[var(--color-border)]">
-                          {themeOptions.map(option => (
-                            <button
-                              key={option.value}
-                              onClick={() => setTheme(option.value)}
-                              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                                theme === option.value ? 'bg-[var(--color-panel-bg)] text-[var(--color-text-primary)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-button-bg)]'
-                              }`}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                      </div>
-                  </div>
 
                   <div className="w-full h-px bg-[var(--color-border)] opacity-50" />
                   
@@ -264,7 +248,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
                     <>
                     <div className="w-full h-px bg-[var(--color-border)] opacity-50" />
                     <div>
-                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">In-App Usage Key</h3>
+                        <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">API Key</h3>
                         <div className="p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-input)]">
                           <AnimatePresence mode="wait">
                             {userApiKey && !isEditing ? (
@@ -295,7 +279,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
                                 exit="exit"
                               >
                                 <p className="text-sm text-[var(--color-text-secondary)] mb-2">
-                                  {userApiKey ? 'Update your key or clear to use the shared key.' : 'Add your own Google Gemini key to bypass usage limits within this app. This key is for in-app use only, not for our SDK.'}
+                                  {userApiKey ? 'Update your key or clear to use the shared key.' : 'Add your Google Gemini key to bypass usage limits.'}
                                 </p>
                                 <div>
                                   <input
@@ -309,9 +293,6 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
                                   <a href="https://ai.google.dev/" target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--color-accent-text)] hover:underline mt-1 inline-block">
                                         Get a key from Google AI Studio
                                   </a>
-                                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                                        Note: This key is for in-app usage. For our SDK, use your personal API key from your Pro dashboard.
-                                  </p>
                                 </div>
                                 <div className="flex items-center gap-2 mt-3">
                                     <button onClick={handleKeySave} className="flex-1 bg-[var(--color-accent)] text-[var(--color-accent-text-strong)] text-sm font-semibold py-2 px-3 rounded-lg hover:opacity-90 transition-opacity relative">
