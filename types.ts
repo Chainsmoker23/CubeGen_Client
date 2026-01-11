@@ -36,6 +36,9 @@ export interface ArchNode {
   layer?: number;
   customIcon?: string | null;
   customIconSize?: number;
+  borderStyle?: 'solid' | 'dotted' | 'dashed' | 'double' | 'none';
+  borderWidth?: 'thin' | 'medium' | 'thick';
+  borderColor?: string;
 }
 
 export interface Link {
@@ -60,6 +63,9 @@ export interface Container {
   childNodeIds: string[];
   description?: string;
   color?: string;
+  borderStyle?: 'solid' | 'dotted' | 'dashed' | 'double' | 'none';
+  borderWidth?: 'thin' | 'medium' | 'thick';
+  borderColor?: string;
 }
 
 export interface DiagramData {
