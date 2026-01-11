@@ -80,7 +80,6 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
  
   const themeOptions = [
     { value: 'light', label: 'Light' },
-    { value: 'slate', label: 'Slate' },
     { value: 'midnight', label: 'Midnight' },
   ] as const;
 
