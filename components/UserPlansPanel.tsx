@@ -9,7 +9,6 @@ interface UserPlansPanelProps {
 
 const UserPlansPanel: React.FC<UserPlansPanelProps> = ({ plan, refreshUser, isOpen }) => {
     const [activePlans, setActivePlans] = useState<any[]>([]);
-    const [isFetchingPlans, setIsFetchingPlans] = useState(false);
     const [isSwitchingPlan, setIsSwitchingPlan] = useState<string | null>(null);
     const lastFetchRef = useRef<number>(0);
     const FETCH_INTERVAL = 30000; // 30 seconds between fetches
@@ -65,17 +64,6 @@ const UserPlansPanel: React.FC<UserPlansPanelProps> = ({ plan, refreshUser, isOp
         }
     };
 
-    if (isFetchingPlans) {
-        return (
-             <div>
-                <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">Your Plans</h3>
-                <div className="p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-input)] text-center text-xs text-[var(--color-text-secondary)]">
-                    Loading plans...
-                </div>
-            </div>
-        );
-    }
-    
     // Don't show the panel if the user only has one active plan (or none).
     if (activePlans.length <= 1) {
         return null;
