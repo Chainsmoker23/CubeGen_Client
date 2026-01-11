@@ -787,8 +787,14 @@ const DiagramContainer = memo<{
     return <rect ref={handleRef} data-handle="true" {...getCoords()} width={14} height={14} fill="var(--color-accent-text)" stroke="var(--color-node-bg)" strokeWidth={2} cursor={getCursor()} className="hover:brightness-125 transition-all duration-150" rx={2} ry={2} />;
   };
   
-  // Add a function to determine stroke dasharray based on container type
+  // Use border style from container properties if available
   const getStrokeDasharray = () => {
+    // Use custom border style if specified
+    if (container.borderStyle === 'dotted') return '2 2';
+    if (container.borderStyle === 'dashed') return '6 4';
+    if (container.borderStyle === 'double') return '6 2 6';
+    
+    // Default behavior based on container type
     switch(container.type) {
       case 'availability-zone':
         return '6 4'; // Dashed border for availability zones
@@ -802,6 +808,18 @@ const DiagramContainer = memo<{
       default:
         return 'none'; // Solid border for tiers and defaults
     }
+  };
+
+  // Get border width based on container properties
+  const getBorderWidth = () => {
+    if (container.borderWidth === 'thin') return 1;
+    if (container.borderWidth === 'thick') return 3;
+    return 1.5; // default
+  };
+
+  // Get border color based on container properties
+  const getBorderColor = () => {
+    return container.borderColor || (props.isSelected ? "var(--color-accent-text)" : "var(--color-border)");
   };
 
   // Enhanced visual feedback for tier boxes
@@ -838,8 +856,8 @@ const DiagramContainer = memo<{
         rx={16}
         ry={16}
         fill={fillColor}
-        stroke={props.isSelected ? "var(--color-accent-text)" : "var(--color-border)"}
-        strokeWidth={props.isSelected ? 2.5 : 1.5} // Thicker stroke when selected
+        stroke={getBorderColor()}
+        strokeWidth={getBorderWidth()}
         strokeDasharray={getStrokeDasharray()}
         className={props.isSelected ? 'selected-element' : ''}
         style={getVisualFeedback()}
@@ -1000,8 +1018,9 @@ const DiagramNode = memo<{
   
   const commonProps = {
     fill: node.color || "var(--color-node-bg)",
-    stroke: isLinkHoverTarget ? "var(--color-accent-text)" : (isSelected ? "var(--color-accent-text)" : "var(--color-border)"),
-    strokeWidth: isLinkHoverTarget ? 3 : (isSelected ? 2.5 : 1.5),
+    stroke: node.borderColor || (isLinkHoverTarget ? "var(--color-accent-text)" : (isSelected ? "var(--color-accent-text)" : "var(--color-border)")),
+    strokeWidth: node.borderWidth === 'thin' ? 1 : (node.borderWidth === 'thick' ? 3 : (isLinkHoverTarget ? 3 : (isSelected ? 2.5 : 1.5))),
+    strokeDasharray: node.borderStyle === 'dotted' ? '2 2' : (node.borderStyle === 'dashed' ? '6 4' : (node.borderStyle === 'double' ? '6 2 6' : 'none')),
   };
 
   const nodeBody = <ShapeRenderer node={node} commonProps={commonProps} />;
