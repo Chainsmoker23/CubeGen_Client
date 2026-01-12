@@ -1,8 +1,6 @@
 import { DiagramData, ArchNode, BlogPost } from "../types";
 import type { Content } from "@google/genai";
 import { supabase } from '../supabaseClient';
-import { LayoutDecisionEngine } from '../utils/layoutDecisionEngine';
-import { PositionCalculator } from '../utils/positionCalculator';
 
 const BACKEND_URL = 'https://ube-chainsmoker231978-a1y8un6p.leapcell.dev'; // Use Vite proxy for local development
 
@@ -97,60 +95,7 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
         if (container.borderColor === undefined) container.borderColor = '#000000';
     });
 
-    // Apply intelligent layout positioning based on architecture analysis
-    const layoutEngine = new LayoutDecisionEngine();
-    const positionCalculator = new PositionCalculator();
-    
-    const analysis = layoutEngine.analyzeArchitecture(prompt);
-    const layoutConfig = layoutEngine.determineLayout(analysis);
-    
-    // Calculate positions based on layout decision
-    const relationships = analysis.relationships; // We would need to extract relationships from the generated data
-    const positionedResult = positionCalculator.calculatePositions(
-      parsedData.nodes || [],
-      parsedData.containers || [],
-      relationships,
-      layoutConfig,
-      analysis
-    );
-    
-    // Update node positions with calculated positions
-    const updatedNodes = (parsedData.nodes || []).map(node => {
-      const positionedNode = positionedResult.positionedNodes.find(pn => pn.id === node.id);
-      if (positionedNode) {
-        return {
-          ...node,
-          x: positionedNode.x,
-          y: positionedNode.y,
-          width: positionedNode.width,
-          height: positionedNode.height
-        };
-      }
-      return node;
-    });
-    
-    // Update container positions with calculated positions
-    const updatedContainers = (parsedData.containers || []).map(container => {
-      const positionedContainer = positionedResult.positionedContainers.find(pc => pc.id === container.id);
-      if (positionedContainer) {
-        return {
-          ...container,
-          x: positionedContainer.x,
-          y: positionedContainer.y,
-          width: positionedContainer.width,
-          height: positionedContainer.height
-        };
-      }
-      return container;
-    });
-    
-    const updatedDiagram = {
-      ...parsedData,
-      nodes: updatedNodes,
-      containers: updatedContainers
-    };
-
-    return { diagram: updatedDiagram as DiagramData, newGenerationCount: responseData.newGenerationCount };
+    return { diagram: parsedData as DiagramData, newGenerationCount: responseData.newGenerationCount };
   } catch (error) {
     console.error("Error fetching diagram data from backend:", String(error));
     // Re-throw to be caught by the component
@@ -175,61 +120,8 @@ export const generateNeuralNetworkData = async (prompt: string, userApiKey?: str
             ...parsedData,
             architectureType: 'Neural Network',
         } as DiagramData;
-        
-        // Apply intelligent layout positioning based on architecture analysis
-        const layoutEngine = new LayoutDecisionEngine();
-        const positionCalculator = new PositionCalculator();
-        
-        const analysis = layoutEngine.analyzeArchitecture(prompt);
-        const layoutConfig = layoutEngine.determineLayout(analysis);
-        
-        // Calculate positions based on layout decision
-        const relationships = analysis.relationships;
-        const positionedResult = positionCalculator.calculatePositions(
-          diagram.nodes || [],
-          diagram.containers || [],
-          relationships,
-          layoutConfig,
-          analysis
-        );
-        
-        // Update node positions with calculated positions
-        const updatedNodes = (diagram.nodes || []).map(node => {
-          const positionedNode = positionedResult.positionedNodes.find(pn => pn.id === node.id);
-          if (positionedNode) {
-            return {
-              ...node,
-              x: positionedNode.x,
-              y: positionedNode.y,
-              width: positionedNode.width,
-              height: positionedNode.height
-            };
-          }
-          return node;
-        });
-        
-        // Update container positions with calculated positions
-        const updatedContainers = (diagram.containers || []).map(container => {
-          const positionedContainer = positionedResult.positionedContainers.find(pc => pc.id === container.id);
-          if (positionedContainer) {
-            return {
-              ...container,
-              x: positionedContainer.x,
-              y: positionedContainer.y,
-              width: positionedContainer.width,
-              height: positionedContainer.height
-            };
-          }
-          return container;
-        });
-        
-        const updatedDiagram = {
-          ...diagram,
-          nodes: updatedNodes,
-          containers: updatedContainers
-        };
 
-        return { diagram: updatedDiagram, newGenerationCount: responseData.newGenerationCount };
+        return { diagram, newGenerationCount: responseData.newGenerationCount };
     } catch (error) {
         console.error("Error fetching neural network data from backend:", String(error));
         throw error;
