@@ -15,6 +15,7 @@ interface PlaygroundToolbarProps {
     onExplain: () => void;
     isExplaining: boolean;
     onExport: (format: 'png' | 'html' | 'json') => void;
+    onShowAutoLayout?: () => void;
 }
 
 // Define ToolButton component
@@ -97,6 +98,7 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
                     <div className="absolute bottom-full left-0 mb-2 w-40 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
                         <button onClick={onFitToScreen} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Fit to Screen</button>
                         <button onClick={onExplain} disabled={isExplaining} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Explain</button>
+                        <button onClick={props.onShowAutoLayout} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Auto-Layout</button>
                     </div>
                 )}
             </AnimatePresence>
@@ -136,6 +138,9 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
                 <div className="w-10/12 h-px bg-[var(--color-border)] my-1" />
                 <ToolButton aria-label="Fit to Screen (F)" title="Fit to Screen (F)" onClick={onFitToScreen} className="w-12 h-12">
                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                </ToolButton>
+                <ToolButton aria-label="Auto-Layout" title="Auto-Layout" onClick={props.onShowAutoLayout} className="w-12 h-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 </ToolButton>
                 <div className="relative" ref={exportMenuRef}>
                     <ToolButton aria-label="Export" title="Export" onClick={() => setIsExportMenuOpen(prev => !prev)} className="w-12 h-12">
