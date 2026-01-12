@@ -1,6 +1,42 @@
-# See https://www.robotstxt.org/robotstxt.html for documentation
-
 User-agent: *
 Allow: /
 
+# Host directive (recommended for Google)
+Host: https://cubegenai.com
+
+# Sitemap location
 Sitemap: https://cubegenai.com/sitemap.xml
+
+# Block sensitive areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /api-keys
+Disallow: /neural-network
+
+# Allow important sections
+Allow: /about$
+Allow: /contact$
+Allow: /blog$
+Allow: /blog/*
+Allow: /docs$
+Allow: /research$
+Allow: /careers$
+
+# Crawl-delay to be respectful
+Crawl-delay: 5
+
+# Specific crawler directives
+User-agent: Googlebot
+Allow: /*
+
+User-agent: Bingbot
+Allow: /*
+
+User-agent: Slurp
+Allow: /*
+
+# Temporary pages to exclude
+Disallow: /*?*
+
+# Clean URLs (without hash fragments)
+Clean-param: * /
