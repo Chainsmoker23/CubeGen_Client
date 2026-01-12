@@ -33,10 +33,9 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
     try { return window.localStorage.getItem('user-api-key'); } catch { return null; }
   });
 
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme(); // Only light theme available now
   const themeOptions = [
     { value: 'light', label: 'Light' },
-    { value: 'midnight', label: 'Midnight' },
   ] as const;
 
   const svgRef = useRef<SVGSVGElement>(null);
@@ -283,22 +282,7 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
                     )}
                 </motion.button>
             </div>
-            <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
-                <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">Theme</h3>
-                <div className="flex items-center space-x-2 bg-[var(--color-bg-input)] p-1 rounded-xl border border-[var(--color-border)]">
-                    {themeOptions.map(option => (
-                        <button
-                        key={option.value}
-                        onClick={() => setTheme(option.value)}
-                        className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                            theme === option.value ? 'bg-[var(--color-panel-bg)] text-[var(--color-text-primary)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-button-bg)]'
-                        }`}
-                        >
-                        {option.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
+
         </aside>
 
         <section className="lg:col-span-9 rounded-2xl shadow-sm flex flex-col relative min-h-[60vh] lg:min-h-0 glass-panel p-2">
