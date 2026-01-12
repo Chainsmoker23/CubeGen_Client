@@ -1,6 +1,7 @@
 import { DiagramData, ArchNode, BlogPost } from "../types";
 import type { Content } from "@google/genai";
 import { supabase } from '../supabaseClient';
+import { ConstraintBasedLayoutEngine, ArchitecturePattern } from '../utils/constraintLayout';
 
 const BACKEND_URL = 'https://ube-chainsmoker231978-a1y8un6p.leapcell.dev'; // Use Vite proxy for local development
 
@@ -95,7 +96,11 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
         if (container.borderColor === undefined) container.borderColor = '#000000';
     });
 
-    return { diagram: parsedData as DiagramData, newGenerationCount: responseData.newGenerationCount };
+    // Apply constraint-based layout to improve positioning
+    const layoutEngine = new ConstraintBasedLayoutEngine();
+    const updatedDiagram = layoutEngine.applyConstraints(parsedData as DiagramData);
+
+    return { diagram: updatedDiagram, newGenerationCount: responseData.newGenerationCount };
   } catch (error) {
     console.error("Error fetching diagram data from backend:", String(error));
     // Re-throw to be caught by the component
@@ -121,7 +126,11 @@ export const generateNeuralNetworkData = async (prompt: string, userApiKey?: str
             architectureType: 'Neural Network',
         } as DiagramData;
 
-        return { diagram, newGenerationCount: responseData.newGenerationCount };
+        // Apply constraint-based layout to improve positioning
+        const layoutEngine = new ConstraintBasedLayoutEngine();
+        const updatedDiagram = layoutEngine.applyConstraints(diagram);
+
+        return { diagram: updatedDiagram, newGenerationCount: responseData.newGenerationCount };
     } catch (error) {
         console.error("Error fetching neural network data from backend:", String(error));
         throw error;
