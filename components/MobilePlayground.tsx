@@ -8,6 +8,7 @@ import { ZoomTransform, zoomIdentity } from 'd3-zoom';
 import AddNodePanel from './AddNodePanel';
 import Toast from './Toast';
 import ContextualActionBar from './ContextualActionBar';
+import AutoLayoutControls from './AutoLayoutControls';
 
 const nanoid = customAlphabet('1234567890abcdef', 10);
 
@@ -43,6 +44,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
 
     const [isAddNodePanelOpen, setIsAddNodePanelOpen] = useState(false);
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+    const [isAutoLayoutOpen, setIsAutoLayoutOpen] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [viewTransform, setViewTransform] = useState<ZoomTransform>(() => zoomIdentity);
     const [linkingState, setLinkingState] = useState<{ sourceNodeId: string; startPos: { x: number, y: number } } | null>(null);
@@ -58,6 +60,12 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
 
     const showToast = (message: string) => {
         setToastMessage(message);
+    };
+    
+    const handleApplyAutoLayout = (updatedData: DiagramData) => {
+        onDataChange(updatedData);
+        setIsAutoLayoutOpen(false);
+        showToast('Auto-layout applied successfully');
     };
 
     const handleFitToScreen = () => {
@@ -244,6 +252,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                             <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0, y: 10}} className="absolute bottom-full right-0 mb-2 w-40 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
                                 <button onClick={handleFitToScreen} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Fit to Screen</button>
                                 <button onClick={() => { onExplain(); setIsMoreMenuOpen(false); }} disabled={isExplaining} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Explain</button>
+                                <button onClick={() => { setIsMoreMenuOpen(false); setIsAutoLayoutOpen(true); }} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Auto-Layout</button>
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -279,6 +288,28 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                              />
                         </div>
                        
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            
+            {/* Auto-Layout Controls */}
+            <AnimatePresence>
+                {isAutoLayoutOpen && (
+                    <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsAutoLayoutOpen(false)} />
+                )}
+                {isAutoLayoutOpen && (
+                    <motion.div initial={{y: "100%"}} animate={{y: 0}} exit={{y: "100%"}} transition={{type: 'spring', stiffness: 400, damping: 40}} className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[var(--color-panel-bg)] rounded-t-2xl border-t border-[var(--color-border)] shadow-2xl z-50 flex flex-col">
+                        <div className="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
+                            <h2 className="text-lg font-bold">Auto-Layout</h2>
+                            <button onClick={() => setIsAutoLayoutOpen(false)} className="text-[var(--color-text-secondary)]">Close</button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4">
+                            <AutoLayoutControls 
+                                diagramData={data} 
+                                onLayoutApplied={handleApplyAutoLayout} 
+                                disabled={false}
+                            />
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
