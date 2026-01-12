@@ -10,6 +10,7 @@ import { zoomIdentity, ZoomTransform } from 'd3-zoom';
 import AssistantWidget from './AssistantWidget';
 import Toast from './Toast';
 import AddNodePanel from './AddNodePanel';
+import AutoLayoutControls from './AutoLayoutControls';
 
 const nanoid = customAlphabet('1234567890abcdef', 10);
 
@@ -42,6 +43,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
     // State for the new drag-to-connect feature
     const [linkingState, setLinkingState] = useState<{ sourceNodeId: string; startPos: { x: number, y: number } } | null>(null);
     const [previewLinkTarget, setPreviewLinkTarget] = useState<{ x: number; y: number; targetNodeId?: string } | null>(null);
+    const [showAutoLayout, setShowAutoLayout] = useState(false);
 
     const isPropertiesPanelOpen = selectedIds.length > 0;
 
@@ -174,6 +176,11 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         setInteractionMode(mode);
         setSelectedIds([]);
         setResizingNodeId(null);
+    };
+
+    const handleApplyAutoLayout = (updatedData: DiagramData) => {
+        onDataChange(updatedData);
+        setToastMessage('Auto-layout applied successfully');
     };
     
     const handleNodeDoubleClick = useCallback((nodeId: string) => {
@@ -490,6 +497,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                     onExplain={onExplain}
                     isExplaining={isExplaining}
                     onExport={handleExport}
+                    onShowAutoLayout={() => setShowAutoLayout(true)}
                  />
                 <AnimatePresence>
                 {interactionMode === 'addNode' && (
@@ -503,6 +511,29 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                         <AddNodePanel onSelectNodeType={onAddNode} onClose={() => setInteractionMode('select')} />
                      </motion.div>
                  )}
+                </AnimatePresence>
+                <AnimatePresence>
+                {showAutoLayout && (
+                    <motion.div 
+                        initial={{ x: '-100%' }}
+                        animate={{ x: 0 }}
+                        exit={{ x: '-100%' }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+                        className="fixed bottom-0 left-0 right-0 z-20 md:relative md:bottom-auto md:left-auto md:right-auto"
+                    >
+                        <AutoLayoutControls 
+                            diagramData={data} 
+                            onLayoutApplied={handleApplyAutoLayout} 
+                            disabled={false}
+                        />
+                        <button 
+                            onClick={() => setShowAutoLayout(false)}
+                            className="absolute top-2 right-2 p-2 bg-[var(--color-button-bg)] rounded-full hover:bg-[var(--color-button-bg-hover)]"
+                        >
+                            ×
+                        </button>
+                    </motion.div>
+                )}
                 </AnimatePresence>
             </div>
             
