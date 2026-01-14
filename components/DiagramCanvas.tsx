@@ -94,7 +94,86 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       const sourceId = sourceNode.id;
       const targetId = targetNode.id;
       
-      const LINK_SPACING = 20;
+      // Enhanced connection point detection
+      const getConnectionPoint = (node: ArchNode, otherNode: ArchNode, isSource: boolean) => {
+        const dx = otherNode.x - node.x;
+        const dy = otherNode.y - node.y;
+        const isHorizontal = Math.abs(dx) > Math.abs(dy);
+        
+        // Determine which side to connect to
+        let side: 'top' | 'right' | 'bottom' | 'left';
+        if (isHorizontal) {
+          side = dx > 0 ? 'right' : 'left';
+        } else {
+          side = dy > 0 ? 'bottom' : 'top';
+        }
+        
+        // Get all connections on this side
+        const sideConnections = data.links.filter(l => {
+          const lSourceId = typeof l.source === 'string' ? l.source : l.source.id;
+          const lTargetId = typeof l.target === 'string' ? l.target : l.target.id;
+          const isConnectedToNode = lSourceId === node.id || lTargetId === node.id;
+          
+          if (!isConnectedToNode) return false;
+          
+          // Check if this link uses the same side
+          const otherConnectedNode = lSourceId === node.id ? 
+            data.nodes.find(n => n.id === lTargetId) : 
+            data.nodes.find(n => n.id === lSourceId);
+            
+          if (!otherConnectedNode) return false;
+          
+          const otherDx = otherConnectedNode.x - node.x;
+          const otherDy = otherConnectedNode.y - node.y;
+          const otherIsHorizontal = Math.abs(otherDx) > Math.abs(otherDy);
+          
+          if (otherIsHorizontal) {
+            const otherSide = otherDx > 0 ? 'right' : 'left';
+            return otherSide === side;
+          } else {
+            const otherSide = otherDy > 0 ? 'bottom' : 'top';
+            return otherSide === side;
+          }
+        });
+        
+        // Calculate position index for this specific connection
+        const connectionIndex = sideConnections.findIndex(l => 
+          (typeof l.source === 'string' ? l.source : l.source.id) === (isSource ? sourceId : targetId) &&
+          (typeof l.target === 'string' ? l.target : l.target.id) === (isSource ? targetId : sourceId)
+        );
+        
+        const totalConnections = sideConnections.length;
+        const spacing = 15; // Reduced spacing for better clustering
+        
+        // Calculate offset position
+        let x, y;
+        switch (side) {
+          case 'top':
+            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * spacing;
+            y = node.y - node.height / 2;
+            break;
+          case 'right':
+            x = node.x + node.width / 2;
+            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * spacing;
+            break;
+          case 'bottom':
+            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * spacing;
+            y = node.y + node.height / 2;
+            break;
+          case 'left':
+            x = node.x - node.width / 2;
+            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * spacing;
+            break;
+        }
+        
+        return { x, y, side };
+      };
+      
+      // Get connection points for both ends
+      const sourcePoint = getConnectionPoint(sourceNode, targetNode, true);
+      const targetPoint = getConnectionPoint(targetNode, sourceNode, false);
+      
+      const LINK_SPACING = 12; // Reduced spacing for individual link offset
       const key = [sourceId, targetId].sort().join('--');
       const group = linkGroups.get(key) || { fwd: [], bwd: [] };
       
@@ -102,7 +181,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       const linkIndex = allLinksInGroup.indexOf(link.id);
       const totalLinks = allLinksInGroup.length;
 
-      const offset = (linkIndex - (totalLinks - 1) / 2) * LINK_SPACING;
+      const groupOffset = (linkIndex - (totalLinks - 1) / 2) * LINK_SPACING;
       
       const isNeuronLink = sourceNode.type === 'neuron' && targetNode.type === 'neuron';
 
@@ -111,23 +190,23 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       let labelPos: {x:number,y:number} | null = null;
 
       if (isNeuronLink) {
-          const dx = targetNode.x - sourceNode.x;
-          const dy = targetNode.y - sourceNode.y;
+          const dx = targetPoint.x - sourcePoint.x;
+          const dy = targetPoint.y - sourcePoint.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist === 0) {
               pathD = '';
           } else {
               const sourceRadius = sourceNode.width / 2;
               const targetRadius = targetNode.width / 2;
-              const p1 = { x: sourceNode.x + (dx / dist) * sourceRadius, y: sourceNode.y + (dy / dist) * sourceRadius };
-              const p4 = { x: targetNode.x - (dx / dist) * targetRadius, y: targetNode.y - (dy / dist) * targetRadius };
+              const p1 = { x: sourcePoint.x + (dx / dist) * sourceRadius, y: sourcePoint.y + (dy / dist) * sourceRadius };
+              const p4 = { x: targetPoint.x - (dx / dist) * targetRadius, y: targetPoint.y - (dy / dist) * targetRadius };
               pathD = `M ${p1.x} ${p1.y} L ${p4.x} ${p4.y}`;
           }
       } else {
-          const dx = targetNode.x - sourceNode.x;
-          const dy = targetNode.y - sourceNode.y;
+          const dx = targetPoint.x - sourcePoint.x;
+          const dy = targetPoint.y - sourcePoint.y;
           const isPrimarilyHorizontal = Math.abs(dx) > Math.abs(dy);
-          const cornerRadius = 10;
+          const cornerRadius = 8;
           let p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}, p4: {x: number, y: number};
           
           const isForward = group.fwd.includes(link.id);
@@ -135,14 +214,11 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           const directionMultiplier = hasBidirectionalPair ? (isForward ? -1 : 1) : -1;
 
           if (isPrimarilyHorizontal) {
-              // H-V-H path
-              const sourceExitX = dx > 0 ? sourceNode.x + sourceNode.width / 2 : sourceNode.x - sourceNode.width / 2;
-              const targetEntryX = dx > 0 ? targetNode.x - targetNode.width / 2 : targetNode.x + targetNode.width / 2;
+              // H-V-H path with individual offsets
+              p1 = { x: sourcePoint.x, y: sourcePoint.y };
+              p4 = { x: targetPoint.x, y: targetPoint.y };
           
-              p1 = { x: sourceExitX, y: sourceNode.y };
-              p4 = { x: targetEntryX, y: targetNode.y };
-          
-              const midX = (p1.x + p4.x) / 2 + offset; // Apply offset to the vertical segment
+              const midX = (p1.x + p4.x) / 2 + groupOffset;
               p2 = { x: midX, y: p1.y };
               p3 = { x: midX, y: p4.y };
           
@@ -151,18 +227,15 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
               if (link.label) {
                   const labelX = p2.x;
                   const labelY = (p2.y + p3.y) / 2;
-                  const xOffset = 18 * directionMultiplier;
+                  const xOffset = 15 * directionMultiplier;
                   labelPos = { x: labelX + xOffset, y: labelY };
               }
           } else {
-              // V-H-V path
-              const sourceExitY = dy > 0 ? sourceNode.y + sourceNode.height / 2 : sourceNode.y - sourceNode.height / 2;
-              const targetEntryY = dy > 0 ? targetNode.y - targetNode.height / 2 : targetNode.y + targetNode.height / 2;
-          
-              p1 = { x: sourceNode.x, y: sourceExitY };
-              p4 = { x: targetNode.x, y: targetEntryY };
+              // V-H-V path with individual offsets
+              p1 = { x: sourcePoint.x, y: sourcePoint.y };
+              p4 = { x: targetPoint.x, y: targetPoint.y };
               
-              const midY = (p1.y + p4.y) / 2 + offset; // Apply offset to the horizontal segment
+              const midY = (p1.y + p4.y) / 2 + groupOffset;
               p2 = { x: p1.x, y: midY };
               p3 = { x: p4.x, y: midY };
           
@@ -171,14 +244,14 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
               if (link.label) {
                   const labelX = (p2.x + p3.x) / 2;
                   const labelY = p2.y;
-                  const yOffset = 18 * directionMultiplier;
+                  const yOffset = 15 * directionMultiplier;
                   labelPos = { x: labelX, y: labelY + yOffset };
               }
           }
       }
 
-      return { link, pathD, labelPos, isNeuronLink };
-    }).filter(Boolean) as { link: Link; pathD: string; labelPos: {x: number, y: number} | null; isNeuronLink: boolean }[];
+      return { link, pathD, labelPos, isNeuronLink, sourcePoint, targetPoint };
+    }).filter(Boolean) as { link: Link; pathD: string; labelPos: {x: number, y: number} | null; isNeuronLink: boolean; sourcePoint: {x: number, y: number}, targetPoint: {x: number, y: number} }[];
   }, [data.links, nodesById, linkGroups]);
 
   const isSelected = (id: string) => selectedIds.includes(id);
@@ -340,7 +413,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           
           {/* Link Paths Layer */}
           <g>
-            {renderableLinks.map(({ link, pathD, labelPos, isNeuronLink }) => {
+            {renderableLinks.map(({ link, pathD, labelPos, isNeuronLink, sourcePoint, targetPoint }) => {
               const selected = isSelected(link.id);
               const thicknessMap = { thin: isNeuronLink ? 0.5 : 1.5, medium: 2.5, thick: 4 };
               const thicknessPx = thicknessMap[link.thickness || 'medium'];
@@ -401,6 +474,11 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                       <path d={pathD} stroke="transparent" strokeWidth={15} fill="none" className="cursor-pointer" />
                     </g>
                   )}
+                  {/* Visualize connection points (optional - for debugging) */}
+                  {/*
+                  <circle cx={sourcePoint.x} cy={sourcePoint.y} r="3" fill="red" />
+                  <circle cx={targetPoint.x} cy={targetPoint.y} r="3" fill="blue" />
+                  */}
                 </g>
               );
             })}
