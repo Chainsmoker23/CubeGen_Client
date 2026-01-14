@@ -94,8 +94,8 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       const sourceId = sourceNode.id;
       const targetId = targetNode.id;
       
-      // Enhanced connection point detection
-      const getConnectionPoint = (node: ArchNode, otherNode: ArchNode, isSource: boolean) => {
+      // Enhanced connection point detection with bidirectional separation
+      const getConnectionPoint = (node: ArchNode, otherNode: ArchNode, isSource: boolean, isBidirectional: boolean = false, isReverse: boolean = false) => {
         const dx = otherNode.x - node.x;
         const dy = otherNode.y - node.y;
         const isHorizontal = Math.abs(dx) > Math.abs(dy);
@@ -143,39 +143,50 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
         );
         
         const totalConnections = sideConnections.length;
-        const spacing = 15; // Reduced spacing for better clustering
+        const baseSpacing = 15;
+        
+        // For bidirectional links, offset them to avoid overlap
+        let offsetMultiplier = 0;
+        if (isBidirectional) {
+          offsetMultiplier = isReverse ? -1 : 1;
+        }
         
         // Calculate offset position
         let x, y;
         switch (side) {
           case 'top':
-            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * spacing;
-            y = node.y - node.height / 2;
+            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
+            y = node.y - node.height / 2 + (offsetMultiplier * 8);
             break;
           case 'right':
-            x = node.x + node.width / 2;
-            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * spacing;
+            x = node.x + node.width / 2 + (offsetMultiplier * 8);
+            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
             break;
           case 'bottom':
-            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * spacing;
-            y = node.y + node.height / 2;
+            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
+            y = node.y + node.height / 2 + (offsetMultiplier * 8);
             break;
           case 'left':
-            x = node.x - node.width / 2;
-            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * spacing;
+            x = node.x - node.width / 2 + (offsetMultiplier * 8);
+            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
             break;
         }
         
         return { x, y, side };
       };
       
-      // Get connection points for both ends
-      const sourcePoint = getConnectionPoint(sourceNode, targetNode, true);
-      const targetPoint = getConnectionPoint(targetNode, sourceNode, false);
-      
-      const LINK_SPACING = 12; // Reduced spacing for individual link offset
+      // Check if this is part of a bidirectional pair
       const key = [sourceId, targetId].sort().join('--');
       const group = linkGroups.get(key) || { fwd: [], bwd: [] };
+      const isBidirectional = group.fwd.length > 0 && group.bwd.length > 0;
+      const isForward = group.fwd.includes(link.id);
+      const isReverse = group.bwd.includes(link.id);
+      
+      // Get connection points for both ends
+      const sourcePoint = getConnectionPoint(sourceNode, targetNode, true, isBidirectional, false);
+      const targetPoint = getConnectionPoint(targetNode, sourceNode, false, isBidirectional, isReverse);
+      
+      const LINK_SPACING = 12; // Reduced spacing for individual link offset
       
       const allLinksInGroup = [...group.fwd, ...group.bwd];
       const linkIndex = allLinksInGroup.indexOf(link.id);
@@ -185,7 +196,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       
       const isNeuronLink = sourceNode.type === 'neuron' && targetNode.type === 'neuron';
 
-      // --- Path & Label Calculation ---
+      // --- Path & Label Calculation with enhanced styling ---
       let pathD: string;
       let labelPos: {x:number,y:number} | null = null;
 
@@ -206,21 +217,36 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           const dx = targetPoint.x - sourcePoint.x;
           const dy = targetPoint.y - sourcePoint.y;
           const isPrimarilyHorizontal = Math.abs(dx) > Math.abs(dy);
-          const cornerRadius = 8;
+          
+          // Use custom curvature from link properties or default
+          const curvaturePercent = link.curvature || 30;
+          const maxCurve = Math.min(Math.abs(dx), Math.abs(dy)) * (curvaturePercent / 100);
+          const cornerRadius = Math.min(8, maxCurve / 3);
+          
           let p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}, p4: {x: number, y: number};
           
-          const isForward = group.fwd.includes(link.id);
           const hasBidirectionalPair = group.fwd.length > 0 && group.bwd.length > 0;
           const directionMultiplier = hasBidirectionalPair ? (isForward ? -1 : 1) : -1;
 
           if (isPrimarilyHorizontal) {
-              // H-V-H path with individual offsets
+              // H-V-H path with enhanced bidirectional separation
               p1 = { x: sourcePoint.x, y: sourcePoint.y };
               p4 = { x: targetPoint.x, y: targetPoint.y };
           
-              const midX = (p1.x + p4.x) / 2 + groupOffset;
+              const midX = (p1.x + p4.x) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
               p2 = { x: midX, y: p1.y };
               p3 = { x: midX, y: p4.y };
+          
+              // Apply custom angle if specified
+              if (link.angle) {
+                const angleRad = (link.angle * Math.PI) / 180;
+                const offsetX = Math.cos(angleRad) * (link.offsetDistance || 20);
+                const offsetY = Math.sin(angleRad) * (link.offsetDistance || 20);
+                p2.x += offsetX;
+                p2.y += offsetY;
+                p3.x += offsetX;
+                p3.y += offsetY;
+              }
           
               pathD = `M ${p1.x} ${p1.y} H ${p2.x - cornerRadius * Math.sign(p2.x - p1.x)} Q ${p2.x} ${p2.y}, ${p2.x} ${p2.y + cornerRadius * Math.sign(p3.y - p2.y)} V ${p3.y - cornerRadius * Math.sign(p3.y - p2.y)} Q ${p3.x} ${p3.y}, ${p3.x + cornerRadius * Math.sign(p4.x - p3.x)} ${p3.y} H ${p4.x}`;
               
@@ -231,13 +257,24 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                   labelPos = { x: labelX + xOffset, y: labelY };
               }
           } else {
-              // V-H-V path with individual offsets
+              // V-H-V path with enhanced bidirectional separation
               p1 = { x: sourcePoint.x, y: sourcePoint.y };
               p4 = { x: targetPoint.x, y: targetPoint.y };
               
-              const midY = (p1.y + p4.y) / 2 + groupOffset;
+              const midY = (p1.y + p4.y) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
               p2 = { x: p1.x, y: midY };
               p3 = { x: p4.x, y: midY };
+          
+              // Apply custom angle if specified
+              if (link.angle) {
+                const angleRad = (link.angle * Math.PI) / 180;
+                const offsetX = Math.cos(angleRad) * (link.offsetDistance || 20);
+                const offsetY = Math.sin(angleRad) * (link.offsetDistance || 20);
+                p2.x += offsetX;
+                p2.y += offsetY;
+                p3.x += offsetX;
+                p3.y += offsetY;
+              }
           
               pathD = `M ${p1.x} ${p1.y} V ${p2.y - cornerRadius * Math.sign(p2.y - p1.y)} Q ${p2.x} ${p2.y}, ${p2.x + cornerRadius * Math.sign(p3.x - p2.x)} ${p2.y} H ${p3.x - cornerRadius * Math.sign(p3.x - p2.x)} Q ${p3.x} ${p3.y}, ${p3.x} ${p3.y + cornerRadius * Math.sign(p4.y - p3.y)} V ${p4.y}`;
               
@@ -250,8 +287,28 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           }
       }
 
-      return { link, pathD, labelPos, isNeuronLink, sourcePoint, targetPoint };
-    }).filter(Boolean) as { link: Link; pathD: string; labelPos: {x: number, y: number} | null; isNeuronLink: boolean; sourcePoint: {x: number, y: number}, targetPoint: {x: number, y: number} }[];
+      return { 
+        link, 
+        pathD, 
+        labelPos, 
+        isNeuronLink, 
+        sourcePoint, 
+        targetPoint,
+        isBidirectional,
+        isForward,
+        isReverse
+      };
+    }).filter(Boolean) as { 
+      link: Link; 
+      pathD: string; 
+      labelPos: {x: number, y: number} | null; 
+      isNeuronLink: boolean; 
+      sourcePoint: {x: number, y: number}, 
+      targetPoint: {x: number, y: number},
+      isBidirectional: boolean,
+      isForward: boolean,
+      isReverse: boolean
+    }[];
   }, [data.links, nodesById, linkGroups]);
 
   const isSelected = (id: string) => selectedIds.includes(id);
@@ -413,19 +470,29 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           
           {/* Link Paths Layer */}
           <g>
-            {renderableLinks.map(({ link, pathD, labelPos, isNeuronLink, sourcePoint, targetPoint }) => {
+            {renderableLinks.map(({ link, pathD, labelPos, isNeuronLink, sourcePoint, targetPoint, isBidirectional, isForward, isReverse }) => {
               const selected = isSelected(link.id);
-              const thicknessMap = { thin: isNeuronLink ? 0.5 : 1.5, medium: 2.5, thick: 4 };
-              const thicknessPx = thicknessMap[link.thickness || 'medium'];
+              
+              // Use custom properties or defaults
+              const strokeWidth = link.strokeWidth || (isNeuronLink ? 0.5 : 2);
               const color = link.color || (selected ? 'var(--color-accent-text)' : 'var(--color-link)');
-              const dashArray = link.style === 'dashed' ? '8 6' : (link.style === 'dotted' ? '2 4' : 'none');
+              
+              // Handle dash patterns
+              let dashArray = 'none';
+              if (link.dashPattern && link.dashPattern !== 'none') {
+                dashArray = link.dashPattern;
+              } else if (link.style === 'dashed') {
+                dashArray = '8 6';
+              } else if (link.style === 'dotted') {
+                dashArray = '2 4';
+              }
 
               return (
                 <g
                   key={link.id}
                   onClick={(e) => {
                     handleItemSelection(e, link.id);
-                    // Set this link as the one being edited for label
+                    // Set this link as the one being edited for label/properties
                     if (!editingLinkId) {
                       setEditingLinkId(link.id);
                       setLabelInputValue(link.label || '');
@@ -434,16 +501,20 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                   onContextMenu={(e) => handleItemContextMenu(e, link)}
                   style={{ cursor: 'pointer' }}
                 >
+                  {/* Click target area */}
                   <path d={pathD} stroke="transparent" strokeWidth={20} fill="none" />
+                  
+                  {/* Main link path */}
                   <path
                     d={pathD}
                     stroke={color}
-                    strokeWidth={thicknessPx}
-                    strokeDasharray={dashArray}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={dashArray === 'none' ? undefined : dashArray}
                     fill="none"
-                    markerEnd={isNeuronLink ? undefined : `url(#arrowhead)`}
-                    markerStart={link.bidirectional ? `url(#arrowhead-reverse)` : undefined}
+                    markerEnd={link.endMarker !== false && !isNeuronLink ? `url(#arrowhead)` : undefined}
+                    markerStart={link.startMarker ? `url(#arrowhead-reverse)` : undefined}
                   />
+                  
                   {/* Interactive label area for adding/editing link labels */}
                   {labelPos && (
                     <g onClick={(e) => {
@@ -463,6 +534,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                       />
                     </g>
                   )}
+                  
                   {/* Alternative click area for adding labels if no label exists yet */}
                   {!labelPos && (
                     <g onClick={(e) => {
@@ -474,10 +546,11 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                       <path d={pathD} stroke="transparent" strokeWidth={15} fill="none" className="cursor-pointer" />
                     </g>
                   )}
-                  {/* Visualize connection points (optional - for debugging) */}
+                  
+                  {/* Visualize connection points and bidirectional separation (debug) */}
                   {/*
-                  <circle cx={sourcePoint.x} cy={sourcePoint.y} r="3" fill="red" />
-                  <circle cx={targetPoint.x} cy={targetPoint.y} r="3" fill="blue" />
+                  <circle cx={sourcePoint.x} cy={sourcePoint.y} r="3" fill={isBidirectional ? (isForward ? "red" : "orange") : "green"} />
+                  <circle cx={targetPoint.x} cy={targetPoint.y} r="3" fill={isBidirectional ? (isReverse ? "purple" : "blue") : "blue"} />
                   */}
                 </g>
               );
