@@ -914,12 +914,85 @@ const DiagramNode = memo<{
   const dataRef = useRef(props.data);
   dataRef.current = props.data;
 
-  const handlePositions: Record<HandleType, { x: number; y: number }> = useMemo(() => ({
-    top: { x: node.x, y: node.y - node.height / 2 },
-    right: { x: node.x + node.width / 2, y: node.y },
-    bottom: { x: node.x, y: node.y + node.height / 2 },
-    left: { x: node.x - node.width / 2, y: node.y },
-  }), [node.x, node.y, node.width, node.height]);
+  // Enhanced connection handle positions - up to 3 ports per side with dynamic spacing
+  const getConnectionHandles = useMemo(() => {
+    const getNodeConnections = (side: HandleType) => {
+      // Count connections on this side
+      const connections = dataRef.current.links.filter(link => {
+        const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+        const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+        return sourceId === node.id || targetId === node.id;
+      });
+      
+      const sideConnections = connections.filter(link => {
+        const sourceNode = dataRef.current.nodes.find(n => n.id === (typeof link.source === 'string' ? link.source : link.source.id));
+        const targetNode = dataRef.current.nodes.find(n => n.id === (typeof link.target === 'string' ? link.target : link.target.id));
+        
+        if (!sourceNode || !targetNode) return false;
+        
+        // Determine which side this connection uses based on node positions
+        const dx = targetNode.x - sourceNode.x;
+        const dy = targetNode.y - sourceNode.y;
+        const isSource = (typeof link.source === 'string' ? link.source : link.source.id) === node.id;
+        
+        if (Math.abs(dx) > Math.abs(dy)) {
+          // Horizontal connection
+          if (isSource) {
+            return (dx > 0 && side === 'right') || (dx < 0 && side === 'left');
+          } else {
+            return (dx > 0 && side === 'left') || (dx < 0 && side === 'right');
+          }
+        } else {
+          // Vertical connection
+          if (isSource) {
+            return (dy > 0 && side === 'bottom') || (dy < 0 && side === 'top');
+          } else {
+            return (dy > 0 && side === 'top') || (dy < 0 && side === 'bottom');
+          }
+        }
+      });
+      
+      // Create up to 3 evenly spaced positions per side
+      const positions = [];
+      const count = Math.min(3, Math.max(1, sideConnections.length));
+      
+      for (let i = 0; i < count; i++) {
+        let x, y;
+        const spacing = 20; // Distance between connection points
+        const offset = (i - (count - 1) / 2) * spacing;
+        
+        switch (side) {
+          case 'top':
+            x = node.x + offset;
+            y = node.y - node.height / 2;
+            break;
+          case 'right':
+            x = node.x + node.width / 2;
+            y = node.y + offset;
+            break;
+          case 'bottom':
+            x = node.x + offset;
+            y = node.y + node.height / 2;
+            break;
+          case 'left':
+            x = node.x - node.width / 2;
+            y = node.y + offset;
+            break;
+        }
+        
+        positions.push({ x, y, index: i });
+      }
+      
+      return positions;
+    };
+    
+    return {
+      top: getNodeConnections('top'),
+      right: getNodeConnections('right'),
+      bottom: getNodeConnections('bottom'),
+      left: getNodeConnections('left')
+    };
+  }, [node.x, node.y, node.width, node.height]);
 
   useEffect(() => {
     if (!ref.current || !isEditable) return;
@@ -1087,37 +1160,39 @@ const DiagramNode = memo<{
       </motion.g>
       {isResizing && isSelected && ['tl', 'tr', 'bl', 'br'].map(h => <ResizeHandle key={h} handle={h as 'br' | 'bl' | 'tr' | 'tl'} />)}
       
-      {/* Connection Handles */}
-      {isSelected && isEditable && (Object.keys(handlePositions) as HandleType[]).map(handle => (
-        <g key={handle}>
-          <circle
-            className="connection-handle"
-            data-handle={handle}
-            cx={handlePositions[handle].x}
-            cy={handlePositions[handle].y}
-            r={8}
-            fill="transparent"
-            strokeWidth={10}
-            stroke="transparent"
-            cursor="crosshair"
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              onLinkStart(node.id, handlePositions[handle]);
-            }}
-          />
-          <motion.circle
-            cx={handlePositions[handle].x}
-            cy={handlePositions[handle].y}
-            r={4}
-            fill="var(--color-accent-text)"
-            stroke="var(--color-node-bg)"
-            strokeWidth={1.5}
-            style={{ pointerEvents: 'none' }}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-          />
-        </g>
+      {/* Connection Handles - Enhanced with multiple ports per side */}
+      {isSelected && isEditable && Object.entries(getConnectionHandles).map(([side, positions]) => (
+        (positions as Array<{x: number, y: number, index: number}>).map((pos, index) => (
+          <g key={`${side}-${index}`}>
+            <circle
+              className="connection-handle"
+              data-handle={`${side}-${index}`}
+              cx={pos.x}
+              cy={pos.y}
+              r={8}
+              fill="transparent"
+              strokeWidth={10}
+              stroke="transparent"
+              cursor="crosshair"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                onLinkStart(node.id, { x: pos.x, y: pos.y });
+              }}
+            />
+            <motion.circle
+              cx={pos.x}
+              cy={pos.y}
+              r={4}
+              fill="var(--color-accent-text)"
+              stroke="var(--color-node-bg)"
+              strokeWidth={1.5}
+              style={{ pointerEvents: 'none' }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+            />
+          </g>
+        ))
       ))}
     </g>
   );
