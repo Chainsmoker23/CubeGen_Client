@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: 'https://cube-api-git-main-diveshs-projects-b3ed141c.vercel.app',
+          target: 'https://cube-api.vercel.app',
           changeOrigin: true,
         },
       },
