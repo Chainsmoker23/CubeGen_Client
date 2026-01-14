@@ -90,7 +90,7 @@ try {
             buttonText: 'Buy for $3',
             highlight: false,
             features: [
-              { name: 'A block of 50 generation credits', icon: 'check', iconColor: 'text-green-500' },
+              { name: 'A block of 20 generation credits', icon: 'check', iconColor: 'text-green-500' },
               { name: 'Custom icons', icon: 'check', iconColor: 'text-purple-500' },
               { name: 'Credits never expire', icon: 'check', iconColor: 'text-blue-500' },
               { name: 'Re-purchase anytime to add more', icon: 'check', iconColor: 'text-orange-500' },
