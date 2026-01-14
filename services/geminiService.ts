@@ -2,7 +2,7 @@ import { DiagramData, ArchNode, BlogPost } from "../types";
 import type { Content } from "@google/genai";
 import { supabase } from '../supabaseClient';
 
-const BACKEND_URL = process.env.VITE_BACKEND_URL || 'cubeapi-production-41a2.up.railway.app'; // Use Vite proxy for local development
+const BACKEND_URL = process.env.VITE_BACKEND_URL || 'https://cubeapi-production-41a2.up.railway.app'; // Use Vite proxy for local development
 
 // Reusable fetch function for our backend API
 const fetchFromApi = async (endpoint: string, body?: object, method: 'POST' | 'GET' | 'DELETE' | 'PUT' = 'POST', adminToken?: string | null) => {
