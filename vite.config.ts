@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: 'cubeapi-production-41a2.up.railway.app',
+          target: 'https://cubeapi-production-41a2.up.railway.app',
           changeOrigin: true,
         },
       },
