@@ -50,6 +50,16 @@ export interface Link {
   color?: string;
   thickness?: 'thin' | 'medium' | 'thick';
   bidirectional?: boolean;
+  // Enhanced properties
+  curvature?: number;        // 0-100 percentage
+  offsetDistance?: number;   // Distance from center line in pixels
+  arrowheadStyle?: 'default' | 'filled' | 'outlined' | 'none';
+  lineStyle?: 'straight' | 'curved' | 'elbow' | 'orthogonal';
+  startMarker?: boolean;
+  endMarker?: boolean;
+  strokeWidth?: number;      // 1-10 pixels
+  dashPattern?: string;      // e.g., "5,5" or "10,5,2,5"
+  angle?: number;           // Custom angle in degrees (0-360)
 }
 
 export interface Container {
