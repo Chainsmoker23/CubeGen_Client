@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': {
-          target: 'https://ube-chainsmoker231978-a1y8un6p.leapcell.dev',
+          target: 'https://cube-api-git-main-diveshs-projects-b3ed141c.vercel.app',
           changeOrigin: true,
         },
       },
