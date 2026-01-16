@@ -11,6 +11,7 @@ import { motion } from 'framer-motion';
 // Enhanced layout engines for better architecture visualization
 import { EnhancedLayoutEngine } from '../utils/enhancedLayoutEngine';
 import { EnhancedPositionCalculator } from '../utils/enhancedPositionCalculator';
+import { StructuredLayoutEngine } from '../utils/structuredLayoutEngine';
 
 const GRID_SIZE = 10;
 
@@ -56,6 +57,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   // Enhanced layout engine instances
   const layoutEngineRef = useRef<EnhancedLayoutEngine>(new EnhancedLayoutEngine());
   const positionCalculatorRef = useRef<EnhancedPositionCalculator>(new EnhancedPositionCalculator());
+  const structuredLayoutEngineRef = useRef<StructuredLayoutEngine>(new StructuredLayoutEngine());
   
   // Auto-enhance layout when data changes significantly
   useEffect(() => {
@@ -65,29 +67,29 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
     const isComplexDiagram = data.nodes.length > 5 || (data.containers && data.containers.length > 3);
     
     if (isComplexDiagram && isEditable) {
-      // Analyze the architecture and apply enhanced positioning
-      const promptAnalysis = generateArchitecturePrompt(data);
-      const analysis = layoutEngineRef.current.analyzeArchitecture(promptAnalysis);
-      const layoutConfig = layoutEngineRef.current.determineLayout(analysis);
-      
-      // Calculate enhanced positions
-      const { positionedNodes, positionedContainers } = positionCalculatorRef.current.calculatePositions(
+      // Use the structured layout engine for better organization
+      const { nodePlacements, containerPlacements } = structuredLayoutEngineRef.current.createStructuredLayout(
         data.nodes,
         data.containers || [],
-        layoutConfig,
-        analysis
+        data.links
       );
       
-      // Apply the enhanced positions if they improve spacing
-      if (positionedNodes.length > 0) {
+      // Apply the structured positions
+      if (nodePlacements.length > 0) {
         const enhancedNodes = data.nodes.map(node => {
-          const newPosition = positionedNodes.find(p => p.id === node.id);
-          return newPosition ? { ...node, x: newPosition.x, y: newPosition.y } : node;
+          const placement = nodePlacements.find(p => p.id === node.id);
+          return placement ? { ...node, x: placement.x, y: placement.y } : node;
         });
         
         const enhancedContainers = data.containers ? data.containers.map(container => {
-          const newPosition = positionedContainers.find(c => c.id === container.id);
-          return newPosition ? newPosition : container;
+          const placement = containerPlacements.find(p => p.id === container.id);
+          return placement ? {
+            ...container,
+            x: placement.x,
+            y: placement.y,
+            width: placement.width,
+            height: placement.height
+          } : container;
         }) : data.containers;
         
         onDataChange({
@@ -98,18 +100,6 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       }
     }
   }, [data.nodes?.length, data.containers?.length]);
-  
-  // Helper function to generate analysis prompt from diagram data
-  const generateArchitecturePrompt = (diagramData: DiagramData): string => {
-    const nodeDescriptions = diagramData.nodes.map(node => 
-      `${node.label} (${node.type})`
-    ).join(', ');
-    
-    const containerInfo = diagramData.containers ? 
-      diagramData.containers.map(c => c.label).join(', ') : '';
-    
-    return `Architecture with components: ${nodeDescriptions}. ${containerInfo ? `Containers: ${containerInfo}.` : ''}`;
-  };
   
   const saveLinkLabel = (linkId: string, newLabel: string) => {
     
