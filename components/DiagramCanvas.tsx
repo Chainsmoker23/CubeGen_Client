@@ -8,6 +8,10 @@ import ArchitectureIcon from './ArchitectureIcon';
 import ContextMenu from './ContextMenu';
 import { motion } from 'framer-motion';
 
+// Enhanced layout engines for better architecture visualization
+import { EnhancedLayoutEngine } from '../utils/enhancedLayoutEngine';
+import { EnhancedPositionCalculator } from '../utils/enhancedPositionCalculator';
+
 const GRID_SIZE = 10;
 
 export type InteractionMode = 'select' | 'pan' | 'addNode';
@@ -49,8 +53,65 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [labelInputValue, setLabelInputValue] = useState<string>('');
   
+  // Enhanced layout engine instances
+  const layoutEngineRef = useRef<EnhancedLayoutEngine>(new EnhancedLayoutEngine());
+  const positionCalculatorRef = useRef<EnhancedPositionCalculator>(new EnhancedPositionCalculator());
+  
+  // Auto-enhance layout when data changes significantly
+  useEffect(() => {
+    if (!data || !data.nodes || data.nodes.length === 0) return;
+    
+    // Only apply enhancement for complex diagrams
+    const isComplexDiagram = data.nodes.length > 5 || (data.containers && data.containers.length > 3);
+    
+    if (isComplexDiagram && isEditable) {
+      // Analyze the architecture and apply enhanced positioning
+      const promptAnalysis = generateArchitecturePrompt(data);
+      const analysis = layoutEngineRef.current.analyzeArchitecture(promptAnalysis);
+      const layoutConfig = layoutEngineRef.current.determineLayout(analysis);
+      
+      // Calculate enhanced positions
+      const { positionedNodes, positionedContainers } = positionCalculatorRef.current.calculatePositions(
+        data.nodes,
+        data.containers || [],
+        layoutConfig,
+        analysis
+      );
+      
+      // Apply the enhanced positions if they improve spacing
+      if (positionedNodes.length > 0) {
+        const enhancedNodes = data.nodes.map(node => {
+          const newPosition = positionedNodes.find(p => p.id === node.id);
+          return newPosition ? { ...node, x: newPosition.x, y: newPosition.y } : node;
+        });
+        
+        const enhancedContainers = data.containers ? data.containers.map(container => {
+          const newPosition = positionedContainers.find(c => c.id === container.id);
+          return newPosition ? newPosition : container;
+        }) : data.containers;
+        
+        onDataChange({
+          ...data,
+          nodes: enhancedNodes,
+          containers: enhancedContainers
+        }, true); // Mark as from history to prevent infinite loops
+      }
+    }
+  }, [data.nodes?.length, data.containers?.length]);
+  
+  // Helper function to generate analysis prompt from diagram data
+  const generateArchitecturePrompt = (diagramData: DiagramData): string => {
+    const nodeDescriptions = diagramData.nodes.map(node => 
+      `${node.label} (${node.type})`
+    ).join(', ');
+    
+    const containerInfo = diagramData.containers ? 
+      diagramData.containers.map(c => c.label).join(', ') : '';
+    
+    return `Architecture with components: ${nodeDescriptions}. ${containerInfo ? `Containers: ${containerInfo}.` : ''}`;
+  };
+  
   const saveLinkLabel = (linkId: string, newLabel: string) => {
-    if (!linkId) return;
     
     const updatedLink = { 
       ...data.links.find(l => l.id === linkId), 
