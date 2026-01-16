@@ -8,11 +8,6 @@ import ArchitectureIcon from './ArchitectureIcon';
 import ContextMenu from './ContextMenu';
 import { motion } from 'framer-motion';
 
-// Enhanced layout engines for better architecture visualization
-import { EnhancedLayoutEngine } from '../utils/enhancedLayoutEngine';
-import { EnhancedPositionCalculator } from '../utils/enhancedPositionCalculator';
-import { StructuredLayoutEngine } from '../utils/structuredLayoutEngine';
-
 const GRID_SIZE = 10;
 
 export type InteractionMode = 'select' | 'pan' | 'addNode';
@@ -54,54 +49,8 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [labelInputValue, setLabelInputValue] = useState<string>('');
   
-  // Enhanced layout engine instances
-  const layoutEngineRef = useRef<EnhancedLayoutEngine>(new EnhancedLayoutEngine());
-  const positionCalculatorRef = useRef<EnhancedPositionCalculator>(new EnhancedPositionCalculator());
-  const structuredLayoutEngineRef = useRef<StructuredLayoutEngine>(new StructuredLayoutEngine());
-  
-  // Auto-enhance layout when data changes significantly
-  useEffect(() => {
-    if (!data || !data.nodes || data.nodes.length === 0) return;
-    
-    // Only apply enhancement for complex diagrams
-    const isComplexDiagram = data.nodes.length > 5 || (data.containers && data.containers.length > 3);
-    
-    if (isComplexDiagram && isEditable) {
-      // Use the structured layout engine for better organization
-      const { nodePlacements, containerPlacements } = structuredLayoutEngineRef.current.createStructuredLayout(
-        data.nodes,
-        data.containers || [],
-        data.links
-      );
-      
-      // Apply the structured positions
-      if (nodePlacements.length > 0) {
-        const enhancedNodes = data.nodes.map(node => {
-          const placement = nodePlacements.find(p => p.id === node.id);
-          return placement ? { ...node, x: placement.x, y: placement.y } : node;
-        });
-        
-        const enhancedContainers = data.containers ? data.containers.map(container => {
-          const placement = containerPlacements.find(p => p.id === container.id);
-          return placement ? {
-            ...container,
-            x: placement.x,
-            y: placement.y,
-            width: placement.width,
-            height: placement.height
-          } : container;
-        }) : data.containers;
-        
-        onDataChange({
-          ...data,
-          nodes: enhancedNodes,
-          containers: enhancedContainers
-        }, true); // Mark as from history to prevent infinite loops
-      }
-    }
-  }, [data.nodes?.length, data.containers?.length]);
-  
   const saveLinkLabel = (linkId: string, newLabel: string) => {
+    if (!linkId) return;
     
     const updatedLink = { 
       ...data.links.find(l => l.id === linkId), 
