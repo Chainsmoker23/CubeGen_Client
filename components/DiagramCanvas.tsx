@@ -287,11 +287,25 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
         const directionMultiplier = hasBidirectionalPair ? (isForward ? -1 : 1) : -1;
 
         if (isPrimarilyHorizontal) {
-          // H-V-H path with enhanced bidirectional separation
+          // H-V-H path with enhanced bidirectional separation and obstacle avoidance
           p1 = { x: sourcePoint.x, y: sourcePoint.y };
           p4 = { x: targetPoint.x, y: targetPoint.y };
 
-          const midX = (p1.x + p4.x) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
+          // Calculate the midpoint X, but offset it to avoid crossing through nodes
+          let midX = (p1.x + p4.x) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
+
+          // Smart offset: if nodes are at different Y levels, route around not through
+          const yDiff = Math.abs(p1.y - p4.y);
+          const xDiff = Math.abs(p1.x - p4.x);
+
+          // If the Y difference is significant but X difference is larger (horizontal flow)
+          // route the vertical segment outside the node area
+          if (yDiff > 30 && xDiff > 100) {
+            // Offset the midpoint to route around intermediate nodes
+            const routeOffset = xDiff * 0.1; // 10% offset
+            midX = p4.x - routeOffset; // Route closer to target to avoid middle nodes
+          }
+
           p2 = { x: midX, y: p1.y };
           p3 = { x: midX, y: p4.y };
 
@@ -315,11 +329,25 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
             labelPos = { x: labelX + xOffset, y: labelY };
           }
         } else {
-          // V-H-V path with enhanced bidirectional separation
+          // V-H-V path with enhanced bidirectional separation and obstacle avoidance
           p1 = { x: sourcePoint.x, y: sourcePoint.y };
           p4 = { x: targetPoint.x, y: targetPoint.y };
 
-          const midY = (p1.y + p4.y) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
+          // Calculate the midpoint Y, but offset it to avoid crossing through nodes
+          let midY = (p1.y + p4.y) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
+
+          // Smart offset: if nodes are at different X levels, route around not through
+          const yDiff = Math.abs(p1.y - p4.y);
+          const xDiff = Math.abs(p1.x - p4.x);
+
+          // If the X difference is significant but Y difference is larger (vertical flow)
+          // route the horizontal segment outside the node area
+          if (xDiff > 30 && yDiff > 100) {
+            // Offset the midpoint to route around intermediate nodes
+            const routeOffset = yDiff * 0.1; // 10% offset
+            midY = p4.y - routeOffset; // Route closer to target to avoid middle nodes
+          }
+
           p2 = { x: p1.x, y: midY };
           p3 = { x: p4.x, y: midY };
 
