@@ -126,49 +126,50 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
         const archSize = getArchitectureSize();
 
         // Adaptive layout parameters based on architecture size
+        // PROFESSIONAL SPACING: Generous gaps for clean, readable diagrams
         const layoutParams = {
             small: {
-                canvasPadding: 60,
-                containerGap: 30,
+                canvasPadding: 100,      // was 60 - more margin from canvas edge
+                containerGap: 60,        // was 30 - doubled for breathing room
                 baseNodeHeight: 80,
                 baseNodeWidth: 140,
-                nodeVerticalGap: 40,
-                containerPadding: 60,
-                headerHeight: 35,
+                nodeVerticalGap: 50,     // was 40 - more space between stacked nodes
+                containerPadding: 80,    // was 60 - more internal breathing room
+                headerHeight: 40,        // was 35 - taller headers
                 maxContainersPerRow: 4,
                 labelCharWidth: 8
             },
             medium: {
-                canvasPadding: 50,
-                containerGap: 25,
+                canvasPadding: 80,       // was 50
+                containerGap: 50,        // was 25 - doubled
                 baseNodeHeight: 75,
                 baseNodeWidth: 150,
-                nodeVerticalGap: 35,
-                containerPadding: 50,
-                headerHeight: 32,
-                maxContainersPerRow: 5,
+                nodeVerticalGap: 45,     // was 35
+                containerPadding: 70,    // was 50
+                headerHeight: 36,        // was 32
+                maxContainersPerRow: 4,  // was 5 - fewer per row = more space
                 labelCharWidth: 7.5
             },
             large: {
-                canvasPadding: 40,
-                containerGap: 20,
+                canvasPadding: 70,       // was 40
+                containerGap: 45,        // was 20 - more than doubled
                 baseNodeHeight: 70,
                 baseNodeWidth: 140,
-                nodeVerticalGap: 30,
-                containerPadding: 45,
-                headerHeight: 30,
-                maxContainersPerRow: 6,
+                nodeVerticalGap: 40,     // was 30
+                containerPadding: 60,    // was 45
+                headerHeight: 34,        // was 30
+                maxContainersPerRow: 5,  // was 6
                 labelCharWidth: 7
             },
             enterprise: {
-                canvasPadding: 30,
-                containerGap: 15,
-                baseNodeHeight: 60,
-                baseNodeWidth: 120,
-                nodeVerticalGap: 25,
-                containerPadding: 35,
-                headerHeight: 28,
-                maxContainersPerRow: 8,
+                canvasPadding: 60,       // was 30 - doubled
+                containerGap: 40,        // was 15 - almost tripled
+                baseNodeHeight: 65,      // was 60
+                baseNodeWidth: 130,      // was 120
+                nodeVerticalGap: 35,     // was 25
+                containerPadding: 50,    // was 35
+                headerHeight: 32,        // was 28
+                maxContainersPerRow: 6,  // was 8
                 labelCharWidth: 6.5
             }
         };
@@ -259,8 +260,8 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
                 nodeCount,
                 contentHeight,
                 contentWidth,
-                containerWidth: Math.max(containerWidth, 200),
-                containerHeight: Math.max(containerHeight, 150),
+                containerWidth: Math.max(containerWidth, 280),  // was 200 - larger minimum
+                containerHeight: Math.max(containerHeight, 200), // was 150 - larger minimum
                 childNodeIds,
                 maxNodeWidth,
                 orientation,
