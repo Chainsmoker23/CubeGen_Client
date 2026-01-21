@@ -98,99 +98,116 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
             if (container.borderColor === undefined) container.borderColor = '#000000';
         });
 
-        // Apply intelligent layout positioning based on architecture analysis
-        const layoutEngine = new LayoutDecisionEngine();
-        const positionCalculator = new PositionCalculator();
+        // =========================================================================
+        // INTELLIGENT SWIMLANE LAYOUT ALGORITHM
+        // =========================================================================
 
-        const analysis = layoutEngine.analyzeArchitecture(prompt);
-        const layoutConfig = layoutEngine.determineLayout(analysis);
+        const containers = parsedData.containers || [];
+        const nodes = parsedData.nodes || [];
+        const links = parsedData.links || [];
 
-        // Calculate positions based on layout decision
-        const relationships = analysis.relationships; // We would need to extract relationships from the generated data
-        const positionedResult = positionCalculator.calculatePositions(
-            parsedData.nodes || [],
-            parsedData.containers || [],
-            relationships,
-            layoutConfig,
-            analysis
-        );
+        // Constants for layout
+        const CANVAS_PADDING = 40;
+        const CONTAINER_GAP = 20;
+        const NODE_HEIGHT = 80;
+        const NODE_WIDTH = 150;
+        const NODE_VERTICAL_GAP = 30;
+        const CONTAINER_PADDING = 50;
+        const HEADER_HEIGHT = 35;
 
-        // Update node positions with calculated positions
-        const updatedNodes = (parsedData.nodes || []).map(node => {
-            const positionedNode = positionedResult.positionedNodes.find(pn => pn.id === node.id);
-            if (positionedNode) {
-                return {
-                    ...node,
-                    x: positionedNode.x,
-                    y: positionedNode.y,
-                    width: positionedNode.width,
-                    height: positionedNode.height
-                };
-            }
-            return node;
-        });
+        // Step 1: Calculate container dimensions based on node count
+        const containerMetrics = containers.map((container, index) => {
+            const childNodeIds = container.childNodeIds || [];
+            const nodeCount = childNodeIds.length;
 
-        // Update container positions with calculated positions
-        const updatedContainers = (parsedData.containers || []).map(container => {
-            const positionedContainer = positionedResult.positionedContainers.find(pc => pc.id === container.id);
-            if (positionedContainer) {
-                return {
-                    ...container,
-                    x: positionedContainer.x,
-                    y: positionedContainer.y,
-                    width: positionedContainer.width,
-                    height: positionedContainer.height
-                };
-            }
-            return container;
-        });
+            // Calculate content height based on nodes
+            const contentHeight = nodeCount > 0
+                ? nodeCount * NODE_HEIGHT + (nodeCount - 1) * NODE_VERTICAL_GAP
+                : NODE_HEIGHT; // Minimum for empty containers
 
-        // Apply intelligent container sizing based on node count
-        const smartContainers = updatedContainers.map(container => {
-            const childNodes = updatedNodes.filter(node =>
-                container.childNodeIds?.includes(node.id)
-            );
-            const nodeCount = childNodes.length;
-
-            if (nodeCount === 0) {
-                return { ...container, height: Math.max(container.height, 150) };
-            }
-
-            // Calculate bounding box of child nodes
-            const nodePositions = childNodes.map(n => ({
-                minX: n.x - n.width / 2,
-                maxX: n.x + n.width / 2,
-                minY: n.y - n.height / 2,
-                maxY: n.y + n.height / 2
-            }));
-
-            const bounds = {
-                minX: Math.min(...nodePositions.map(p => p.minX)),
-                maxX: Math.max(...nodePositions.map(p => p.maxX)),
-                minY: Math.min(...nodePositions.map(p => p.minY)),
-                maxY: Math.max(...nodePositions.map(p => p.maxY))
-            };
-
-            // Dynamic padding based on node count
-            const basePadding = 40;
-            const headerHeight = 35;
-            const padding = basePadding + Math.min(nodeCount * 5, 30);
-
-            const newWidth = bounds.maxX - bounds.minX + padding * 2;
-            const newHeight = bounds.maxY - bounds.minY + padding * 2 + headerHeight;
+            // Calculate container dimensions
+            const containerWidth = NODE_WIDTH + CONTAINER_PADDING * 2;
+            const containerHeight = contentHeight + CONTAINER_PADDING * 2 + HEADER_HEIGHT;
 
             return {
-                ...container,
-                x: bounds.minX - padding,
-                y: bounds.minY - padding - headerHeight,
-                width: Math.max(newWidth, 180),
-                height: Math.max(newHeight, 120)
+                container,
+                index,
+                nodeCount,
+                contentHeight,
+                containerWidth: Math.max(containerWidth, 200),
+                containerHeight: Math.max(containerHeight, 150),
+                childNodeIds
             };
         });
 
-        // Assign relational colors to links
-        const linkColorMap = generateLinkColors(parsedData.links || [], parsedData.nodes || []);
-        const coloredLinks = (parsedData.links || []).map((link: Link) => {
+        // Step 2: Find the tallest container to use as reference
+        const maxContainerHeight = Math.max(...containerMetrics.map(m => m.containerHeight), 300);
+
+        // Step 3: Position containers left to right
+        let currentX = CANVAS_PADDING;
+        const positionedContainers = containerMetrics.map((metrics, index) => {
+            const x = currentX;
+            const y = CANVAS_PADDING;
+
+            // Update X for next container
+            currentX += metrics.containerWidth + CONTAINER_GAP;
+
+            return {
+                ...metrics.container,
+                x,
+                y,
+                width: metrics.containerWidth,
+                height: maxContainerHeight // All containers same height for alignment
+            };
+        });
+
+        // Step 4: Position nodes CENTERED within their containers
+        const positionedNodes = nodes.map(node => {
+            // Find which container this node belongs to
+            const containerMetric = containerMetrics.find(m =>
+                m.childNodeIds.includes(node.id)
+            );
+
+            if (!containerMetric) {
+                // Node not in any container - position at canvas edge
+                return {
+                    ...node,
+                    x: CANVAS_PADDING + NODE_WIDTH / 2,
+                    y: maxContainerHeight + CANVAS_PADDING * 2 + NODE_HEIGHT / 2,
+                    width: node.width || NODE_WIDTH,
+                    height: node.height || NODE_HEIGHT
+                };
+            }
+
+            const posContainer = positionedContainers[containerMetric.index];
+            const nodeIndex = containerMetric.childNodeIds.indexOf(node.id);
+            const totalNodes = containerMetric.nodeCount;
+
+            // Calculate center X of container
+            const centerX = posContainer.x + posContainer.width / 2;
+
+            // Calculate vertical distribution - center all nodes vertically
+            const containerContentAreaTop = posContainer.y + HEADER_HEIGHT + CONTAINER_PADDING;
+            const containerContentAreaBottom = posContainer.y + maxContainerHeight - CONTAINER_PADDING;
+            const contentAreaHeight = containerContentAreaBottom - containerContentAreaTop;
+
+            // Distribute nodes evenly in the content area
+            const totalNodesHeight = totalNodes * NODE_HEIGHT + (totalNodes - 1) * NODE_VERTICAL_GAP;
+            const startY = containerContentAreaTop + (contentAreaHeight - totalNodesHeight) / 2;
+            const nodeY = startY + nodeIndex * (NODE_HEIGHT + NODE_VERTICAL_GAP) + NODE_HEIGHT / 2;
+
+            return {
+                ...node,
+                x: centerX,
+                y: nodeY,
+                width: node.width || NODE_WIDTH,
+                height: node.height || NODE_HEIGHT
+            };
+        });
+
+        // Step 5: Assign relational colors to links
+        const linkColorMap = generateLinkColors(links, nodes);
+        const coloredLinks = links.map((link: Link) => {
             const assignedColor = linkColorMap.get(link.id);
             return {
                 ...link,
@@ -200,8 +217,8 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
 
         const updatedDiagram = {
             ...parsedData,
-            nodes: updatedNodes,
-            containers: smartContainers,
+            nodes: positionedNodes,
+            containers: positionedContainers,
             links: coloredLinks
         };
 
