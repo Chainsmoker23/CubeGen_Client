@@ -1015,50 +1015,124 @@ const DiagramContainer = memo<{
     if (container.borderStyle === 'dashed') return '6 4';
     if (container.borderStyle === 'double') return '6 2 6';
 
-    // Default behavior based on container type
+    // Professional styling based on container type
     switch (container.type) {
-      case 'availability-zone':
-        return '6 4'; // Dashed border for availability zones
-      case 'subnet':
-        return '4 2'; // Different dash for subnets
-      case 'vpc':
-        return '8 4'; // Different dash for VPCs
       case 'region':
-        return '10 6'; // Different dash for regions
+        return 'none'; // Solid for regions (outermost boundary)
+      case 'vpc':
+        return 'none'; // Solid for VPCs (network boundary)
+      case 'availability-zone':
+        return '8 4'; // Dashed for AZs (logical zone)
+      case 'subnet':
+        return '4 3'; // Different dash for subnets
+      case 'security-group':
+      case 'group':
+        return '3 3'; // Dotted for security groups
       case 'tier':
       default:
-        return 'none'; // Solid border for tiers and defaults
+        return 'none'; // Solid border for tiers
     }
   };
 
-  // Get border width based on container properties
+  // Get border width based on container type for visual hierarchy
   const getBorderWidth = () => {
     if (container.borderWidth === 'thin') return 1;
     if (container.borderWidth === 'thick') return 3;
-    return 1.5; // default
+
+    // Type-based border width for hierarchy
+    switch (container.type) {
+      case 'region':
+        return 2.5; // Thicker for outermost
+      case 'vpc':
+        return 2;
+      case 'tier':
+        return 1.5;
+      case 'availability-zone':
+      case 'subnet':
+      case 'security-group':
+      case 'group':
+        return 1;
+      default:
+        return 1.5;
+    }
   };
+
+  // Professional color palette for container types
+  const getContainerTypeStyle = () => {
+    switch (container.type) {
+      case 'region':
+        return {
+          borderColor: '#1e3a5f',
+          backgroundColor: 'rgba(30, 58, 95, 0.04)',
+          shadow: 'drop-shadow(0 4px 12px rgba(30, 58, 95, 0.15))'
+        };
+      case 'vpc':
+        return {
+          borderColor: '#4361ee',
+          backgroundColor: 'rgba(67, 97, 238, 0.05)',
+          shadow: 'drop-shadow(0 3px 8px rgba(67, 97, 238, 0.12))'
+        };
+      case 'availability-zone':
+        return {
+          borderColor: '#7c3aed',
+          backgroundColor: 'rgba(124, 58, 237, 0.03)',
+          shadow: 'none'
+        };
+      case 'subnet':
+        return {
+          borderColor: '#6b7280',
+          backgroundColor: 'rgba(107, 114, 128, 0.02)',
+          shadow: 'none'
+        };
+      case 'security-group':
+      case 'group':
+        return {
+          borderColor: '#f59e0b',
+          backgroundColor: 'rgba(245, 158, 11, 0.04)',
+          shadow: 'none'
+        };
+      case 'tier':
+      default:
+        return {
+          borderColor: container.borderColor || '#3f3f46',
+          backgroundColor: fillColor || 'rgba(63, 63, 70, 0.03)',
+          shadow: 'drop-shadow(0 2px 6px rgba(0, 0, 0, 0.08))'
+        };
+    }
+  };
+
+  const typeStyle = getContainerTypeStyle();
 
   // Get border color based on container properties
   const getBorderColor = () => {
-    return container.borderColor || (props.isSelected ? "var(--color-accent-text)" : "var(--color-border)");
+    if (container.borderColor) return container.borderColor;
+    if (props.isSelected) return "var(--color-accent-text)";
+    return typeStyle.borderColor;
   };
 
-  // Enhanced visual feedback for tier boxes
+  // Enhanced visual feedback with type-based shadows
   const getVisualFeedback = () => {
-    const baseStyle = {
-      filter: props.isSelected ? 'drop-shadow(0 0 10px rgba(0, 0, 0, 0.25))' : 'none',
+    const baseStyle: React.CSSProperties = {
+      filter: props.isSelected
+        ? 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.4))'
+        : typeStyle.shadow,
       transition: 'all 0.2s ease',
     };
 
-    // Add animation when container is selected
     if (props.isSelected) {
       return {
         ...baseStyle,
-        strokeWidth: 3, // Thicker border when selected
+        strokeWidth: getBorderWidth() + 1.5,
       };
     }
 
     return baseStyle;
+  };
+
+  // Get fill color - use type style if no custom color
+  const getContainerFill = () => {
+    if (container.color) return container.color;
+    return typeStyle.backgroundColor;
   };
 
   return (
@@ -1076,7 +1150,7 @@ const DiagramContainer = memo<{
         height={container.height}
         rx={16}
         ry={16}
-        fill={fillColor}
+        fill={getContainerFill()}
         stroke={getBorderColor()}
         strokeWidth={getBorderWidth()}
         strokeDasharray={getStrokeDasharray()}
