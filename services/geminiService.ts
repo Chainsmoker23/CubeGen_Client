@@ -198,52 +198,128 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
         });
 
         // =========================================================================
-        // CONTAINER METRICS - Calculate each container's requirements
+        // CONTAINER HIERARCHY - Build parent-child relationships
         // =========================================================================
 
+        // Identify root containers (no parent) and nested containers
+        const rootContainers = containers.filter(c => !c.parentContainerId);
+        const nestedContainers = containers.filter(c => c.parentContainerId);
+
+        // Build container metrics for all containers
         const containerMetrics = containers.map((container, index) => {
             const childNodeIds = container.childNodeIds || [];
             const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
             const nodeCount = childNodes.length;
+            const orientation = container.orientation || 'vertical';
 
-            // Find the widest node in this container
+            // Find the widest/tallest node in this container based on orientation
             let maxNodeWidth = params.baseNodeWidth;
+            let totalNodeWidth = 0;
             childNodes.forEach(node => {
                 const dims = nodeDimensions.get(node.id);
                 if (dims && dims.width > maxNodeWidth) {
                     maxNodeWidth = dims.width;
                 }
+                totalNodeWidth += dims?.width || params.baseNodeWidth;
             });
 
-            // Calculate content dimensions
-            const contentHeight = nodeCount > 0
-                ? nodeCount * params.baseNodeHeight + (nodeCount - 1) * params.nodeVerticalGap
-                : params.baseNodeHeight;
+            // Calculate content dimensions based on orientation
+            let contentHeight: number;
+            let contentWidth: number;
 
-            const containerWidth = maxNodeWidth + params.containerPadding * 2;
+            if (orientation === 'horizontal') {
+                // Nodes arranged horizontally
+                contentWidth = nodeCount > 0
+                    ? totalNodeWidth + (nodeCount - 1) * params.nodeVerticalGap
+                    : params.baseNodeWidth;
+                contentHeight = params.baseNodeHeight;
+            } else {
+                // Nodes arranged vertically (default)
+                contentHeight = nodeCount > 0
+                    ? nodeCount * params.baseNodeHeight + (nodeCount - 1) * params.nodeVerticalGap
+                    : params.baseNodeHeight;
+                contentWidth = maxNodeWidth;
+            }
+
+            // Calculate child containers if this is a parent
+            const childContainerMetrics = nestedContainers
+                .filter(nc => nc.parentContainerId === container.id)
+                .length;
+
+            const containerWidth = contentWidth + params.containerPadding * 2;
             const containerHeight = contentHeight + params.containerPadding * 2 + params.headerHeight;
 
             return {
-                container,
+                container: {
+                    ...container,
+                    orientation,
+                    nestingLevel: container.parentContainerId ? 1 : 0
+                },
                 index,
                 nodeCount,
                 contentHeight,
+                contentWidth,
                 containerWidth: Math.max(containerWidth, 200),
                 containerHeight: Math.max(containerHeight, 150),
                 childNodeIds,
-                maxNodeWidth
+                maxNodeWidth,
+                orientation,
+                hasChildContainers: childContainerMetrics > 0,
+                isNested: !!container.parentContainerId
             };
         });
 
         // =========================================================================
-        // MULTI-ROW LAYOUT - For large architectures
+        // IDENTIFY STANDALONE NODES - Nodes not in any container
         // =========================================================================
 
-        const maxContainersPerRow = params.maxContainersPerRow;
-        const rows: typeof containerMetrics[] = [];
+        const allContainedNodeIds = new Set(containers.flatMap(c => c.childNodeIds || []));
+        const standaloneNodes = nodes.filter(n => !allContainedNodeIds.has(n.id));
+        const containedNodes = nodes.filter(n => allContainedNodeIds.has(n.id));
 
-        for (let i = 0; i < containerMetrics.length; i += maxContainersPerRow) {
-            rows.push(containerMetrics.slice(i, i + maxContainersPerRow));
+        // Analyze standalone node positions based on their links
+        const standaloneNodePositions = standaloneNodes.map(node => {
+            const nodeDims = nodeDimensions.get(node.id) || {
+                width: params.baseNodeWidth,
+                height: params.baseNodeHeight
+            };
+
+            // Check if this node is an entry point (only has outgoing links)
+            const incomingLinks = links.filter(l => {
+                const targetId = typeof l.target === 'string' ? l.target : l.target.id;
+                return targetId === node.id;
+            });
+            const outgoingLinks = links.filter(l => {
+                const sourceId = typeof l.source === 'string' ? l.source : l.source.id;
+                return sourceId === node.id;
+            });
+
+            let position: 'left' | 'right' | 'bottom' = 'left';
+            if (incomingLinks.length === 0 && outgoingLinks.length > 0) {
+                position = 'left'; // Entry point
+            } else if (outgoingLinks.length === 0 && incomingLinks.length > 0) {
+                position = 'right'; // Exit point
+            } else {
+                position = 'bottom'; // Intermediary
+            }
+
+            return {
+                node,
+                nodeDims,
+                position: node.positionHint || position
+            };
+        });
+
+        // =========================================================================
+        // MULTI-ROW LAYOUT - Only for root containers
+        // =========================================================================
+
+        const rootContainerMetrics = containerMetrics.filter(m => !m.isNested);
+        const maxContainersPerRow = params.maxContainersPerRow;
+        const rows: typeof rootContainerMetrics[] = [];
+
+        for (let i = 0; i < rootContainerMetrics.length; i += maxContainersPerRow) {
+            rows.push(rootContainerMetrics.slice(i, i + maxContainersPerRow));
         }
 
         // Calculate row heights (max height in each row)
@@ -251,13 +327,19 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
             Math.max(...row.map(m => m.containerHeight), 200)
         );
 
+        // Calculate space for left-side standalone nodes
+        const leftStandaloneNodes = standaloneNodePositions.filter(n => n.position === 'left');
+        const leftStandaloneWidth = leftStandaloneNodes.length > 0
+            ? Math.max(...leftStandaloneNodes.map(n => n.nodeDims.width)) + params.containerGap * 2
+            : 0;
+
         // =========================================================================
-        // POSITION CONTAINERS - Multi-row aware
+        // POSITION CONTAINERS - Multi-row aware with standalone node space
         // =========================================================================
 
         let globalContainerIndex = 0;
         const positionedContainers = rows.flatMap((row, rowIndex) => {
-            let currentX = params.canvasPadding;
+            let currentX = params.canvasPadding + leftStandaloneWidth;
             const rowY = params.canvasPadding +
                 rowHeights.slice(0, rowIndex).reduce((sum, h) => sum + h + params.containerGap * 2, 0);
             const rowHeight = rowHeights[rowIndex];
@@ -272,7 +354,7 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
                     x,
                     y: rowY,
                     width: metrics.containerWidth,
-                    height: rowHeight // Align to row height
+                    height: rowHeight
                 };
             });
         });
@@ -282,11 +364,71 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
             positionedContainers.map(c => [c.id, c])
         );
 
+        // Calculate total container width for positioning right-side nodes
+        const totalContainerWidth = positionedContainers.length > 0
+            ? Math.max(...positionedContainers.map(c => c.x + c.width))
+            : params.canvasPadding;
+
         // =========================================================================
-        // POSITION NODES - Centered within containers with smart sizing
+        // POSITION STANDALONE NODES - Outside containers
         // =========================================================================
 
-        const positionedNodes = nodes.map(node => {
+        const positionedStandaloneNodes: ArchNode[] = [];
+        const mainRowHeight = rowHeights[0] || 300;
+        const containerCenterY = params.canvasPadding + mainRowHeight / 2;
+
+        // Position left-side nodes (entry points)
+        const leftNodes = standaloneNodePositions.filter(n => n.position === 'left');
+        leftNodes.forEach((nodeInfo, idx) => {
+            const totalLeftHeight = leftNodes.length * params.baseNodeHeight +
+                (leftNodes.length - 1) * params.nodeVerticalGap;
+            const startY = containerCenterY - totalLeftHeight / 2;
+
+            positionedStandaloneNodes.push({
+                ...nodeInfo.node,
+                x: params.canvasPadding + nodeInfo.nodeDims.width / 2,
+                y: startY + idx * (params.baseNodeHeight + params.nodeVerticalGap) + params.baseNodeHeight / 2,
+                width: nodeInfo.nodeDims.width,
+                height: nodeInfo.nodeDims.height
+            });
+        });
+
+        // Position right-side nodes (exit points)
+        const rightNodes = standaloneNodePositions.filter(n => n.position === 'right');
+        rightNodes.forEach((nodeInfo, idx) => {
+            const totalRightHeight = rightNodes.length * params.baseNodeHeight +
+                (rightNodes.length - 1) * params.nodeVerticalGap;
+            const startY = containerCenterY - totalRightHeight / 2;
+
+            positionedStandaloneNodes.push({
+                ...nodeInfo.node,
+                x: totalContainerWidth + params.containerGap + nodeInfo.nodeDims.width / 2,
+                y: startY + idx * (params.baseNodeHeight + params.nodeVerticalGap) + params.baseNodeHeight / 2,
+                width: nodeInfo.nodeDims.width,
+                height: nodeInfo.nodeDims.height
+            });
+        });
+
+        // Position bottom nodes
+        const bottomNodes = standaloneNodePositions.filter(n => n.position === 'bottom');
+        const bottomRowY = params.canvasPadding +
+            rowHeights.reduce((sum, h) => sum + h + params.containerGap * 2, 0);
+        bottomNodes.forEach((nodeInfo, idx) => {
+            positionedStandaloneNodes.push({
+                ...nodeInfo.node,
+                x: params.canvasPadding + leftStandaloneWidth +
+                    idx * (nodeInfo.nodeDims.width + params.containerGap) + nodeInfo.nodeDims.width / 2,
+                y: bottomRowY + nodeInfo.nodeDims.height / 2,
+                width: nodeInfo.nodeDims.width,
+                height: nodeInfo.nodeDims.height
+            });
+        });
+
+        // =========================================================================
+        // POSITION CONTAINED NODES - Centered within containers with orientation
+        // =========================================================================
+
+        const positionedContainedNodes = containedNodes.map(node => {
             // Find which container this node belongs to
             const containerMetric = containerMetrics.find(m =>
                 m.childNodeIds.includes(node.id)
@@ -298,16 +440,7 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
             };
 
             if (!containerMetric) {
-                // Node not in any container - position below the layout
-                const lastRowBottom = params.canvasPadding +
-                    rowHeights.reduce((sum, h) => sum + h + params.containerGap * 2, 0);
-                return {
-                    ...node,
-                    x: params.canvasPadding + nodeDims.width / 2,
-                    y: lastRowBottom + nodeDims.height / 2,
-                    width: nodeDims.width,
-                    height: nodeDims.height
-                };
+                return { ...node, width: nodeDims.width, height: nodeDims.height };
             }
 
             const posContainer = containerPositionMap.get(containerMetric.container.id);
@@ -317,30 +450,56 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
 
             const nodeIndex = containerMetric.childNodeIds.indexOf(node.id);
             const totalNodes = containerMetric.nodeCount;
+            const orientation = containerMetric.orientation;
 
-            // Calculate center X of container
-            const centerX = posContainer.x + posContainer.width / 2;
+            if (orientation === 'horizontal') {
+                // Horizontal node arrangement
+                const containerContentAreaLeft = posContainer.x + params.containerPadding;
+                const containerContentAreaRight = posContainer.x + posContainer.width - params.containerPadding;
+                const contentAreaWidth = containerContentAreaRight - containerContentAreaLeft;
 
-            // Calculate vertical distribution - center all nodes vertically
-            const containerContentAreaTop = posContainer.y + params.headerHeight + params.containerPadding;
-            const containerContentAreaBottom = posContainer.y + posContainer.height - params.containerPadding;
-            const contentAreaHeight = containerContentAreaBottom - containerContentAreaTop;
+                const totalNodesWidth = totalNodes * params.baseNodeWidth +
+                    (totalNodes - 1) * params.containerGap;
+                const startX = containerContentAreaLeft + (contentAreaWidth - totalNodesWidth) / 2;
+                const nodeX = startX + nodeIndex * (params.baseNodeWidth + params.containerGap) +
+                    params.baseNodeWidth / 2;
 
-            // Distribute nodes evenly in the content area
-            const totalNodesHeight = totalNodes * params.baseNodeHeight +
-                (totalNodes - 1) * params.nodeVerticalGap;
-            const startY = containerContentAreaTop + (contentAreaHeight - totalNodesHeight) / 2;
-            const nodeY = startY + nodeIndex * (params.baseNodeHeight + params.nodeVerticalGap) +
-                params.baseNodeHeight / 2;
+                // Center Y
+                const centerY = posContainer.y + params.headerHeight +
+                    (posContainer.height - params.headerHeight) / 2;
 
-            return {
-                ...node,
-                x: centerX,
-                y: nodeY,
-                width: nodeDims.width,
-                height: nodeDims.height
-            };
+                return {
+                    ...node,
+                    x: nodeX,
+                    y: centerY,
+                    width: nodeDims.width,
+                    height: nodeDims.height
+                };
+            } else {
+                // Vertical node arrangement (default)
+                const centerX = posContainer.x + posContainer.width / 2;
+                const containerContentAreaTop = posContainer.y + params.headerHeight + params.containerPadding;
+                const containerContentAreaBottom = posContainer.y + posContainer.height - params.containerPadding;
+                const contentAreaHeight = containerContentAreaBottom - containerContentAreaTop;
+
+                const totalNodesHeight = totalNodes * params.baseNodeHeight +
+                    (totalNodes - 1) * params.nodeVerticalGap;
+                const startY = containerContentAreaTop + (contentAreaHeight - totalNodesHeight) / 2;
+                const nodeY = startY + nodeIndex * (params.baseNodeHeight + params.nodeVerticalGap) +
+                    params.baseNodeHeight / 2;
+
+                return {
+                    ...node,
+                    x: centerX,
+                    y: nodeY,
+                    width: nodeDims.width,
+                    height: nodeDims.height
+                };
+            }
         });
+
+        // Combine all positioned nodes
+        const positionedNodes = [...positionedStandaloneNodes, ...positionedContainedNodes];
 
         // =========================================================================
         // DATA FLOW EMPHASIS - Assign colors and vary thickness by importance
