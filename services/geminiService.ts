@@ -234,8 +234,14 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
                     ? totalNodeWidth + (nodeCount - 1) * params.nodeVerticalGap
                     : params.baseNodeWidth;
                 contentHeight = params.baseNodeHeight;
+            } else if (nodeCount >= 4) {
+                // GRID LAYOUT: 2-column arrangement for 4+ nodes
+                const columns = 2;
+                const rows = Math.ceil(nodeCount / columns);
+                contentWidth = (maxNodeWidth * columns) + params.nodeVerticalGap;
+                contentHeight = rows * params.baseNodeHeight + (rows - 1) * params.nodeVerticalGap;
             } else {
-                // Nodes arranged vertically (default)
+                // Standard vertical arrangement
                 contentHeight = nodeCount > 0
                     ? nodeCount * params.baseNodeHeight + (nodeCount - 1) * params.nodeVerticalGap
                     : params.baseNodeHeight;
@@ -481,25 +487,57 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
                     height: nodeDims.height
                 };
             } else {
-                // Vertical node arrangement (default)
-                const centerX = posContainer.x + posContainer.width / 2;
-                const containerContentAreaTop = posContainer.y + params.headerHeight + params.containerPadding;
-                const containerContentAreaBottom = posContainer.y + posContainer.height - params.containerPadding;
-                const contentAreaHeight = containerContentAreaBottom - containerContentAreaTop;
+                // ADVANCED: Grid-based layout for containers with 4+ nodes
+                const useGridLayout = totalNodes >= 4 && orientation !== 'horizontal';
 
-                const totalNodesHeight = totalNodes * params.baseNodeHeight +
-                    (totalNodes - 1) * params.nodeVerticalGap;
-                const startY = containerContentAreaTop + (contentAreaHeight - totalNodesHeight) / 2;
-                const nodeY = startY + nodeIndex * (params.baseNodeHeight + params.nodeVerticalGap) +
-                    params.baseNodeHeight / 2;
+                if (useGridLayout) {
+                    // 2-column grid layout for better space utilization
+                    const columns = 2;
+                    const rows = Math.ceil(totalNodes / columns);
+                    const col = nodeIndex % columns;
+                    const row = Math.floor(nodeIndex / columns);
 
-                return {
-                    ...node,
-                    x: centerX,
-                    y: nodeY,
-                    width: nodeDims.width,
-                    height: nodeDims.height
-                };
+                    const containerContentAreaTop = posContainer.y + params.headerHeight + params.containerPadding;
+                    const containerContentAreaLeft = posContainer.x + params.containerPadding;
+                    const contentAreaWidth = posContainer.width - params.containerPadding * 2;
+                    const contentAreaHeight = posContainer.height - params.headerHeight - params.containerPadding * 2;
+
+                    // Calculate grid cell dimensions
+                    const cellWidth = contentAreaWidth / columns;
+                    const cellHeight = contentAreaHeight / rows;
+
+                    // Center node within its grid cell
+                    const nodeX = containerContentAreaLeft + cellWidth * col + cellWidth / 2;
+                    const nodeY = containerContentAreaTop + cellHeight * row + cellHeight / 2;
+
+                    return {
+                        ...node,
+                        x: nodeX,
+                        y: nodeY,
+                        width: nodeDims.width,
+                        height: nodeDims.height
+                    };
+                } else {
+                    // Standard vertical node arrangement
+                    const centerX = posContainer.x + posContainer.width / 2;
+                    const containerContentAreaTop = posContainer.y + params.headerHeight + params.containerPadding;
+                    const containerContentAreaBottom = posContainer.y + posContainer.height - params.containerPadding;
+                    const contentAreaHeight = containerContentAreaBottom - containerContentAreaTop;
+
+                    const totalNodesHeight = totalNodes * params.baseNodeHeight +
+                        (totalNodes - 1) * params.nodeVerticalGap;
+                    const startY = containerContentAreaTop + (contentAreaHeight - totalNodesHeight) / 2;
+                    const nodeY = startY + nodeIndex * (params.baseNodeHeight + params.nodeVerticalGap) +
+                        params.baseNodeHeight / 2;
+
+                    return {
+                        ...node,
+                        x: centerX,
+                        y: nodeY,
+                        width: nodeDims.width,
+                        height: nodeDims.height
+                    };
+                }
             }
         });
 
