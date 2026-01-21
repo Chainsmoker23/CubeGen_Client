@@ -352,7 +352,115 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       isForward: boolean,
       isReverse: boolean
     }[];
-  }, [data.links, nodesById, linkGroups]);
+
+    // Store the filtered links for intelligent label adjustment
+    const linksWithPaths = data.links.map(link => {
+      const sourceNode = nodesById.get(typeof link.source === 'string' ? link.source : link.source.id);
+      const targetNode = nodesById.get(typeof link.target === 'string' ? link.target : link.target.id);
+      if (!sourceNode || !targetNode) return null;
+
+      const sourceId = sourceNode.id;
+      const targetId = targetNode.id;
+      const key = [sourceId, targetId].sort().join('--');
+      const group = linkGroups.get(key) || { fwd: [], bwd: [] };
+      const isBidirectional = group.fwd.length > 0 && group.bwd.length > 0;
+      const isForward = group.fwd.includes(link.id);
+      const isReverse = group.bwd.includes(link.id);
+
+      // Find from our already calculated results
+      return {
+        link, pathD: '', labelPos: null as { x: number, y: number } | null,
+        isNeuronLink: false, sourcePoint: { x: sourceNode.x, y: sourceNode.y },
+        targetPoint: { x: targetNode.x, y: targetNode.y }, isBidirectional, isForward, isReverse
+      };
+    }).filter(Boolean) as {
+      link: Link;
+      pathD: string;
+      labelPos: { x: number, y: number } | null;
+      isNeuronLink: boolean;
+      sourcePoint: { x: number, y: number },
+      targetPoint: { x: number, y: number },
+      isBidirectional: boolean,
+      isForward: boolean,
+      isReverse: boolean
+    }[];
+
+    // =========================================================================
+    // INTELLIGENT LABEL POSITIONING - Collision avoidance & smart placement
+    // =========================================================================
+    const adjustedLinks = linksWithPaths.map((linkData, index) => {
+      if (!linkData.labelPos || !linkData.link.label) return linkData;
+
+      const labelWidth = linkData.link.label.length * 7 + 28;
+      const labelHeight = 24;
+      let { x: labelX, y: labelY } = linkData.labelPos;
+
+      // Check collision with nodes
+      const collidesWithNode = (x: number, y: number) => {
+        return data.nodes.some(node => {
+          const nodeLeft = node.x - (node.width || 120) / 2 - 10;
+          const nodeRight = node.x + (node.width || 120) / 2 + 10;
+          const nodeTop = node.y - (node.height || 60) / 2 - 10;
+          const nodeBottom = node.y + (node.height || 60) / 2 + 10;
+
+          const labelLeft = x - labelWidth / 2;
+          const labelRight = x + labelWidth / 2;
+          const labelTop = y - labelHeight / 2;
+          const labelBottom = y + labelHeight / 2;
+
+          return !(labelRight < nodeLeft || labelLeft > nodeRight ||
+            labelBottom < nodeTop || labelTop > nodeBottom);
+        });
+      };
+
+      // Check collision with other labels
+      const collidesWithOtherLabels = (x: number, y: number, currentIndex: number) => {
+        return linksWithPaths.some((other, idx) => {
+          if (idx >= currentIndex || !other.labelPos || !other.link.label) return false;
+
+          const otherWidth = other.link.label.length * 7 + 28;
+          const otherHeight = 24;
+
+          const margin = 8;
+          return Math.abs(x - other.labelPos.x) < (labelWidth + otherWidth) / 2 + margin &&
+            Math.abs(y - other.labelPos.y) < (labelHeight + otherHeight) / 2 + margin;
+        });
+      };
+
+      // Try different positions if collision detected
+      const offsets = [
+        { dx: 0, dy: 0 },      // Original
+        { dx: 0, dy: -25 },    // Move up
+        { dx: 0, dy: 25 },     // Move down
+        { dx: 30, dy: 0 },     // Move right
+        { dx: -30, dy: 0 },    // Move left
+        { dx: 20, dy: -20 },   // Diagonal up-right
+        { dx: -20, dy: -20 },  // Diagonal up-left
+        { dx: 20, dy: 20 },    // Diagonal down-right
+        { dx: -20, dy: 20 },   // Diagonal down-left
+      ];
+
+      for (const offset of offsets) {
+        const testX = labelX + offset.dx;
+        const testY = labelY + offset.dy;
+
+        if (!collidesWithNode(testX, testY) && !collidesWithOtherLabels(testX, testY, index)) {
+          return {
+            ...linkData,
+            labelPos: { x: testX, y: testY }
+          };
+        }
+      }
+
+      // If all positions collide, move further away
+      return {
+        ...linkData,
+        labelPos: { x: labelX + 40, y: labelY - 30 }
+      };
+    });
+
+    return adjustedLinks;
+  }, [data.links, data.nodes, nodesById, linkGroups]);
 
   const isSelected = (id: string) => selectedIds.includes(id);
 
@@ -691,36 +799,60 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
             />
           )}
 
-          {/* Link Labels Layer (On Top) */}
+          {/* Link Labels Layer (On Top) - ADVANCED SMART LABELS */}
           <g>
             {renderableLinks.map(({ link, labelPos }) => {
               if (!link.label || !labelPos) return null;
 
               const labelText = link.label;
-              const labelWidth = labelText.length * 6.5 + 16;
-              const labelHeight = 22;
+              // Smart width calculation based on text length
+              const charWidth = 7;
+              const paddingX = 14;
+              const paddingY = 6;
+              const labelWidth = Math.max(labelText.length * charWidth + paddingX * 2, 50);
+              const labelHeight = 24;
+              const borderRadius = labelHeight / 2; // Pill shape
+
+              // Get link color for accent border
+              const assignedColor = linkColorMap.get(link.id);
+              const linkColor = link.color || assignedColor || 'var(--color-link)';
 
               return (
                 <g key={`${link.id}-label`} style={{ pointerEvents: 'none' }}>
+                  {/* Shadow layer for depth */}
+                  <rect
+                    x={labelPos.x - labelWidth / 2 + 1}
+                    y={labelPos.y - labelHeight / 2 + 2}
+                    width={labelWidth}
+                    height={labelHeight}
+                    rx={borderRadius}
+                    ry={borderRadius}
+                    fill="rgba(0, 0, 0, 0.08)"
+                  />
+                  {/* Background pill with subtle gradient feel */}
                   <rect
                     x={labelPos.x - labelWidth / 2}
                     y={labelPos.y - labelHeight / 2}
                     width={labelWidth}
                     height={labelHeight}
-                    rx={6}
-                    ry={6}
+                    rx={borderRadius}
+                    ry={borderRadius}
                     fill="var(--color-canvas-bg)"
-                    stroke="var(--color-border)"
+                    stroke={linkColor}
                     strokeWidth="1.5"
+                    style={{ filter: 'drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1))' }}
                   />
+                  {/* Label text with improved typography */}
                   <text
                     x={labelPos.x}
                     y={labelPos.y}
-                    dy=".3em"
+                    dy=".35em"
                     textAnchor="middle"
                     fill="var(--color-text-primary)"
-                    fontSize="12px"
+                    fontSize="11px"
                     fontWeight="600"
+                    fontFamily="Inter, system-ui, sans-serif"
+                    letterSpacing="0.2px"
                   >
                     {labelText}
                   </text>
@@ -730,76 +862,80 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           </g>
         </g>
       </svg>
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          options={
-            contextMenu.item.type === 'link'
-              ? [
-                { label: 'Edit Label', onClick: () => handleEditLinkLabel(contextMenu.item as Link) },
-                { label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }
-              ]
-              : [{ label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }]
-          }
-          onClose={() => setContextMenu(null)}
-        />
-      )}
+      {
+        contextMenu && (
+          <ContextMenu
+            x={contextMenu.x}
+            y={contextMenu.y}
+            options={
+              contextMenu.item.type === 'link'
+                ? [
+                  { label: 'Edit Label', onClick: () => handleEditLinkLabel(contextMenu.item as Link) },
+                  { label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }
+                ]
+                : [{ label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }]
+            }
+            onClose={() => setContextMenu(null)}
+          />
+        )
+      }
       {/* Overlay for editing link labels */}
-      {editingLinkId && (
-        <foreignObject
-          x={0}
-          y={0}
-          width="100%"
-          height="100%"
-          style={{ pointerEvents: 'none' }}
-        >
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-auto"
-            onClick={(e) => e.stopPropagation()}
+      {
+        editingLinkId && (
+          <foreignObject
+            x={0}
+            y={0}
+            width="100%"
+            height="100%"
+            style={{ pointerEvents: 'none' }}
           >
             <div
-              className="bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-lg shadow-xl p-4 w-64"
+              className="absolute inset-0 flex items-center justify-center pointer-events-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <input
-                type="text"
-                value={labelInputValue}
-                onChange={(e) => setLabelInputValue(e.target.value)}
-                autoFocus
-                className="w-full px-3 py-2 bg-[var(--color-input-bg)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-text)]"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    saveLinkLabel(editingLinkId, labelInputValue);
-                  } else if (e.key === 'Escape') {
-                    setEditingLinkId(null);
-                    setLabelInputValue('');
-                  }
-                }}
-                placeholder="Enter link label..."
-              />
-              <div className="flex gap-2 mt-2 justify-end">
-                <button
-                  onClick={() => {
-                    setEditingLinkId(null);
-                    setLabelInputValue('');
+              <div
+                className="bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-lg shadow-xl p-4 w-64"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <input
+                  type="text"
+                  value={labelInputValue}
+                  onChange={(e) => setLabelInputValue(e.target.value)}
+                  autoFocus
+                  className="w-full px-3 py-2 bg-[var(--color-input-bg)] text-[var(--color-text-primary)] border border-[var(--color-border)] rounded-md focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-text)]"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      saveLinkLabel(editingLinkId, labelInputValue);
+                    } else if (e.key === 'Escape') {
+                      setEditingLinkId(null);
+                      setLabelInputValue('');
+                    }
                   }}
-                  className="px-3 py-1 text-sm bg-[var(--color-button-bg)] text-[var(--color-text-primary)] rounded-md hover:bg-[var(--color-button-bg-hover)]"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => saveLinkLabel(editingLinkId, labelInputValue)}
-                  className="px-3 py-1 text-sm bg-[var(--color-accent-text)] text-white rounded-md hover:bg-opacity-90"
-                >
-                  Save
-                </button>
+                  placeholder="Enter link label..."
+                />
+                <div className="flex gap-2 mt-2 justify-end">
+                  <button
+                    onClick={() => {
+                      setEditingLinkId(null);
+                      setLabelInputValue('');
+                    }}
+                    className="px-3 py-1 text-sm bg-[var(--color-button-bg)] text-[var(--color-text-primary)] rounded-md hover:bg-[var(--color-button-bg-hover)]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => saveLinkLabel(editingLinkId, labelInputValue)}
+                    className="px-3 py-1 text-sm bg-[var(--color-accent-text)] text-white rounded-md hover:bg-opacity-90"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        </foreignObject>
-      )}
-    </div>
+          </foreignObject>
+        )
+      }
+    </div >
   );
 };
 
