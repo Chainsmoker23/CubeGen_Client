@@ -1,14 +1,17 @@
-import { DiagramData, ArchNode, BlogPost } from "../types";
+import { DiagramData, ArchNode, BlogPost, Link } from "../types";
 import type { Content } from "@google/genai";
 import { supabase } from '../supabaseClient';
+import { LayoutDecisionEngine } from '../utils/layoutDecisionEngine';
+import { PositionCalculator } from '../utils/positionCalculator';
+import { generateLinkColors } from '../utils/linkColorAssigner';
 
-const BACKEND_URL = process.env.VITE_BACKEND_URL || 'https://cubeapi-production-41a2.up.railway.app'; // Use Vite proxy for local development
+const BACKEND_URL = process.env.VITE_BACKEND_URL || 'https://cubeapi-production-41a2.up.railway.app'; // Production backend URL
 
 // Reusable fetch function for our backend API
 const fetchFromApi = async (endpoint: string, body?: object, method: 'POST' | 'GET' | 'DELETE' | 'PUT' = 'POST', adminToken?: string | null) => {
     const { data: { session } } = await supabase.auth.getSession();
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
-    
+
     // Use the admin token if provided, otherwise use the regular user's session token
     const token = adminToken || session?.access_token;
     if (token) {
@@ -43,64 +46,171 @@ const fetchFromApi = async (endpoint: string, body?: object, method: 'POST' | 'G
 };
 
 export const generateDiagramData = async (prompt: string, userApiKey?: string): Promise<{ diagram: DiagramData; newGenerationCount: number | null; }> => {
-  try {
-    const responseData = await fetchFromApi('/generate-diagram', { prompt, userApiKey });
-    const parsedData = responseData.diagram;
-    
-    // Sanitize node and container data to prevent rendering issues from invalid values
-    (parsedData.nodes || []).forEach((node: ArchNode) => {
-        node.x = parseFloat(String(node.x));
-        node.y = parseFloat(String(node.y));
-        node.width = parseFloat(String(node.width));
-        node.height = parseFloat(String(node.height));
+    try {
+        const responseData = await fetchFromApi('/generate-diagram', { prompt, userApiKey });
+        const parsedData = responseData.diagram;
 
-        node.x = isFinite(node.x) ? node.x : 600;
-        node.y = isFinite(node.y) ? node.y : 400;
-        node.width = isFinite(node.width) && node.width > 10 ? node.width : 150;
-        node.height = isFinite(node.height) && node.height > 10 ? node.height : 80;
-        if (node.locked === undefined) node.locked = false;
-        
-        // Set default border properties if not defined
-        if (node.borderStyle === undefined) node.borderStyle = 'solid';
-        if (node.borderWidth === undefined) node.borderWidth = 'medium';
-        if (node.borderColor === undefined) node.borderColor = '#000000';
-        
-        // Auto-sizing safety net to prevent text truncation
-        if (node.label && node.type !== 'neuron' && node.type !== 'layer-label') {
-            const labelLength = node.label.length;
-            // Heuristic to ensure nodes are large enough for their labels.
-            if (labelLength > 25) { // For very long labels
-                if (node.width < 180) node.width = 180;
-                if (node.height < 90) node.height = 90;
-            } else if (labelLength > 18) { // For moderately long labels
-                if (node.width < 160) node.width = 160;
+        // Sanitize node and container data to prevent rendering issues from invalid values
+        (parsedData.nodes || []).forEach((node: ArchNode) => {
+            node.x = parseFloat(String(node.x));
+            node.y = parseFloat(String(node.y));
+            node.width = parseFloat(String(node.width));
+            node.height = parseFloat(String(node.height));
+
+            node.x = isFinite(node.x) ? node.x : 600;
+            node.y = isFinite(node.y) ? node.y : 400;
+            node.width = isFinite(node.width) && node.width > 10 ? node.width : 150;
+            node.height = isFinite(node.height) && node.height > 10 ? node.height : 80;
+            if (node.locked === undefined) node.locked = false;
+
+            // Set default border properties if not defined
+            if (node.borderStyle === undefined) node.borderStyle = 'solid';
+            if (node.borderWidth === undefined) node.borderWidth = 'medium';
+            if (node.borderColor === undefined) node.borderColor = '#000000';
+
+            // Auto-sizing safety net to prevent text truncation
+            if (node.label && node.type !== 'neuron' && node.type !== 'layer-label') {
+                const labelLength = node.label.length;
+                // Heuristic to ensure nodes are large enough for their labels.
+                if (labelLength > 25) { // For very long labels
+                    if (node.width < 180) node.width = 180;
+                    if (node.height < 90) node.height = 90;
+                } else if (labelLength > 18) { // For moderately long labels
+                    if (node.width < 160) node.width = 160;
+                }
             }
-        }
-    });
+        });
 
-    (parsedData.containers || []).forEach((container: any) => {
-        container.x = parseFloat(container.x);
-        container.y = parseFloat(container.y);
-        container.width = parseFloat(container.width);
-        container.height = parseFloat(container.height);
+        (parsedData.containers || []).forEach((container: any) => {
+            container.x = parseFloat(container.x);
+            container.y = parseFloat(container.y);
+            container.width = parseFloat(container.width);
+            container.height = parseFloat(container.height);
 
-        container.x = isFinite(container.x) ? container.x : 100;
-        container.y = isFinite(container.y) ? container.y : 100;
-        container.width = isFinite(container.width) && container.width > 20 ? container.width : 500;
-        container.height = isFinite(container.height) && container.height > 20 ? container.height : 500;
-        
-        // Set default border properties if not defined
-        if (container.borderStyle === undefined) container.borderStyle = 'solid';
-        if (container.borderWidth === undefined) container.borderWidth = 'medium';
-        if (container.borderColor === undefined) container.borderColor = '#000000';
-    });
+            container.x = isFinite(container.x) ? container.x : 100;
+            container.y = isFinite(container.y) ? container.y : 100;
+            container.width = isFinite(container.width) && container.width > 20 ? container.width : 500;
+            container.height = isFinite(container.height) && container.height > 20 ? container.height : 500;
 
-    return { diagram: parsedData as DiagramData, newGenerationCount: responseData.newGenerationCount };
-  } catch (error) {
-    console.error("Error fetching diagram data from backend:", String(error));
-    // Re-throw to be caught by the component
-    throw error;
-  }
+            // Set default border properties if not defined
+            if (container.borderStyle === undefined) container.borderStyle = 'solid';
+            if (container.borderWidth === undefined) container.borderWidth = 'medium';
+            if (container.borderColor === undefined) container.borderColor = '#000000';
+        });
+
+        // Apply intelligent layout positioning based on architecture analysis
+        const layoutEngine = new LayoutDecisionEngine();
+        const positionCalculator = new PositionCalculator();
+
+        const analysis = layoutEngine.analyzeArchitecture(prompt);
+        const layoutConfig = layoutEngine.determineLayout(analysis);
+
+        // Calculate positions based on layout decision
+        const relationships = analysis.relationships; // We would need to extract relationships from the generated data
+        const positionedResult = positionCalculator.calculatePositions(
+            parsedData.nodes || [],
+            parsedData.containers || [],
+            relationships,
+            layoutConfig,
+            analysis
+        );
+
+        // Update node positions with calculated positions
+        const updatedNodes = (parsedData.nodes || []).map(node => {
+            const positionedNode = positionedResult.positionedNodes.find(pn => pn.id === node.id);
+            if (positionedNode) {
+                return {
+                    ...node,
+                    x: positionedNode.x,
+                    y: positionedNode.y,
+                    width: positionedNode.width,
+                    height: positionedNode.height
+                };
+            }
+            return node;
+        });
+
+        // Update container positions with calculated positions
+        const updatedContainers = (parsedData.containers || []).map(container => {
+            const positionedContainer = positionedResult.positionedContainers.find(pc => pc.id === container.id);
+            if (positionedContainer) {
+                return {
+                    ...container,
+                    x: positionedContainer.x,
+                    y: positionedContainer.y,
+                    width: positionedContainer.width,
+                    height: positionedContainer.height
+                };
+            }
+            return container;
+        });
+
+        // Apply intelligent container sizing based on node count
+        const smartContainers = updatedContainers.map(container => {
+            const childNodes = updatedNodes.filter(node =>
+                container.childNodeIds?.includes(node.id)
+            );
+            const nodeCount = childNodes.length;
+
+            if (nodeCount === 0) {
+                return { ...container, height: Math.max(container.height, 150) };
+            }
+
+            // Calculate bounding box of child nodes
+            const nodePositions = childNodes.map(n => ({
+                minX: n.x - n.width / 2,
+                maxX: n.x + n.width / 2,
+                minY: n.y - n.height / 2,
+                maxY: n.y + n.height / 2
+            }));
+
+            const bounds = {
+                minX: Math.min(...nodePositions.map(p => p.minX)),
+                maxX: Math.max(...nodePositions.map(p => p.maxX)),
+                minY: Math.min(...nodePositions.map(p => p.minY)),
+                maxY: Math.max(...nodePositions.map(p => p.maxY))
+            };
+
+            // Dynamic padding based on node count
+            const basePadding = 40;
+            const headerHeight = 35;
+            const padding = basePadding + Math.min(nodeCount * 5, 30);
+
+            const newWidth = bounds.maxX - bounds.minX + padding * 2;
+            const newHeight = bounds.maxY - bounds.minY + padding * 2 + headerHeight;
+
+            return {
+                ...container,
+                x: bounds.minX - padding,
+                y: bounds.minY - padding - headerHeight,
+                width: Math.max(newWidth, 180),
+                height: Math.max(newHeight, 120)
+            };
+        });
+
+        // Assign relational colors to links
+        const linkColorMap = generateLinkColors(parsedData.links || [], parsedData.nodes || []);
+        const coloredLinks = (parsedData.links || []).map((link: Link) => {
+            const assignedColor = linkColorMap.get(link.id);
+            return {
+                ...link,
+                color: link.color || assignedColor || '#374151'
+            };
+        });
+
+        const updatedDiagram = {
+            ...parsedData,
+            nodes: updatedNodes,
+            containers: smartContainers,
+            links: coloredLinks
+        };
+
+        return { diagram: updatedDiagram as DiagramData, newGenerationCount: responseData.newGenerationCount };
+    } catch (error) {
+        console.error("Error fetching diagram data from backend:", String(error));
+        // Re-throw to be caught by the component
+        throw error;
+    }
 };
 
 export const generateNeuralNetworkData = async (prompt: string, userApiKey?: string): Promise<{ diagram: DiagramData; newGenerationCount: number | null; }> => {
@@ -115,13 +225,66 @@ export const generateNeuralNetworkData = async (prompt: string, userApiKey?: str
             node.width = node.type === 'neuron' ? 40 : 100;
             node.height = node.type === 'neuron' ? 40 : 20;
         });
-        
+
         const diagram = {
             ...parsedData,
             architectureType: 'Neural Network',
         } as DiagramData;
 
-        return { diagram, newGenerationCount: responseData.newGenerationCount };
+        // Apply intelligent layout positioning based on architecture analysis
+        const layoutEngine = new LayoutDecisionEngine();
+        const positionCalculator = new PositionCalculator();
+
+        const analysis = layoutEngine.analyzeArchitecture(prompt);
+        const layoutConfig = layoutEngine.determineLayout(analysis);
+
+        // Calculate positions based on layout decision
+        const relationships = analysis.relationships;
+        const positionedResult = positionCalculator.calculatePositions(
+            diagram.nodes || [],
+            diagram.containers || [],
+            relationships,
+            layoutConfig,
+            analysis
+        );
+
+        // Update node positions with calculated positions
+        const updatedNodes = (diagram.nodes || []).map(node => {
+            const positionedNode = positionedResult.positionedNodes.find(pn => pn.id === node.id);
+            if (positionedNode) {
+                return {
+                    ...node,
+                    x: positionedNode.x,
+                    y: positionedNode.y,
+                    width: positionedNode.width,
+                    height: positionedNode.height
+                };
+            }
+            return node;
+        });
+
+        // Update container positions with calculated positions
+        const updatedContainers = (diagram.containers || []).map(container => {
+            const positionedContainer = positionedResult.positionedContainers.find(pc => pc.id === container.id);
+            if (positionedContainer) {
+                return {
+                    ...container,
+                    x: positionedContainer.x,
+                    y: positionedContainer.y,
+                    width: positionedContainer.width,
+                    height: positionedContainer.height
+                };
+            }
+            return container;
+        });
+
+        const updatedDiagram = {
+            ...diagram,
+            nodes: updatedNodes,
+            containers: updatedContainers
+        };
+
+        return { diagram: updatedDiagram, newGenerationCount: responseData.newGenerationCount };
     } catch (error) {
         console.error("Error fetching neural network data from backend:", String(error));
         throw error;
@@ -141,13 +304,13 @@ export const explainArchitecture = async (diagramData: DiagramData, userApiKey?:
 };
 
 export const chatWithAssistant = async (history: Content[], userApiKey?: string): Promise<string> => {
-  try {
-    const { response } = await fetchFromApi('/chat', { history, userApiKey });
-    return response;
-  } catch (error) {
-    console.error("Error fetching chat response from backend:", String(error));
-    throw error;
-  }
+    try {
+        const { response } = await fetchFromApi('/chat', { history, userApiKey });
+        return response;
+    } catch (error) {
+        console.error("Error fetching chat response from backend:", String(error));
+        throw error;
+    }
 };
 
 // --- Payment & Plan Services ---
@@ -372,10 +535,10 @@ export const deleteBlogPost = async (postId: string, adminToken: string): Promis
 export const uploadBlogImage = async (file: File, adminToken: string): Promise<{ publicUrl: string }> => {
     try {
         const base64Data = await fileToBase64(file);
-        return await fetchFromApi('/admin/blog/upload-image', { 
-            fileName: file.name, 
+        return await fetchFromApi('/admin/blog/upload-image', {
+            fileName: file.name,
             fileType: file.type,
-            base64Data 
+            base64Data
         }, 'POST', adminToken);
     } catch (error) {
         console.error("Error uploading blog image:", String(error));
