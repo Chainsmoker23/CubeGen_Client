@@ -8,7 +8,7 @@ import ArchitectureIcon from './ArchitectureIcon';
 import ContextMenu from './ContextMenu';
 import { motion } from 'framer-motion';
 
-import { IntelligentArchitectureService, ArchitectureGenerationOptions } from '../services/intelligentArchitectureService';
+
 import { generateLinkColors, LINK_COLORS } from '../utils/linkColorAssigner';
 
 const GRID_SIZE = 10;
@@ -52,55 +52,11 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [labelInputValue, setLabelInputValue] = useState<string>('');
 
-  // Intelligent architecture service instance
-  const intelligentArchitectureServiceRef = useRef<IntelligentArchitectureService>(new IntelligentArchitectureService());
+  // Auto-enhance layout logic removed - relying on backend generation
 
-  // Auto-enhance layout when data changes significantly
-  useEffect(() => {
-    if (!data || !data.nodes || data.nodes.length === 0) return;
 
-    // Only apply enhancement for complex diagrams
-    const isComplexDiagram = data.nodes.length > 3 || (data.containers && data.containers.length > 1);
+  // Auto-enhance layout logic removed - relying on backend generation
 
-    if (isComplexDiagram && isEditable) {
-      // Use the intelligent architecture service for semantic understanding
-      const options: ArchitectureGenerationOptions = {
-        prompt: `Current diagram with ${data.nodes.length} nodes and ${data.links.length} links. Improve the layout and organization.`,
-        detailLevel: 'standard',
-        useReasoningModel: true
-      };
-
-      // Generate an improved architecture based on current data
-      intelligentArchitectureServiceRef.current.refineArchitecture(data, options.prompt)
-        .then(improvedData => {
-          // Apply the improved positions while preserving user modifications
-          const enhancedNodes = data.nodes.map(node => {
-            const improvedNode = improvedData.nodes.find(n => n.id === node.id);
-            return improvedNode ? { ...node, x: improvedNode.x, y: improvedNode.y } : node;
-          });
-
-          const enhancedContainers = data.containers ? data.containers.map(container => {
-            const improvedContainer = improvedData.containers?.find(c => c.id === container.id);
-            return improvedContainer ? {
-              ...container,
-              x: improvedContainer.x,
-              y: improvedContainer.y,
-              width: improvedContainer.width,
-              height: improvedContainer.height
-            } : container;
-          }) : data.containers;
-
-          onDataChange({
-            ...data,
-            nodes: enhancedNodes,
-            containers: enhancedContainers
-          }, true); // Mark as from history to prevent infinite loops
-        })
-        .catch(error => {
-          console.error('Error refining architecture:', error);
-        });
-    }
-  }, [data.nodes?.length, data.containers?.length, isEditable, intelligentArchitectureServiceRef, data, onDataChange]);
 
   const saveLinkLabel = (linkId: string, newLabel: string) => {
     if (!linkId) return;
