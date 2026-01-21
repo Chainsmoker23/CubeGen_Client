@@ -99,35 +99,129 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
         });
 
         // =========================================================================
-        // INTELLIGENT SWIMLANE LAYOUT ALGORITHM
+        // ADVANCED ADAPTIVE ARCHITECTURE LAYOUT SYSTEM
+        // Handles small, medium, large, and enterprise architectures intelligently
         // =========================================================================
 
         const containers = parsedData.containers || [];
         const nodes = parsedData.nodes || [];
         const links = parsedData.links || [];
 
-        // Constants for layout
-        const CANVAS_PADDING = 40;
-        const CONTAINER_GAP = 20;
-        const NODE_HEIGHT = 80;
-        const NODE_WIDTH = 150;
-        const NODE_VERTICAL_GAP = 30;
-        const CONTAINER_PADDING = 50;
-        const HEADER_HEIGHT = 35;
+        // Calculate totals for adaptive sizing
+        const totalNodes = nodes.length;
+        const totalContainers = containers.length;
 
-        // Step 1: Calculate container dimensions based on node count
+        // =========================================================================
+        // ADAPTIVE SIZING BASED ON ARCHITECTURE COMPLEXITY
+        // =========================================================================
+
+        type ArchitectureSize = 'small' | 'medium' | 'large' | 'enterprise';
+        const getArchitectureSize = (): ArchitectureSize => {
+            if (totalNodes <= 5 && totalContainers <= 3) return 'small';
+            if (totalNodes <= 15 && totalContainers <= 6) return 'medium';
+            if (totalNodes <= 30 && totalContainers <= 10) return 'large';
+            return 'enterprise';
+        };
+
+        const archSize = getArchitectureSize();
+
+        // Adaptive layout parameters based on architecture size
+        const layoutParams = {
+            small: {
+                canvasPadding: 60,
+                containerGap: 30,
+                baseNodeHeight: 80,
+                baseNodeWidth: 140,
+                nodeVerticalGap: 40,
+                containerPadding: 60,
+                headerHeight: 35,
+                maxContainersPerRow: 4,
+                labelCharWidth: 8
+            },
+            medium: {
+                canvasPadding: 50,
+                containerGap: 25,
+                baseNodeHeight: 75,
+                baseNodeWidth: 150,
+                nodeVerticalGap: 35,
+                containerPadding: 50,
+                headerHeight: 32,
+                maxContainersPerRow: 5,
+                labelCharWidth: 7.5
+            },
+            large: {
+                canvasPadding: 40,
+                containerGap: 20,
+                baseNodeHeight: 70,
+                baseNodeWidth: 140,
+                nodeVerticalGap: 30,
+                containerPadding: 45,
+                headerHeight: 30,
+                maxContainersPerRow: 6,
+                labelCharWidth: 7
+            },
+            enterprise: {
+                canvasPadding: 30,
+                containerGap: 15,
+                baseNodeHeight: 60,
+                baseNodeWidth: 120,
+                nodeVerticalGap: 25,
+                containerPadding: 35,
+                headerHeight: 28,
+                maxContainersPerRow: 8,
+                labelCharWidth: 6.5
+            }
+        };
+
+        const params = layoutParams[archSize];
+
+        // =========================================================================
+        // SMART NODE SIZING - Based on label length
+        // =========================================================================
+
+        const calculateNodeWidth = (node: ArchNode): number => {
+            const labelLength = node.label?.length || 10;
+            const calculatedWidth = Math.max(
+                params.baseNodeWidth,
+                labelLength * params.labelCharWidth + 40 // padding for icon and margins
+            );
+            return Math.min(calculatedWidth, 250); // Max width cap
+        };
+
+        // Pre-calculate node dimensions
+        const nodeDimensions = new Map<string, { width: number; height: number }>();
+        nodes.forEach(node => {
+            nodeDimensions.set(node.id, {
+                width: calculateNodeWidth(node),
+                height: node.height || params.baseNodeHeight
+            });
+        });
+
+        // =========================================================================
+        // CONTAINER METRICS - Calculate each container's requirements
+        // =========================================================================
+
         const containerMetrics = containers.map((container, index) => {
             const childNodeIds = container.childNodeIds || [];
-            const nodeCount = childNodeIds.length;
+            const childNodes = nodes.filter(n => childNodeIds.includes(n.id));
+            const nodeCount = childNodes.length;
 
-            // Calculate content height based on nodes
+            // Find the widest node in this container
+            let maxNodeWidth = params.baseNodeWidth;
+            childNodes.forEach(node => {
+                const dims = nodeDimensions.get(node.id);
+                if (dims && dims.width > maxNodeWidth) {
+                    maxNodeWidth = dims.width;
+                }
+            });
+
+            // Calculate content dimensions
             const contentHeight = nodeCount > 0
-                ? nodeCount * NODE_HEIGHT + (nodeCount - 1) * NODE_VERTICAL_GAP
-                : NODE_HEIGHT; // Minimum for empty containers
+                ? nodeCount * params.baseNodeHeight + (nodeCount - 1) * params.nodeVerticalGap
+                : params.baseNodeHeight;
 
-            // Calculate container dimensions
-            const containerWidth = NODE_WIDTH + CONTAINER_PADDING * 2;
-            const containerHeight = contentHeight + CONTAINER_PADDING * 2 + HEADER_HEIGHT;
+            const containerWidth = maxNodeWidth + params.containerPadding * 2;
+            const containerHeight = contentHeight + params.containerPadding * 2 + params.headerHeight;
 
             return {
                 container,
@@ -136,50 +230,91 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
                 contentHeight,
                 containerWidth: Math.max(containerWidth, 200),
                 containerHeight: Math.max(containerHeight, 150),
-                childNodeIds
+                childNodeIds,
+                maxNodeWidth
             };
         });
 
-        // Step 2: Find the tallest container to use as reference
-        const maxContainerHeight = Math.max(...containerMetrics.map(m => m.containerHeight), 300);
+        // =========================================================================
+        // MULTI-ROW LAYOUT - For large architectures
+        // =========================================================================
 
-        // Step 3: Position containers left to right
-        let currentX = CANVAS_PADDING;
-        const positionedContainers = containerMetrics.map((metrics, index) => {
-            const x = currentX;
-            const y = CANVAS_PADDING;
+        const maxContainersPerRow = params.maxContainersPerRow;
+        const rows: typeof containerMetrics[] = [];
 
-            // Update X for next container
-            currentX += metrics.containerWidth + CONTAINER_GAP;
+        for (let i = 0; i < containerMetrics.length; i += maxContainersPerRow) {
+            rows.push(containerMetrics.slice(i, i + maxContainersPerRow));
+        }
 
-            return {
-                ...metrics.container,
-                x,
-                y,
-                width: metrics.containerWidth,
-                height: maxContainerHeight // All containers same height for alignment
-            };
+        // Calculate row heights (max height in each row)
+        const rowHeights = rows.map(row =>
+            Math.max(...row.map(m => m.containerHeight), 200)
+        );
+
+        // =========================================================================
+        // POSITION CONTAINERS - Multi-row aware
+        // =========================================================================
+
+        let globalContainerIndex = 0;
+        const positionedContainers = rows.flatMap((row, rowIndex) => {
+            let currentX = params.canvasPadding;
+            const rowY = params.canvasPadding +
+                rowHeights.slice(0, rowIndex).reduce((sum, h) => sum + h + params.containerGap * 2, 0);
+            const rowHeight = rowHeights[rowIndex];
+
+            return row.map(metrics => {
+                const x = currentX;
+                currentX += metrics.containerWidth + params.containerGap;
+                globalContainerIndex++;
+
+                return {
+                    ...metrics.container,
+                    x,
+                    y: rowY,
+                    width: metrics.containerWidth,
+                    height: rowHeight // Align to row height
+                };
+            });
         });
 
-        // Step 4: Position nodes CENTERED within their containers
+        // Re-map container positions by ID for node positioning
+        const containerPositionMap = new Map(
+            positionedContainers.map(c => [c.id, c])
+        );
+
+        // =========================================================================
+        // POSITION NODES - Centered within containers with smart sizing
+        // =========================================================================
+
         const positionedNodes = nodes.map(node => {
             // Find which container this node belongs to
             const containerMetric = containerMetrics.find(m =>
                 m.childNodeIds.includes(node.id)
             );
 
+            const nodeDims = nodeDimensions.get(node.id) || {
+                width: params.baseNodeWidth,
+                height: params.baseNodeHeight
+            };
+
             if (!containerMetric) {
-                // Node not in any container - position at canvas edge
+                // Node not in any container - position below the layout
+                const lastRowBottom = params.canvasPadding +
+                    rowHeights.reduce((sum, h) => sum + h + params.containerGap * 2, 0);
                 return {
                     ...node,
-                    x: CANVAS_PADDING + NODE_WIDTH / 2,
-                    y: maxContainerHeight + CANVAS_PADDING * 2 + NODE_HEIGHT / 2,
-                    width: node.width || NODE_WIDTH,
-                    height: node.height || NODE_HEIGHT
+                    x: params.canvasPadding + nodeDims.width / 2,
+                    y: lastRowBottom + nodeDims.height / 2,
+                    width: nodeDims.width,
+                    height: nodeDims.height
                 };
             }
 
-            const posContainer = positionedContainers[containerMetric.index];
+            const posContainer = containerPositionMap.get(containerMetric.container.id);
+            if (!posContainer) {
+                return { ...node, width: nodeDims.width, height: nodeDims.height };
+            }
+
             const nodeIndex = containerMetric.childNodeIds.indexOf(node.id);
             const totalNodes = containerMetric.nodeCount;
 
@@ -187,33 +322,64 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
             const centerX = posContainer.x + posContainer.width / 2;
 
             // Calculate vertical distribution - center all nodes vertically
-            const containerContentAreaTop = posContainer.y + HEADER_HEIGHT + CONTAINER_PADDING;
-            const containerContentAreaBottom = posContainer.y + maxContainerHeight - CONTAINER_PADDING;
+            const containerContentAreaTop = posContainer.y + params.headerHeight + params.containerPadding;
+            const containerContentAreaBottom = posContainer.y + posContainer.height - params.containerPadding;
             const contentAreaHeight = containerContentAreaBottom - containerContentAreaTop;
 
             // Distribute nodes evenly in the content area
-            const totalNodesHeight = totalNodes * NODE_HEIGHT + (totalNodes - 1) * NODE_VERTICAL_GAP;
+            const totalNodesHeight = totalNodes * params.baseNodeHeight +
+                (totalNodes - 1) * params.nodeVerticalGap;
             const startY = containerContentAreaTop + (contentAreaHeight - totalNodesHeight) / 2;
-            const nodeY = startY + nodeIndex * (NODE_HEIGHT + NODE_VERTICAL_GAP) + NODE_HEIGHT / 2;
+            const nodeY = startY + nodeIndex * (params.baseNodeHeight + params.nodeVerticalGap) +
+                params.baseNodeHeight / 2;
 
             return {
                 ...node,
                 x: centerX,
                 y: nodeY,
-                width: node.width || NODE_WIDTH,
-                height: node.height || NODE_HEIGHT
+                width: nodeDims.width,
+                height: nodeDims.height
             };
         });
 
-        // Step 5: Assign relational colors to links
+        // =========================================================================
+        // DATA FLOW EMPHASIS - Assign colors and vary thickness by importance
+        // =========================================================================
+
         const linkColorMap = generateLinkColors(links, nodes);
+
+        // Analyze link importance (connections to/from more nodes = more important)
+        const nodeConnectionCount = new Map<string, number>();
+        links.forEach(link => {
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+            nodeConnectionCount.set(sourceId, (nodeConnectionCount.get(sourceId) || 0) + 1);
+            nodeConnectionCount.set(targetId, (nodeConnectionCount.get(targetId) || 0) + 1);
+        });
+
         const coloredLinks = links.map((link: Link) => {
             const assignedColor = linkColorMap.get(link.id);
+            const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+            const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+
+            // Calculate importance: average connections of source and target
+            const sourceConns = nodeConnectionCount.get(sourceId) || 1;
+            const targetConns = nodeConnectionCount.get(targetId) || 1;
+            const importance = (sourceConns + targetConns) / 2;
+
+            // Vary stroke width based on importance (1-4)
+            const strokeWidth = Math.min(4, Math.max(1.5, importance * 0.8));
+
             return {
                 ...link,
-                color: link.color || assignedColor || '#374151'
+                color: link.color || assignedColor || '#374151',
+                strokeWidth: link.strokeWidth || strokeWidth
             };
         });
+
+        // =========================================================================
+        // FINAL OUTPUT
+        // =========================================================================
 
         const updatedDiagram = {
             ...parsedData,
