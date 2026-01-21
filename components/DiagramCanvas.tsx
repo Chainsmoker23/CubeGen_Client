@@ -388,75 +388,86 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
     // =========================================================================
     // INTELLIGENT LABEL POSITIONING - Collision avoidance & smart placement
     // =========================================================================
-    const adjustedLinks = linksWithPaths.map((linkData, index) => {
-      if (!linkData.labelPos || !linkData.link.label) return linkData;
+    const adjustedLinks: typeof linksWithPaths = [];
+
+    // Track occupied areas (starts with nodes)
+    const occupiedZones: { x: number, y: number, w: number, h: number }[] = data.nodes.map(node => ({
+      x: node.x,
+      y: node.y,
+      w: node.width || 120,
+      h: node.height || 60
+    }));
+
+    // Serial processing to ensure later labels avoid earlier ones
+    linksWithPaths.forEach((linkData) => {
+      if (!linkData.labelPos || !linkData.link.label) {
+        adjustedLinks.push(linkData);
+        return;
+      }
 
       const labelWidth = linkData.link.label.length * 7 + 28;
       const labelHeight = 24;
-      let { x: labelX, y: labelY } = linkData.labelPos;
+      let bestPos = linkData.labelPos;
+      let foundCleanSpot = false;
 
-      // Check collision with nodes
-      const collidesWithNode = (x: number, y: number) => {
-        return data.nodes.some(node => {
-          const nodeLeft = node.x - (node.width || 120) / 2 - 10;
-          const nodeRight = node.x + (node.width || 120) / 2 + 10;
-          const nodeTop = node.y - (node.height || 60) / 2 - 10;
-          const nodeBottom = node.y + (node.height || 60) / 2 + 10;
-
-          const labelLeft = x - labelWidth / 2;
-          const labelRight = x + labelWidth / 2;
-          const labelTop = y - labelHeight / 2;
-          const labelBottom = y + labelHeight / 2;
-
-          return !(labelRight < nodeLeft || labelLeft > nodeRight ||
-            labelBottom < nodeTop || labelTop > nodeBottom);
-        });
-      };
-
-      // Check collision with other labels
-      const collidesWithOtherLabels = (x: number, y: number, currentIndex: number) => {
-        return linksWithPaths.some((other, idx) => {
-          if (idx >= currentIndex || !other.labelPos || !other.link.label) return false;
-
-          const otherWidth = other.link.label.length * 7 + 28;
-          const otherHeight = 24;
-
-          const margin = 8;
-          return Math.abs(x - other.labelPos.x) < (labelWidth + otherWidth) / 2 + margin &&
-            Math.abs(y - other.labelPos.y) < (labelHeight + otherHeight) / 2 + margin;
-        });
-      };
-
-      // Try different positions if collision detected
-      const offsets = [
-        { dx: 0, dy: 0 },      // Original
-        { dx: 0, dy: -25 },    // Move up
-        { dx: 0, dy: 25 },     // Move down
-        { dx: 30, dy: 0 },     // Move right
-        { dx: -30, dy: 0 },    // Move left
-        { dx: 20, dy: -20 },   // Diagonal up-right
-        { dx: -20, dy: -20 },  // Diagonal up-left
-        { dx: 20, dy: 20 },    // Diagonal down-right
-        { dx: -20, dy: 20 },   // Diagonal down-left
+      // Define candidates: Original -> Vertical offsets -> Horizontal offsets -> Diagonals -> Extended offsets
+      const candidates = [
+        { x: 0, y: 0 },
+        { x: 0, y: -25 }, { x: 0, y: 25 },     // Close Vertical
+        { x: 0, y: -45 }, { x: 0, y: 45 },     // Far Vertical
+        { x: 30, y: 0 }, { x: -30, y: 0 },     // Close Horizontal
+        { x: 20, y: -20 }, { x: -20, y: -20 }, // Diagonals
+        { x: 20, y: 20 }, { x: -20, y: 20 },
+        { x: 50, y: 0 }, { x: -50, y: 0 }      // Far Horizontal
       ];
 
-      for (const offset of offsets) {
-        const testX = labelX + offset.dx;
-        const testY = labelY + offset.dy;
+      for (const offset of candidates) {
+        const testX = linkData.labelPos.x + offset.x;
+        const testY = linkData.labelPos.y + offset.y;
 
-        if (!collidesWithNode(testX, testY) && !collidesWithOtherLabels(testX, testY, index)) {
-          return {
-            ...linkData,
-            labelPos: { x: testX, y: testY }
-          };
+        // Define label rect with padding
+        const labelRect = {
+          left: testX - labelWidth / 2 - 4, // 4px extra buffer
+          right: testX + labelWidth / 2 + 4,
+          top: testY - labelHeight / 2 - 4,
+          bottom: testY + labelHeight / 2 + 4
+        };
+
+        const hasCollision = occupiedZones.some(zone => {
+          const zoneLeft = zone.x - zone.w / 2;
+          const zoneRight = zone.x + zone.w / 2;
+          const zoneTop = zone.y - zone.h / 2;
+          const zoneBottom = zone.y + zone.h / 2;
+
+          return !(labelRect.right < zoneLeft || labelRect.left > zoneRight ||
+            labelRect.bottom < zoneTop || labelRect.top > zoneBottom);
+        });
+
+        if (!hasCollision) {
+          bestPos = { x: testX, y: testY };
+          foundCleanSpot = true;
+          break;
         }
       }
 
-      // If all positions collide, move further away
-      return {
+      // If no clean spot, try a "desperate" fallback that shifts based on index to avoid total stacking
+      if (!foundCleanSpot) {
+        const shift = (adjustedLinks.length % 3) * 20; // 0, 20, 40
+        bestPos = { x: bestPos.x + 40, y: bestPos.y - 40 - shift };
+      }
+
+      // Register this label's final position as occupied
+      occupiedZones.push({
+        x: bestPos.x,
+        y: bestPos.y,
+        w: labelWidth,
+        h: labelHeight
+      });
+
+      adjustedLinks.push({
         ...linkData,
-        labelPos: { x: labelX + 40, y: labelY - 30 }
-      };
+        labelPos: bestPos
+      });
     });
 
     return adjustedLinks;
