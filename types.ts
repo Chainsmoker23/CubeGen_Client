@@ -39,6 +39,8 @@ export interface ArchNode {
   borderStyle?: 'solid' | 'dotted' | 'dashed' | 'double' | 'none';
   borderWidth?: 'thin' | 'medium' | 'thick';
   borderColor?: string;
+  // NEW: Position hint for standalone nodes
+  positionHint?: 'left' | 'right' | 'top' | 'bottom' | 'center';
 }
 
 export interface Link {
@@ -63,7 +65,7 @@ export interface Link {
 }
 
 export interface Container {
-  id:string;
+  id: string;
   label: string;
   type: 'region' | 'availability-zone' | 'tier' | 'vpc' | 'subnet';
   x: number;
@@ -76,6 +78,13 @@ export interface Container {
   borderStyle?: 'solid' | 'dotted' | 'dashed' | 'double' | 'none';
   borderWidth?: 'thin' | 'medium' | 'thick';
   borderColor?: string;
+  // NEW: Nested container support
+  parentContainerId?: string;    // ID of parent container (for nesting)
+  childContainerIds?: string[];  // IDs of child containers
+  // NEW: Layout orientation
+  orientation?: 'horizontal' | 'vertical';  // Node arrangement within container
+  // NEW: Container level (0 = root, 1 = nested, 2 = deeply nested)
+  nestingLevel?: number;
 }
 
 export interface DiagramData {
@@ -110,7 +119,7 @@ export enum IconType {
   AwsLoadBalancer = 'aws-load-balancer',
   AwsCloudfront = 'aws-cloudfront',
   AwsEcs = 'aws-ecs',
-  
+
   // --- Extended AWS ---
   AwsDynamoDb = 'aws-dynamodb',
   AwsSns = 'aws-sns',
@@ -157,7 +166,7 @@ export enum IconType {
   Wallet = 'wallet',
   Oracle = 'oracle',
   Ipfs = 'ipfs',
-  
+
   // --- Development & Web ---
   Javascript = 'javascript',
   Nginx = 'nginx',
@@ -171,13 +180,13 @@ export enum IconType {
   C = 'c',
   Cpp = 'cpp',
   Swift = 'swift',
-  
+
   // --- AI Models ---
   ChatGpt = 'chat-gpt',
   Gemini = 'gemini',
   Anthropic = 'anthropic',
   Grok = 'grok',
-  
+
   // --- AI / ML ---
   Llm = 'llm',
   VectorDatabase = 'vector-database',
@@ -214,12 +223,12 @@ export enum IconType {
   Postgresql = 'postgresql',
   MongoDb = 'mongodb',
   DataStore = 'data-store',
-  
+
   // --- Security ---
   Firewall = 'firewall',
   AuthService = 'auth-service',
   SecretsManager = 'secrets-manager',
-  
+
   // --- Generic & Vendor ---
   User = 'user',
   WebServer = 'web-server',
