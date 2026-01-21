@@ -36,9 +36,12 @@ const UserManagement: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
+            console.log('Fetching users with search term:', debouncedSearchTerm);
             const fetchedUsers = await getAdminUsers(adminToken, debouncedSearchTerm);
+            console.log('Fetched users:', fetchedUsers);
             setUsers(fetchedUsers);
         } catch (err: any) {
+            console.error('Error fetching users:', err);
             setError(err.message || 'Failed to fetch users.');
         } finally {
             setIsLoading(false);
@@ -95,7 +98,7 @@ const UserManagement: React.FC = () => {
         return <span className={`${baseClasses} ${colorClasses}`}>{status}</span>;
     };
     
-    if (isLoading && users.length === 0) {
+    if (isLoading) {
         return <div className="flex justify-center items-center h-64"><Loader /></div>;
     }
     
@@ -104,7 +107,11 @@ const UserManagement: React.FC = () => {
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                 <div>
                     <h2 className="text-2xl font-bold">User Management</h2>
-                    <p className="text-gray-500 text-sm">Search, view, and manage user subscriptions. Total users: <span className="font-semibold text-pink-600">{users.length}</span></p>
+                    <p className="text-gray-500 text-sm">
+                        Search, view, and manage user subscriptions. 
+                        Total users: <span className="font-semibold text-pink-600">{users.length}</span>
+                        {debouncedSearchTerm && ` (filtered by: "${debouncedSearchTerm}")`}
+                    </p>
                 </div>
                 <div className="w-full md:w-auto relative">
                     <input
@@ -121,6 +128,20 @@ const UserManagement: React.FC = () => {
             </div>
 
             {error && <div className="bg-red-100 border border-red-300 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+
+            <div className="mb-4 flex justify-between items-center">
+                <div>
+                    <button 
+                        onClick={fetchUsers}
+                        className="bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        Refresh Users
+                    </button>
+                </div>
+                <div className="text-sm text-gray-500">
+                    Showing {users.length} user{users.length !== 1 ? 's' : ''}
+                </div>
+            </div>
 
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
