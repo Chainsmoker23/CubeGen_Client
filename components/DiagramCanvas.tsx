@@ -8,6 +8,9 @@ import ArchitectureIcon from './ArchitectureIcon';
 import ContextMenu from './ContextMenu';
 import { motion } from 'framer-motion';
 
+import { IntelligentArchitectureService, ArchitectureGenerationOptions } from '../services/intelligentArchitectureService';
+import { generateLinkColors, LINK_COLORS } from '../utils/linkColorAssigner';
+
 const GRID_SIZE = 10;
 
 export type InteractionMode = 'select' | 'pan' | 'addNode';
@@ -35,7 +38,7 @@ interface DiagramCanvasProps {
 // --- Main Canvas Component ---
 // ====================================================================================
 
-const DiagramCanvas: React.FC<DiagramCanvasProps> = ({ 
+const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   data, onDataChange, selectedIds, setSelectedIds, forwardedRef, fitScreenRef,
   isEditable = false,
   interactionMode = 'select',
@@ -48,21 +51,71 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [editingLinkId, setEditingLinkId] = useState<string | null>(null);
   const [labelInputValue, setLabelInputValue] = useState<string>('');
-  
+
+  // Intelligent architecture service instance
+  const intelligentArchitectureServiceRef = useRef<IntelligentArchitectureService>(new IntelligentArchitectureService());
+
+  // Auto-enhance layout when data changes significantly
+  useEffect(() => {
+    if (!data || !data.nodes || data.nodes.length === 0) return;
+
+    // Only apply enhancement for complex diagrams
+    const isComplexDiagram = data.nodes.length > 3 || (data.containers && data.containers.length > 1);
+
+    if (isComplexDiagram && isEditable) {
+      // Use the intelligent architecture service for semantic understanding
+      const options: ArchitectureGenerationOptions = {
+        prompt: `Current diagram with ${data.nodes.length} nodes and ${data.links.length} links. Improve the layout and organization.`,
+        detailLevel: 'standard',
+        useReasoningModel: true
+      };
+
+      // Generate an improved architecture based on current data
+      intelligentArchitectureServiceRef.current.refineArchitecture(data, options.prompt)
+        .then(improvedData => {
+          // Apply the improved positions while preserving user modifications
+          const enhancedNodes = data.nodes.map(node => {
+            const improvedNode = improvedData.nodes.find(n => n.id === node.id);
+            return improvedNode ? { ...node, x: improvedNode.x, y: improvedNode.y } : node;
+          });
+
+          const enhancedContainers = data.containers ? data.containers.map(container => {
+            const improvedContainer = improvedData.containers?.find(c => c.id === container.id);
+            return improvedContainer ? {
+              ...container,
+              x: improvedContainer.x,
+              y: improvedContainer.y,
+              width: improvedContainer.width,
+              height: improvedContainer.height
+            } : container;
+          }) : data.containers;
+
+          onDataChange({
+            ...data,
+            nodes: enhancedNodes,
+            containers: enhancedContainers
+          }, true); // Mark as from history to prevent infinite loops
+        })
+        .catch(error => {
+          console.error('Error refining architecture:', error);
+        });
+    }
+  }, [data.nodes?.length, data.containers?.length, isEditable, intelligentArchitectureServiceRef, data, onDataChange]);
+
   const saveLinkLabel = (linkId: string, newLabel: string) => {
     if (!linkId) return;
-    
-    const updatedLink = { 
-      ...data.links.find(l => l.id === linkId), 
-      label: newLabel.trim() || undefined 
+
+    const updatedLink = {
+      ...data.links.find(l => l.id === linkId),
+      label: newLabel.trim() || undefined
     } as Link;
-    
+
     const newLinks = data.links.map(l => l.id === linkId ? updatedLink : l);
     onDataChange({ ...data, links: newLinks });
     setEditingLinkId(null);
     setLabelInputValue('');
   };
-  
+
   const nodesById = useMemo(() => new Map(data.nodes.map(node => [node.id, node])), [data.nodes]);
 
   const linkGroups = useMemo(() => {
@@ -84,6 +137,11 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
     return groups;
   }, [data.links]);
 
+  // Generate relational-based colors for links
+  const linkColorMap = useMemo(() => {
+    return generateLinkColors(data.links, data.nodes);
+  }, [data.links, data.nodes]);
+
   const renderableLinks = useMemo(() => {
     return data.links.map(link => {
       const sourceNode = nodesById.get(typeof link.source === 'string' ? link.source : link.source.id);
@@ -93,13 +151,13 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
 
       const sourceId = sourceNode.id;
       const targetId = targetNode.id;
-      
+
       // Enhanced connection point detection with bidirectional separation
       const getConnectionPoint = (node: ArchNode, otherNode: ArchNode, isSource: boolean, isBidirectional: boolean = false, isReverse: boolean = false) => {
         const dx = otherNode.x - node.x;
         const dy = otherNode.y - node.y;
         const isHorizontal = Math.abs(dx) > Math.abs(dy);
-        
+
         // Determine which side to connect to
         let side: 'top' | 'right' | 'bottom' | 'left';
         if (isHorizontal) {
@@ -107,26 +165,26 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
         } else {
           side = dy > 0 ? 'bottom' : 'top';
         }
-        
+
         // Get all connections on this side
         const sideConnections = data.links.filter(l => {
           const lSourceId = typeof l.source === 'string' ? l.source : l.source.id;
           const lTargetId = typeof l.target === 'string' ? l.target : l.target.id;
           const isConnectedToNode = lSourceId === node.id || lTargetId === node.id;
-          
+
           if (!isConnectedToNode) return false;
-          
+
           // Check if this link uses the same side
-          const otherConnectedNode = lSourceId === node.id ? 
-            data.nodes.find(n => n.id === lTargetId) : 
+          const otherConnectedNode = lSourceId === node.id ?
+            data.nodes.find(n => n.id === lTargetId) :
             data.nodes.find(n => n.id === lSourceId);
-            
+
           if (!otherConnectedNode) return false;
-          
+
           const otherDx = otherConnectedNode.x - node.x;
           const otherDy = otherConnectedNode.y - node.y;
           const otherIsHorizontal = Math.abs(otherDx) > Math.abs(otherDy);
-          
+
           if (otherIsHorizontal) {
             const otherSide = otherDx > 0 ? 'right' : 'left';
             return otherSide === side;
@@ -135,22 +193,22 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
             return otherSide === side;
           }
         });
-        
+
         // Calculate position index for this specific connection
-        const connectionIndex = sideConnections.findIndex(l => 
+        const connectionIndex = sideConnections.findIndex(l =>
           (typeof l.source === 'string' ? l.source : l.source.id) === (isSource ? sourceId : targetId) &&
           (typeof l.target === 'string' ? l.target : l.target.id) === (isSource ? targetId : sourceId)
         );
-        
+
         const totalConnections = sideConnections.length;
         const baseSpacing = 15;
-        
+
         // For bidirectional links, offset them to avoid overlap
         let offsetMultiplier = 0;
         if (isBidirectional) {
           offsetMultiplier = isReverse ? -1 : 1;
         }
-        
+
         // Calculate offset position
         let x, y;
         switch (side) {
@@ -171,140 +229,140 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
             y = node.y + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
             break;
         }
-        
+
         return { x, y, side };
       };
-      
+
       // Check if this is part of a bidirectional pair
       const key = [sourceId, targetId].sort().join('--');
       const group = linkGroups.get(key) || { fwd: [], bwd: [] };
       const isBidirectional = group.fwd.length > 0 && group.bwd.length > 0;
       const isForward = group.fwd.includes(link.id);
       const isReverse = group.bwd.includes(link.id);
-      
+
       // Get connection points for both ends
       const sourcePoint = getConnectionPoint(sourceNode, targetNode, true, isBidirectional, false);
       const targetPoint = getConnectionPoint(targetNode, sourceNode, false, isBidirectional, isReverse);
-      
+
       const LINK_SPACING = 12; // Reduced spacing for individual link offset
-      
+
       const allLinksInGroup = [...group.fwd, ...group.bwd];
       const linkIndex = allLinksInGroup.indexOf(link.id);
       const totalLinks = allLinksInGroup.length;
 
       const groupOffset = (linkIndex - (totalLinks - 1) / 2) * LINK_SPACING;
-      
+
       const isNeuronLink = sourceNode.type === 'neuron' && targetNode.type === 'neuron';
 
       // --- Path & Label Calculation with enhanced styling ---
       let pathD: string;
-      let labelPos: {x:number,y:number} | null = null;
+      let labelPos: { x: number, y: number } | null = null;
 
       if (isNeuronLink) {
-          const dx = targetPoint.x - sourcePoint.x;
-          const dy = targetPoint.y - sourcePoint.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist === 0) {
-              pathD = '';
-          } else {
-              const sourceRadius = sourceNode.width / 2;
-              const targetRadius = targetNode.width / 2;
-              const p1 = { x: sourcePoint.x + (dx / dist) * sourceRadius, y: sourcePoint.y + (dy / dist) * sourceRadius };
-              const p4 = { x: targetPoint.x - (dx / dist) * targetRadius, y: targetPoint.y - (dy / dist) * targetRadius };
-              pathD = `M ${p1.x} ${p1.y} L ${p4.x} ${p4.y}`;
-          }
+        const dx = targetPoint.x - sourcePoint.x;
+        const dy = targetPoint.y - sourcePoint.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist === 0) {
+          pathD = '';
+        } else {
+          const sourceRadius = sourceNode.width / 2;
+          const targetRadius = targetNode.width / 2;
+          const p1 = { x: sourcePoint.x + (dx / dist) * sourceRadius, y: sourcePoint.y + (dy / dist) * sourceRadius };
+          const p4 = { x: targetPoint.x - (dx / dist) * targetRadius, y: targetPoint.y - (dy / dist) * targetRadius };
+          pathD = `M ${p1.x} ${p1.y} L ${p4.x} ${p4.y}`;
+        }
       } else {
-          const dx = targetPoint.x - sourcePoint.x;
-          const dy = targetPoint.y - sourcePoint.y;
-          const isPrimarilyHorizontal = Math.abs(dx) > Math.abs(dy);
-          
-          // Use custom curvature from link properties or default
-          const curvaturePercent = link.curvature || 30;
-          const maxCurve = Math.min(Math.abs(dx), Math.abs(dy)) * (curvaturePercent / 100);
-          const cornerRadius = Math.min(8, maxCurve / 3);
-          
-          let p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}, p4: {x: number, y: number};
-          
-          const hasBidirectionalPair = group.fwd.length > 0 && group.bwd.length > 0;
-          const directionMultiplier = hasBidirectionalPair ? (isForward ? -1 : 1) : -1;
+        const dx = targetPoint.x - sourcePoint.x;
+        const dy = targetPoint.y - sourcePoint.y;
+        const isPrimarilyHorizontal = Math.abs(dx) > Math.abs(dy);
 
-          if (isPrimarilyHorizontal) {
-              // H-V-H path with enhanced bidirectional separation
-              p1 = { x: sourcePoint.x, y: sourcePoint.y };
-              p4 = { x: targetPoint.x, y: targetPoint.y };
-          
-              const midX = (p1.x + p4.x) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
-              p2 = { x: midX, y: p1.y };
-              p3 = { x: midX, y: p4.y };
-          
-              // Apply custom angle if specified
-              if (link.angle) {
-                const angleRad = (link.angle * Math.PI) / 180;
-                const offsetX = Math.cos(angleRad) * (link.offsetDistance || 20);
-                const offsetY = Math.sin(angleRad) * (link.offsetDistance || 20);
-                p2.x += offsetX;
-                p2.y += offsetY;
-                p3.x += offsetX;
-                p3.y += offsetY;
-              }
-          
-              pathD = `M ${p1.x} ${p1.y} H ${p2.x - cornerRadius * Math.sign(p2.x - p1.x)} Q ${p2.x} ${p2.y}, ${p2.x} ${p2.y + cornerRadius * Math.sign(p3.y - p2.y)} V ${p3.y - cornerRadius * Math.sign(p3.y - p2.y)} Q ${p3.x} ${p3.y}, ${p3.x + cornerRadius * Math.sign(p4.x - p3.x)} ${p3.y} H ${p4.x}`;
-              
-              if (link.label) {
-                  const labelX = p2.x;
-                  const labelY = (p2.y + p3.y) / 2;
-                  const xOffset = 15 * directionMultiplier;
-                  labelPos = { x: labelX + xOffset, y: labelY };
-              }
-          } else {
-              // V-H-V path with enhanced bidirectional separation
-              p1 = { x: sourcePoint.x, y: sourcePoint.y };
-              p4 = { x: targetPoint.x, y: targetPoint.y };
-              
-              const midY = (p1.y + p4.y) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
-              p2 = { x: p1.x, y: midY };
-              p3 = { x: p4.x, y: midY };
-          
-              // Apply custom angle if specified
-              if (link.angle) {
-                const angleRad = (link.angle * Math.PI) / 180;
-                const offsetX = Math.cos(angleRad) * (link.offsetDistance || 20);
-                const offsetY = Math.sin(angleRad) * (link.offsetDistance || 20);
-                p2.x += offsetX;
-                p2.y += offsetY;
-                p3.x += offsetX;
-                p3.y += offsetY;
-              }
-          
-              pathD = `M ${p1.x} ${p1.y} V ${p2.y - cornerRadius * Math.sign(p2.y - p1.y)} Q ${p2.x} ${p2.y}, ${p2.x + cornerRadius * Math.sign(p3.x - p2.x)} ${p2.y} H ${p3.x - cornerRadius * Math.sign(p3.x - p2.x)} Q ${p3.x} ${p3.y}, ${p3.x} ${p3.y + cornerRadius * Math.sign(p4.y - p3.y)} V ${p4.y}`;
-              
-              if (link.label) {
-                  const labelX = (p2.x + p3.x) / 2;
-                  const labelY = p2.y;
-                  const yOffset = 15 * directionMultiplier;
-                  labelPos = { x: labelX, y: labelY + yOffset };
-              }
+        // Use custom curvature from link properties or default
+        const curvaturePercent = link.curvature || 30;
+        const maxCurve = Math.min(Math.abs(dx), Math.abs(dy)) * (curvaturePercent / 100);
+        const cornerRadius = Math.min(8, maxCurve / 3);
+
+        let p1: { x: number, y: number }, p2: { x: number, y: number }, p3: { x: number, y: number }, p4: { x: number, y: number };
+
+        const hasBidirectionalPair = group.fwd.length > 0 && group.bwd.length > 0;
+        const directionMultiplier = hasBidirectionalPair ? (isForward ? -1 : 1) : -1;
+
+        if (isPrimarilyHorizontal) {
+          // H-V-H path with enhanced bidirectional separation
+          p1 = { x: sourcePoint.x, y: sourcePoint.y };
+          p4 = { x: targetPoint.x, y: targetPoint.y };
+
+          const midX = (p1.x + p4.x) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
+          p2 = { x: midX, y: p1.y };
+          p3 = { x: midX, y: p4.y };
+
+          // Apply custom angle if specified
+          if (link.angle) {
+            const angleRad = (link.angle * Math.PI) / 180;
+            const offsetX = Math.cos(angleRad) * (link.offsetDistance || 20);
+            const offsetY = Math.sin(angleRad) * (link.offsetDistance || 20);
+            p2.x += offsetX;
+            p2.y += offsetY;
+            p3.x += offsetX;
+            p3.y += offsetY;
           }
+
+          pathD = `M ${p1.x} ${p1.y} H ${p2.x - cornerRadius * Math.sign(p2.x - p1.x)} Q ${p2.x} ${p2.y}, ${p2.x} ${p2.y + cornerRadius * Math.sign(p3.y - p2.y)} V ${p3.y - cornerRadius * Math.sign(p3.y - p2.y)} Q ${p3.x} ${p3.y}, ${p3.x + cornerRadius * Math.sign(p4.x - p3.x)} ${p3.y} H ${p4.x}`;
+
+          if (link.label) {
+            const labelX = p2.x;
+            const labelY = (p2.y + p3.y) / 2;
+            const xOffset = 15 * directionMultiplier;
+            labelPos = { x: labelX + xOffset, y: labelY };
+          }
+        } else {
+          // V-H-V path with enhanced bidirectional separation
+          p1 = { x: sourcePoint.x, y: sourcePoint.y };
+          p4 = { x: targetPoint.x, y: targetPoint.y };
+
+          const midY = (p1.y + p4.y) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
+          p2 = { x: p1.x, y: midY };
+          p3 = { x: p4.x, y: midY };
+
+          // Apply custom angle if specified
+          if (link.angle) {
+            const angleRad = (link.angle * Math.PI) / 180;
+            const offsetX = Math.cos(angleRad) * (link.offsetDistance || 20);
+            const offsetY = Math.sin(angleRad) * (link.offsetDistance || 20);
+            p2.x += offsetX;
+            p2.y += offsetY;
+            p3.x += offsetX;
+            p3.y += offsetY;
+          }
+
+          pathD = `M ${p1.x} ${p1.y} V ${p2.y - cornerRadius * Math.sign(p2.y - p1.y)} Q ${p2.x} ${p2.y}, ${p2.x + cornerRadius * Math.sign(p3.x - p2.x)} ${p2.y} H ${p3.x - cornerRadius * Math.sign(p3.x - p2.x)} Q ${p3.x} ${p3.y}, ${p3.x} ${p3.y + cornerRadius * Math.sign(p4.y - p3.y)} V ${p4.y}`;
+
+          if (link.label) {
+            const labelX = (p2.x + p3.x) / 2;
+            const labelY = p2.y;
+            const yOffset = 15 * directionMultiplier;
+            labelPos = { x: labelX, y: labelY + yOffset };
+          }
+        }
       }
 
-      return { 
-        link, 
-        pathD, 
-        labelPos, 
-        isNeuronLink, 
-        sourcePoint, 
+      return {
+        link,
+        pathD,
+        labelPos,
+        isNeuronLink,
+        sourcePoint,
         targetPoint,
         isBidirectional,
         isForward,
         isReverse
       };
-    }).filter(Boolean) as { 
-      link: Link; 
-      pathD: string; 
-      labelPos: {x: number, y: number} | null; 
-      isNeuronLink: boolean; 
-      sourcePoint: {x: number, y: number}, 
-      targetPoint: {x: number, y: number},
+    }).filter(Boolean) as {
+      link: Link;
+      pathD: string;
+      labelPos: { x: number, y: number } | null;
+      isNeuronLink: boolean;
+      sourcePoint: { x: number, y: number },
+      targetPoint: { x: number, y: number },
       isBidirectional: boolean,
       isForward: boolean,
       isReverse: boolean
@@ -319,7 +377,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       'var(--color-tier-4)', 'var(--color-tier-5)', 'var(--color-tier-6)',
     ];
     // Filter containers that should get tier coloring - including all container types
-    const tierContainers = data.containers?.filter(c => 
+    const tierContainers = data.containers?.filter(c =>
       c.type === 'tier' || c.type === 'vpc' || c.type === 'subnet' || c.type === 'region' || c.type === 'availability-zone'
     ).sort((a, b) => a.y - b.y) || [];
     const colorMap = new Map<string, string>();
@@ -357,9 +415,9 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
         setViewTransform(event.transform);
         if (onTransformChange) onTransformChange(event.transform);
       });
-      
+
     svg.call(zoomBehavior).on("dblclick.zoom", null);
-    
+
     const fitToScreen = () => {
       const contentGroup = svg.select<SVGGElement>('#diagram-content').node();
       if (!contentGroup || !parent || data.nodes.length === 0) return;
@@ -372,9 +430,9 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       const ty = parentHeight / 2 - (diagramY + diagramHeight / 2) * scale;
       svg.transition().duration(750).call(zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(scale));
     };
-    
+
     if (fitScreenRef) fitScreenRef.current = fitToScreen;
-    
+
     const handleCanvasClick = (event: PointerEvent) => {
       if (!event.defaultPrevented && (event.target as SVGSVGElement).tagName === 'svg') {
         if (onCanvasClick) {
@@ -385,7 +443,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
         setContextMenu(null);
       }
     };
-    
+
     const svgNode = svg.node();
     if (svgNode) svgNode.addEventListener('pointerdown', handleCanvasClick as EventListener);
 
@@ -403,7 +461,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       setContextMenu({ x: e.clientX - rect.left, y: e.clientY - rect.top, item });
     }
   };
-  
+
   const handleDeleteItem = (item: ArchNode | Link | Container) => {
     const { id } = item;
     const newNodes = data.nodes.filter(n => n.id !== id);
@@ -413,17 +471,17 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
     onDataChange({ ...data, nodes: newNodes, containers: newContainers, links: newLinks });
     setContextMenu(null);
   }
-  
+
   const handleEditLinkLabel = (link: Link) => {
     setEditingLinkId(link.id);
     setLabelInputValue(link.label || '');
     setContextMenu(null);
   }
-  
+
   const getCursor = () => {
     if (!isEditable) return 'default';
     if (linkingState) return 'crosshair';
-    switch(interactionMode) {
+    switch (interactionMode) {
       default: return 'default';
     }
   };
@@ -435,12 +493,24 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           <pattern id="grid" width={GRID_SIZE} height={GRID_SIZE} patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="1" fill="var(--color-grid-dot)"></circle>
           </pattern>
+          {/* Default arrowheads */}
           <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" orient="auto" markerWidth="6" markerHeight="6">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
           </marker>
           <marker id="arrowhead-reverse" viewBox="0 0 10 10" refX="2" refY="5" orient="auto" markerWidth="6" markerHeight="6">
-            <path d="M 10 0 L 0 5 L 10 10 z" fill="currentColor"/>
+            <path d="M 10 0 L 0 5 L 10 10 z" fill="currentColor" />
           </marker>
+          {/* Color-coded arrowheads for relational coloring */}
+          {LINK_COLORS.map((color, idx) => (
+            <React.Fragment key={`arrow-${idx}`}>
+              <marker id={`arrowhead-${color.replace('#', '')}`} viewBox="0 0 10 10" refX="8" refY="5" orient="auto" markerWidth="6" markerHeight="6">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
+              </marker>
+              <marker id={`arrowhead-reverse-${color.replace('#', '')}`} viewBox="0 0 10 10" refX="2" refY="5" orient="auto" markerWidth="6" markerHeight="6">
+                <path d="M 10 0 L 0 5 L 10 10 z" fill={color} />
+              </marker>
+            </React.Fragment>
+          ))}
           <filter id="drop-shadow" x="-50%" y="-50%" width="200%" height="200%">
             <feDropShadow dx="1" dy="2" stdDeviation="2" floodColor="var(--color-shadow)" floodOpacity="0.1" />
           </filter>
@@ -467,16 +537,32 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
               />
             ))}
           </g>
-          
+
           {/* Link Paths Layer */}
           <g>
             {renderableLinks.map(({ link, pathD, labelPos, isNeuronLink, sourcePoint, targetPoint, isBidirectional, isForward, isReverse }) => {
               const selected = isSelected(link.id);
-              
+
+              // Use relational colors from linkColorMap, falling back to custom or default
+              const assignedColor = linkColorMap.get(link.id);
+              const color = selected
+                ? 'var(--color-accent-text)'
+                : (link.color || assignedColor || 'var(--color-link)');
+
+              // Get the arrowhead marker ID based on the color
+              const getArrowheadId = (colorValue: string) => {
+                if (colorValue.startsWith('#')) {
+                  return `arrowhead-${colorValue.replace('#', '')}`;
+                }
+                return 'arrowhead'; // Fallback to default
+              };
+
+              const arrowheadId = getArrowheadId(color);
+              const arrowheadReverseId = getArrowheadId(color) + '-reverse';
+
               // Use custom properties or defaults
               const strokeWidth = link.strokeWidth || (isNeuronLink ? 0.5 : 2);
-              const color = link.color || (selected ? 'var(--color-accent-text)' : 'var(--color-link)');
-              
+
               // Handle dash patterns
               let dashArray = 'none';
               if (link.dashPattern && link.dashPattern !== 'none') {
@@ -503,18 +589,18 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                 >
                   {/* Click target area */}
                   <path d={pathD} stroke="transparent" strokeWidth={20} fill="none" />
-                  
-                  {/* Main link path */}
+
+                  {/* Main link path with colored arrowhead */}
                   <path
                     d={pathD}
                     stroke={color}
                     strokeWidth={strokeWidth}
                     strokeDasharray={dashArray === 'none' ? undefined : dashArray}
                     fill="none"
-                    markerEnd={link.endMarker !== false && !isNeuronLink ? `url(#arrowhead)` : undefined}
-                    markerStart={link.startMarker ? `url(#arrowhead-reverse)` : undefined}
+                    markerEnd={link.endMarker !== false && !isNeuronLink ? `url(#${arrowheadId})` : undefined}
+                    markerStart={link.startMarker ? `url(#${arrowheadReverseId.replace('-reverse-reverse', '-reverse')})` : undefined}
                   />
-                  
+
                   {/* Interactive label area for adding/editing link labels */}
                   {labelPos && (
                     <g onClick={(e) => {
@@ -534,7 +620,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                       />
                     </g>
                   )}
-                  
+
                   {/* Alternative click area for adding labels if no label exists yet */}
                   {!labelPos && (
                     <g onClick={(e) => {
@@ -546,7 +632,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                       <path d={pathD} stroke="transparent" strokeWidth={15} fill="none" className="cursor-pointer" />
                     </g>
                   )}
-                  
+
                   {/* Visualize connection points and bidirectional separation (debug) */}
                   {/*
                   <circle cx={sourcePoint.x} cy={sourcePoint.y} r="3" fill={isBidirectional ? (isForward ? "red" : "orange") : "green"} />
@@ -556,7 +642,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
               );
             })}
           </g>
-          
+
           {/* Nodes Layer */}
           <g>
             {data.nodes.map(node => (
@@ -594,7 +680,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
               style={{ pointerEvents: 'none' }}
             />
           )}
-          
+
           {/* Link Labels Layer (On Top) */}
           <g>
             {renderableLinks.map(({ link, labelPos }) => {
@@ -639,11 +725,11 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           x={contextMenu.x}
           y={contextMenu.y}
           options={
-            contextMenu.item.type === 'link' 
+            contextMenu.item.type === 'link'
               ? [
-                  { label: 'Edit Label', onClick: () => handleEditLinkLabel(contextMenu.item as Link) },
-                  { label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }
-                ]
+                { label: 'Edit Label', onClick: () => handleEditLinkLabel(contextMenu.item as Link) },
+                { label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }
+              ]
               : [{ label: 'Delete', onClick: () => handleDeleteItem(contextMenu.item) }]
           }
           onClose={() => setContextMenu(null)}
@@ -658,11 +744,11 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           height="100%"
           style={{ pointerEvents: 'none' }}
         >
-          <div 
+          <div
             className="absolute inset-0 flex items-center justify-center pointer-events-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div 
+            <div
               className="bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-lg shadow-xl p-4 w-64"
               onClick={(e) => e.stopPropagation()}
             >
@@ -854,7 +940,7 @@ const DiagramContainer = memo<{
             (c.childNodeIds || []).forEach(childId => childNodeIdsToMove.add(childId));
           }
         });
-        
+
         const newContainers = currentData.containers?.map(c => {
           if (containerIdsToMove.has(c.id)) {
             return { ...c, x: c.x + dx, y: c.y + dy };
@@ -922,8 +1008,8 @@ const DiagramContainer = memo<{
 
     const getCoords = () => {
       const size = 14; // Increased size for better usability
-      let x = container.x - size/2;
-      let y = container.y - size/2;
+      let x = container.x - size / 2;
+      let y = container.y - size / 2;
       if (handle.includes('r')) x += container.width;
       if (handle.includes('b')) y += container.height;
       return { x, y };
@@ -937,16 +1023,16 @@ const DiagramContainer = memo<{
 
     return <rect ref={handleRef} data-handle="true" {...getCoords()} width={14} height={14} fill="var(--color-accent-text)" stroke="var(--color-node-bg)" strokeWidth={2} cursor={getCursor()} className="hover:brightness-125 transition-all duration-150" rx={2} ry={2} />;
   };
-  
+
   // Use border style from container properties if available
   const getStrokeDasharray = () => {
     // Use custom border style if specified
     if (container.borderStyle === 'dotted') return '2 2';
     if (container.borderStyle === 'dashed') return '6 4';
     if (container.borderStyle === 'double') return '6 2 6';
-    
+
     // Default behavior based on container type
-    switch(container.type) {
+    switch (container.type) {
       case 'availability-zone':
         return '6 4'; // Dashed border for availability zones
       case 'subnet':
@@ -979,7 +1065,7 @@ const DiagramContainer = memo<{
       filter: props.isSelected ? 'drop-shadow(0 0 10px rgba(0, 0, 0, 0.25))' : 'none',
       transition: 'all 0.2s ease',
     };
-    
+
     // Add animation when container is selected
     if (props.isSelected) {
       return {
@@ -987,7 +1073,7 @@ const DiagramContainer = memo<{
         strokeWidth: 3, // Thicker border when selected
       };
     }
-    
+
     return baseStyle;
   };
 
@@ -1074,18 +1160,18 @@ const DiagramNode = memo<{
         const targetId = typeof link.target === 'string' ? link.target : link.target.id;
         return sourceId === node.id || targetId === node.id;
       });
-      
+
       const sideConnections = connections.filter(link => {
         const sourceNode = dataRef.current.nodes.find(n => n.id === (typeof link.source === 'string' ? link.source : link.source.id));
         const targetNode = dataRef.current.nodes.find(n => n.id === (typeof link.target === 'string' ? link.target : link.target.id));
-        
+
         if (!sourceNode || !targetNode) return false;
-        
+
         // Determine which side this connection uses based on node positions
         const dx = targetNode.x - sourceNode.x;
         const dy = targetNode.y - sourceNode.y;
         const isSource = (typeof link.source === 'string' ? link.source : link.source.id) === node.id;
-        
+
         if (Math.abs(dx) > Math.abs(dy)) {
           // Horizontal connection
           if (isSource) {
@@ -1102,16 +1188,16 @@ const DiagramNode = memo<{
           }
         }
       });
-      
+
       // Create up to 3 evenly spaced positions per side
       const positions = [];
       const count = Math.min(3, Math.max(1, sideConnections.length));
-      
+
       for (let i = 0; i < count; i++) {
         let x, y;
         const spacing = 20; // Distance between connection points
         const offset = (i - (count - 1) / 2) * spacing;
-        
+
         switch (side) {
           case 'top':
             x = node.x + offset;
@@ -1130,13 +1216,13 @@ const DiagramNode = memo<{
             y = node.y + offset;
             break;
         }
-        
+
         positions.push({ x, y, index: i });
       }
-      
+
       return positions;
     };
-    
+
     return {
       top: getNodeConnections('top'),
       right: getNodeConnections('right'),
@@ -1167,7 +1253,7 @@ const DiagramNode = memo<{
       .on('drag', (event) => {
         const { dx, dy } = event;
         const { selectedIds, node } = props;
-        
+
         const idsToMove = new Set(selectedIds);
         if (!idsToMove.has(node.id)) {
           idsToMove.add(node.id);
@@ -1188,7 +1274,7 @@ const DiagramNode = memo<{
           props.onDataChange(currentData, false);
         }
       });
-      
+
     selection.call(dragBehavior);
     return () => { selection.on('.drag', null); };
   }, [props.onDataChange, props.selectedIds, isEditable, interactionMode, node.id, props.setSelectedIds, setIsDragging]);
@@ -1227,8 +1313,8 @@ const DiagramNode = memo<{
 
     const getCoords = () => {
       const size = 8;
-      let x = node.x - node.width/2 - size/2;
-      let y = node.y - node.height/2 - size/2;
+      let x = node.x - node.width / 2 - size / 2;
+      let y = node.y - node.height / 2 - size / 2;
       if (handle.includes('r')) x += node.width;
       if (handle.includes('b')) y += node.height;
       return { x, y };
@@ -1236,10 +1322,10 @@ const DiagramNode = memo<{
 
     return <rect ref={handleRef} {...getCoords()} width={8} height={8} fill="var(--color-accent-text)" stroke="var(--color-node-bg)" strokeWidth={2} cursor={`${handle.includes('b') ? 's' : 'n'}${handle.includes('r') ? 'e' : 'w'}-resize`} />;
   };
-  
+
   const isResizing = resizingNodeId === node.id;
   const isCustomIcon = !!node.customIcon;
-  
+
   const commonProps = {
     fill: node.color || "var(--color-node-bg)",
     stroke: node.borderColor || (isLinkHoverTarget ? "var(--color-accent-text)" : (isSelected ? "var(--color-accent-text)" : "var(--color-border)")),
@@ -1248,7 +1334,7 @@ const DiagramNode = memo<{
   };
 
   const nodeBody = <ShapeRenderer node={node} commonProps={commonProps} />;
-  
+
 
   return (
     <g
@@ -1260,13 +1346,13 @@ const DiagramNode = memo<{
       className={`diagram-node node-id-${node.id}`}
     >
       {node.description && <title>{node.description}</title>}
-      <motion.g 
-        animate={{ x: node.x - node.width/2, y: node.y - node.height/2 }} 
+      <motion.g
+        animate={{ x: node.x - node.width / 2, y: node.y - node.height / 2 }}
         transition={isDragging ? { type: false } : { type: 'spring', stiffness: 500, damping: 30 }}
         style={{ filter: 'url(#drop-shadow)', transition: 'stroke 0.2s ease-in-out' }}
       >
         {nodeBody}
-        
+
         {isCustomIcon ? (
           (() => {
             const iconSizePercent = node.customIconSize || 60;
@@ -1275,7 +1361,7 @@ const DiagramNode = memo<{
             const availableHeight = node.height - 8 - labelHeight;
             const baseSize = Math.min(availableWidth, availableHeight);
             const iconSize = (baseSize * iconSizePercent) / 100;
-            
+
             const iconX = (node.width - iconSize) / 2;
             const iconY = (availableHeight - iconSize) / 2 + 8;
 
@@ -1310,10 +1396,10 @@ const DiagramNode = memo<{
         )}
       </motion.g>
       {isResizing && isSelected && ['tl', 'tr', 'bl', 'br'].map(h => <ResizeHandle key={h} handle={h as 'br' | 'bl' | 'tr' | 'tl'} />)}
-      
+
       {/* Connection Handles - Enhanced with multiple ports per side */}
       {isSelected && isEditable && Object.entries(getConnectionHandles).map(([side, positions]) => (
-        (positions as Array<{x: number, y: number, index: number}>).map((pos, index) => (
+        (positions as Array<{ x: number, y: number, index: number }>).map((pos, index) => (
           <g key={`${side}-${index}`}>
             <circle
               className="connection-handle"
