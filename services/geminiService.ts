@@ -349,12 +349,16 @@ export const generateDiagramData = async (prompt: string, userApiKey?: string): 
                 currentX += metrics.containerWidth + params.containerGap;
                 globalContainerIndex++;
 
+                // Use individual container height, but vertically center within row for alignment
+                const actualHeight = metrics.containerHeight;
+                const verticalOffset = (rowHeight - actualHeight) / 2;
+
                 return {
                     ...metrics.container,
                     x,
-                    y: rowY,
+                    y: rowY + verticalOffset, // Vertically center smaller containers
                     width: metrics.containerWidth,
-                    height: rowHeight
+                    height: actualHeight // Use actual height, not max row height
                 };
             });
         });
