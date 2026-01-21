@@ -67,7 +67,7 @@ export interface Link {
 export interface Container {
   id: string;
   label: string;
-  type: 'region' | 'availability-zone' | 'tier' | 'vpc' | 'subnet';
+  type: 'region' | 'availability-zone' | 'tier' | 'vpc' | 'subnet' | 'security-group' | 'group';
   x: number;
   y: number;
   width: number;
