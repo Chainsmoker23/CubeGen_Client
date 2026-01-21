@@ -235,7 +235,8 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
         // Use custom curvature from link properties or default
         const curvaturePercent = link.curvature || 30;
         const maxCurve = Math.min(Math.abs(dx), Math.abs(dy)) * (curvaturePercent / 100);
-        const cornerRadius = Math.min(8, maxCurve / 3);
+        // Enhanced corner radius for smoother, professional arrow turns
+        const cornerRadius = Math.min(14, maxCurve / 2); // was 8, now 14 for smoother curves
 
         let p1: { x: number, y: number }, p2: { x: number, y: number }, p3: { x: number, y: number }, p4: { x: number, y: number };
 
@@ -544,8 +545,33 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
               const arrowheadId = getArrowheadId(color);
               const arrowheadReverseId = getArrowheadId(color) + '-reverse';
 
-              // Use custom properties or defaults
-              const strokeWidth = link.strokeWidth || (isNeuronLink ? 0.5 : 2);
+              // ADVANCED: Smart flow-aware stroke width calculation
+              const getSmartStrokeWidth = () => {
+                // If custom stroke width is set, use it
+                if (link.strokeWidth) return link.strokeWidth;
+                if (isNeuronLink) return 0.5;
+
+                // Calculate based on connection importance
+                const linkSourceId = typeof link.source === 'string' ? link.source : link.source.id;
+                const linkTargetId = typeof link.target === 'string' ? link.target : link.target.id;
+                const allLinks = data.links || [];
+                const sourceConnections = allLinks.filter(l => {
+                  const sid = typeof l.source === 'string' ? l.source : l.source.id;
+                  return sid === linkSourceId;
+                }).length;
+                const targetConnections = allLinks.filter(l => {
+                  const tid = typeof l.target === 'string' ? l.target : l.target.id;
+                  return tid === linkTargetId;
+                }).length;
+
+                // Main distributor nodes get thicker arrows
+                const importance = Math.max(sourceConnections, targetConnections);
+                if (importance >= 4) return 2.5;  // Major hub
+                if (importance >= 3) return 2.2;  // Secondary hub
+                if (importance >= 2) return 2;    // Normal flow
+                return 1.8;  // Leaf connection
+              };
+              const strokeWidth = getSmartStrokeWidth();
 
               // Handle dash patterns
               let dashArray = 'none';
