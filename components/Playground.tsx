@@ -50,6 +50,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
     const svgRef = useRef<SVGSVGElement>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
     const fitScreenRef = useRef<(() => void) | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleUndo = useCallback(() => {
         if (canUndo) {
@@ -471,8 +472,45 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         }
     };
 
+    const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const jsonString = e.target?.result as string;
+                const importedData = JSON.parse(jsonString);
+
+                // Validate structure
+                if (!importedData.title || !Array.isArray(importedData.nodes) || !Array.isArray(importedData.links)) {
+                    throw new Error('Invalid diagram format');
+                }
+
+                // Apply imported data
+                onDataChange(importedData);
+                setToastMessage(`Imported: ${importedData.title}`);
+                setTimeout(() => fitScreenRef.current?.(), 100);
+            } catch (err) {
+                setToastMessage('Import failed: Invalid JSON file');
+            }
+        };
+        reader.readAsText(file);
+
+        // Reset input so same file can be imported again
+        event.target.value = '';
+    };
+
     return (
         <div className="fixed inset-0 bg-[var(--color-bg)] flex flex-col md:flex-row z-30">
+            {/* Hidden file input for import */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImport}
+                className="hidden"
+            />
             <AnimatePresence>
                 {toastMessage && (
                     <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
@@ -492,6 +530,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                     onExplain={onExplain}
                     isExplaining={isExplaining}
                     onExport={handleExport}
+                    onImport={() => fileInputRef.current?.click()}
                 />
                 <AnimatePresence>
                     {interactionMode === 'addNode' && (
