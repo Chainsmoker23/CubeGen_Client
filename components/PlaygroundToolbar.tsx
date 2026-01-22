@@ -15,6 +15,7 @@ interface PlaygroundToolbarProps {
     onExplain: () => void;
     isExplaining: boolean;
     onExport: (format: 'png' | 'html' | 'json') => void;
+    onImport: () => void;
 }
 
 // Define ToolButton component
@@ -40,7 +41,7 @@ const ToolButton: React.FC<React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
     const { interactionMode, onSetInteractionMode, onAddContainer, onFitToScreen } = props;
-    const { onUndo, onRedo, canUndo, canRedo, onExplain, isExplaining, onExport } = props;
+    const { onUndo, onRedo, canUndo, canRedo, onExplain, isExplaining, onExport, onImport } = props;
 
     const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
@@ -48,18 +49,18 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
     const moreMenuRef = useRef<HTMLDivElement>(null);
     const [isContainerMenuOpen, setIsContainerMenuOpen] = useState(false);
     const containerMenuRef = useRef<HTMLDivElement>(null);
-    
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-          if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
-            setIsMoreMenuOpen(false);
-          }
-           if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
-            setIsExportMenuOpen(false);
-          }
-          if (containerMenuRef.current && !containerMenuRef.current.contains(event.target as Node)) {
-            setIsContainerMenuOpen(false);
-          }
+            if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+                setIsMoreMenuOpen(false);
+            }
+            if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+                setIsExportMenuOpen(false);
+            }
+            if (containerMenuRef.current && !containerMenuRef.current.contains(event.target as Node)) {
+                setIsContainerMenuOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -122,9 +123,9 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
             </ToolButton>
 
             {containerMenu}
-            
+
             <div className="flex-grow hidden md:block" />
-            
+
             {/* --- Secondary Tools (Desktop) --- */}
             <div className="hidden md:flex flex-col items-center space-y-3">
                 <ToolButton aria-label="Undo (Cmd+Z)" title="Undo (Cmd+Z)" onClick={onUndo} isDisabled={!canUndo} className="w-12 h-12">
@@ -135,13 +136,13 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
                 </ToolButton>
                 <div className="w-10/12 h-px bg-[var(--color-border)] my-1" />
                 <ToolButton aria-label="Fit to Screen (F)" title="Fit to Screen (F)" onClick={onFitToScreen} className="w-12 h-12">
-                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
                 </ToolButton>
                 <div className="relative" ref={exportMenuRef}>
                     <ToolButton aria-label="Export" title="Export" onClick={() => setIsExportMenuOpen(prev => !prev)} className="w-12 h-12">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     </ToolButton>
-                     {isExportMenuOpen && (
+                    {isExportMenuOpen && (
                         <div className="absolute bottom-full left-0 mb-2 w-32 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-20">
                             <a onClick={() => handleExportClick('png')} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">PNG</a>
                             <a onClick={() => handleExportClick('html')} className="block px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md cursor-pointer">HTML</a>
@@ -149,11 +150,14 @@ const PlaygroundToolbar: React.FC<PlaygroundToolbarProps> = (props) => {
                         </div>
                     )}
                 </div>
+                <ToolButton aria-label="Import JSON" title="Import JSON" onClick={onImport} className="w-12 h-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                </ToolButton>
                 <ToolButton aria-label="Explain Architecture" title="Explain Architecture" onClick={onExplain} isDisabled={isExplaining} className="w-12 h-12">
                     {isExplaining ? <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> : <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
                 </ToolButton>
             </div>
-            
+
             <div className="md:hidden">
                 {mobileMenu}
             </div>
