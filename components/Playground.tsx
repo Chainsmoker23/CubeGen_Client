@@ -10,6 +10,7 @@ import { zoomIdentity, ZoomTransform } from 'd3-zoom';
 import AssistantWidget from './AssistantWidget';
 import Toast from './Toast';
 import AddNodePanel from './AddNodePanel';
+import ExitConfirmationModal from './ExitConfirmationModal';
 
 const nanoid = customAlphabet('1234567890abcdef', 10);
 
@@ -38,7 +39,8 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
     const [viewTransform, setViewTransform] = useState<ZoomTransform>(() => zoomIdentity);
     const [resizingNodeId, setResizingNodeId] = useState<string | null>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
-    
+    const [showExitModal, setShowExitModal] = useState(false);
+
     // State for the new drag-to-connect feature
     const [linkingState, setLinkingState] = useState<{ sourceNodeId: string; startPos: { x: number, y: number } } | null>(null);
     const [previewLinkTarget, setPreviewLinkTarget] = useState<{ x: number; y: number; targetNodeId?: string } | null>(null);
@@ -50,23 +52,23 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
     const fitScreenRef = useRef<(() => void) | null>(null);
 
     const handleUndo = useCallback(() => {
-      if (canUndo) {
-        onUndo();
-        setToastMessage('Action undone');
-      }
+        if (canUndo) {
+            onUndo();
+            setToastMessage('Action undone');
+        }
     }, [canUndo, onUndo]);
 
     const handleRedo = useCallback(() => {
-      if (canRedo) {
-        onRedo();
-        setToastMessage('Action redone');
-      }
+        if (canRedo) {
+            onRedo();
+            setToastMessage('Action redone');
+        }
     }, [canRedo, onRedo]);
 
     const handleAddContainer = (containerType: 'tier' | 'vpc' | 'region' | 'availability-zone' | 'subnet' = 'availability-zone') => {
         if (!canvasContainerRef.current) return;
         const canvasRect = canvasContainerRef.current.getBoundingClientRect();
-        
+
         // Calculate center of the current view
         const [viewX, viewY] = viewTransform.invert([canvasRect.width / 2, canvasRect.height / 2]);
 
@@ -135,7 +137,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleUndo, handleRedo]);
-    
+
     const nodesAndContainersById = useMemo(() => {
         const map = new Map<string, ArchNode | Container | Link>();
         data.nodes.forEach(node => map.set(node.id, node));
@@ -157,10 +159,10 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                 minX = Math.min(minX, node.x - node.width / 2);
                 minY = Math.min(minY, node.y - node.height / 2);
             });
-            
+
             const [screenX, screenY] = viewTransform.apply([minX, minY]);
             const canvasRect = canvasContainerRef.current.getBoundingClientRect();
-            
+
             setActionBarPosition({ x: screenX, y: screenY - canvasRect.top - 60 });
 
         } else {
@@ -175,7 +177,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         setSelectedIds([]);
         setResizingNodeId(null);
     };
-    
+
     const handleNodeDoubleClick = useCallback((nodeId: string) => {
         setInteractionMode('select');
         setResizingNodeId(prevId => (prevId === nodeId ? null : nodeId));
@@ -188,7 +190,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         setSelectedIds([]);
         setResizingNodeId(null);
     };
-    
+
     const selectedItem = useMemo(() => {
         if (!data || selectedIds.length !== 1) return null;
         return nodesAndContainersById.get(selectedIds[0]) || null;
@@ -207,7 +209,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         const selectedIdsSet = new Set(selectedIds);
         const newNodes = data.nodes.filter(n => !selectedIdsSet.has(n.id));
         const newContainers = (data.containers || []).filter(c => !selectedIdsSet.has(c.id));
-        
+
         const remainingNodeIds = new Set(newNodes.map(n => n.id));
         const newLinks = data.links.filter(l => {
             if (selectedIdsSet.has(l.id)) return false;
@@ -246,17 +248,17 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
             x: node.x + 30,
             y: node.y + 30,
         }));
-        
+
         const allNewNodes = [...data.nodes, ...newNodes];
         onDataChange({ ...data, nodes: allNewNodes });
         setSelectedIds(newNodes.map(n => n.id)); // Select the new duplicated nodes
 
     }, [data, onDataChange, selectedIds, setSelectedIds]);
 
-     const onAddNode = (type: IconType) => {
+    const onAddNode = (type: IconType) => {
         if (!canvasContainerRef.current) return;
         const canvasRect = canvasContainerRef.current.getBoundingClientRect();
-        
+
         const [viewX, viewY] = viewTransform.invert([canvasRect.width / 2, canvasRect.height / 2]);
 
         const newNode: ArchNode = {
@@ -298,15 +300,15 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         if (!linkingState || !canvasContainerRef.current) return;
         const canvasRect = canvasContainerRef.current.getBoundingClientRect();
         const [x, y] = viewTransform.invert([e.clientX - canvasRect.left, e.clientY - canvasRect.top]);
-        
+
         let targetNodeId: string | undefined = undefined;
         if (e.target instanceof SVGElement) {
             const parentGroup = e.target.closest('g.diagram-node');
             if (parentGroup) {
-                 targetNodeId = Array.from(parentGroup.classList).find(c => c.startsWith('node-id-'))?.replace('node-id-', '');
+                targetNodeId = Array.from(parentGroup.classList).find(c => c.startsWith('node-id-'))?.replace('node-id-', '');
             }
         }
-        
+
         setPreviewLinkTarget({ x, y, targetNodeId });
     }, [linkingState, viewTransform]);
 
@@ -326,7 +328,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 
             window.addEventListener('mousemove', handleLinkMove);
             window.addEventListener('mouseup', handleMouseUp);
-    
+
             return () => {
                 window.removeEventListener('mousemove', handleLinkMove);
                 window.removeEventListener('mouseup', handleMouseUp);
@@ -366,7 +368,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 
         const originalElements = Array.from(svgElement.querySelectorAll('*'));
         originalElements.unshift(svgElement);
-        const clonedElements = Array.from(svgClone.querySelectorAll<SVGElement | Element>('*')); 
+        const clonedElements = Array.from(svgClone.querySelectorAll<SVGElement | Element>('*'));
         clonedElements.unshift(svgClone);
 
         originalElements.forEach((sourceEl, index) => {
@@ -419,7 +421,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         }
 
         while (svgClone.firstChild) {
-          svgClone.removeChild(svgClone.firstChild);
+            svgClone.removeChild(svgClone.firstChild);
         }
         svgClone.appendChild(exportRoot);
 
@@ -472,13 +474,13 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
     return (
         <div className="fixed inset-0 bg-[var(--color-bg)] flex flex-col md:flex-row z-30">
             <AnimatePresence>
-              {toastMessage && (
-                <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
-              )}
+                {toastMessage && (
+                    <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+                )}
             </AnimatePresence>
 
             <div className="order-2 md:order-1 h-full flex flex-col md:flex-row">
-                 <PlaygroundToolbar
+                <PlaygroundToolbar
                     interactionMode={interactionMode}
                     onSetInteractionMode={handleSetInteractionMode}
                     onAddContainer={handleAddContainer}
@@ -490,25 +492,25 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                     onExplain={onExplain}
                     isExplaining={isExplaining}
                     onExport={handleExport}
-                 />
+                />
                 <AnimatePresence>
-                {interactionMode === 'addNode' && (
-                     <motion.div 
-                        initial={{ x: '-100%' }}
-                        animate={{ x: 0 }}
-                        exit={{ x: '-100%' }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-                        className="fixed bottom-0 left-0 right-0 z-20 md:relative md:bottom-auto md:left-auto md:right-auto"
-                     >
-                        <AddNodePanel onSelectNodeType={onAddNode} onClose={() => setInteractionMode('select')} />
-                     </motion.div>
-                 )}
+                    {interactionMode === 'addNode' && (
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+                            className="fixed bottom-0 left-0 right-0 z-20 md:relative md:bottom-auto md:left-auto md:right-auto"
+                        >
+                            <AddNodePanel onSelectNodeType={onAddNode} onClose={() => setInteractionMode('select')} />
+                        </motion.div>
+                    )}
                 </AnimatePresence>
             </div>
-            
+
             <main className="order-1 md:order-2 flex-1 flex flex-col relative" ref={canvasContainerRef}>
                 <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
-                    <button onClick={onExit} className="bg-[var(--color-panel-bg)] text-[var(--color-text-primary)] font-semibold py-2 px-4 rounded-full shadow-lg border border-[var(--color-border)] pointer-events-auto hover:bg-[var(--color-button-bg-hover)] transition-colors">
+                    <button onClick={() => setShowExitModal(true)} className="bg-[var(--color-panel-bg)] text-[var(--color-text-primary)] font-semibold py-2 px-4 rounded-full shadow-lg border border-[var(--color-border)] pointer-events-auto hover:bg-[var(--color-button-bg-hover)] transition-colors">
                         &larr; Exit Playground
                     </button>
                     {actionBarPosition && selectedIds.length > 0 && (
@@ -553,6 +555,13 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                 )}
             </AnimatePresence>
             <AssistantWidget />
+
+            {/* Exit Confirmation Modal */}
+            <ExitConfirmationModal
+                isOpen={showExitModal}
+                onConfirm={onExit}
+                onCancel={() => setShowExitModal(false)}
+            />
         </div>
     );
 };
