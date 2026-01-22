@@ -10,24 +10,24 @@ import Loader from './Loader';
 type Page = 'contact' | 'about' | 'api' | 'privacy' | 'terms' | 'docs' | 'apiKey' | 'careers' | 'research' | 'sdk';
 
 interface ApiKeyPageProps {
-  onBack: () => void;
-  onLaunch: () => void;
-  onNavigate: (page: Page) => void;
+    onBack: () => void;
+    onLaunch: () => void;
+    onNavigate: (page: Page) => void;
 }
 
 // --- SUB-COMPONENTS for enhanced creativity ---
 
 const useWindowSize = () => {
-  const [size, setSize] = useState([0, 0]);
-  useEffect(() => {
-    function updateSize() {
-      setSize([window.innerWidth, window.innerHeight]);
-    }
-    window.addEventListener('resize', updateSize);
-    updateSize();
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
-  return size;
+    const [size, setSize] = useState([0, 0]);
+    useEffect(() => {
+        function updateSize() {
+            setSize([window.innerWidth, window.innerHeight]);
+        }
+        window.addEventListener('resize', updateSize);
+        updateSize();
+        return () => window.removeEventListener('resize', updateSize);
+    }, []);
+    return size;
 };
 
 const ParticleBackground = React.memo(() => {
@@ -78,7 +78,7 @@ const useUnscramble = (text: string, isEnabled: boolean) => {
             frame++;
             const progress = frame / totalFrames;
             const revealCount = Math.floor(text.length * progress);
-            
+
             let output = text.substring(0, revealCount);
             for (let i = revealCount; i < text.length; i++) {
                 output += chars[Math.floor(Math.random() * chars.length)];
@@ -107,7 +107,7 @@ const CredentialCard: React.FC<{
 }> = ({ apiKey, isRevealing, onCopy, isCopied, onRevoke }) => {
     const cardRef = useRef<HTMLDivElement>(null);
     const unscrambledKey = useUnscramble(isRevealing ? apiKey : `cg_sk_${'•'.repeat(20)}${apiKey.slice(-4)}`, isRevealing);
-    
+
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const card = cardRef.current;
         if (!card) return;
@@ -214,7 +214,7 @@ try {
                     <div className="ide-control-dot bg-green-500"></div>
                 </div>
                 <div className="ide-tabs">
-                     <button className="ide-tab active">NPM Package</button>
+                    <button className="ide-tab active">NPM Package</button>
                 </div>
             </div>
             <pre>
@@ -224,11 +224,15 @@ try {
     );
 };
 
+// MODULE-LEVEL CACHE - persists across component mount/unmount cycles
+let cachedApiKey: string | null = null;
+let hasFetchedApiKey: boolean = false;
 
 const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
     const { currentUser } = useAuth();
-    const [apiKey, setApiKey] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    // Initialize from cache immediately - no loading flash!
+    const [apiKey, setApiKey] = useState<string | null>(cachedApiKey);
+    const [isLoading, setIsLoading] = useState(!hasFetchedApiKey);
     const [error, setError] = useState<string | null>(null);
     const [isKeyCopied, setIsKeyCopied] = useState(false);
     const [isRevealing, setIsRevealing] = useState(false);
@@ -238,15 +242,28 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
     const isPremiumUser = ['pro', 'business'].includes(plan);
 
     useEffect(() => {
-        if (isPremiumUser) {
-            setIsLoading(true);
-            getUserApiKey()
-                .then(setApiKey)
-                .catch(err => setError(err.message || 'Failed to fetch API key.'))
-                .finally(() => setIsLoading(false));
-        } else {
+        if (!isPremiumUser) {
             setIsLoading(false);
+            return;
         }
+
+        // Use cache if available - don't fetch
+        if (hasFetchedApiKey) {
+            setApiKey(cachedApiKey);
+            setIsLoading(false);
+            return;
+        }
+
+        // First time only - show loading
+        setIsLoading(true);
+        getUserApiKey()
+            .then(key => {
+                cachedApiKey = key;
+                hasFetchedApiKey = true;
+                setApiKey(key);
+            })
+            .catch(err => setError(err.message || 'Failed to fetch API key.'))
+            .finally(() => setIsLoading(false));
     }, [isPremiumUser]);
 
     const handleGenerateKey = async () => {
@@ -254,6 +271,9 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
         setError(null);
         try {
             const newKey = await generateUserApiKey();
+            // Update cache
+            cachedApiKey = newKey;
+            hasFetchedApiKey = true;
             setApiKey(newKey);
             setIsRevealing(true);
             setIsBursting(true);
@@ -272,6 +292,8 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
             setError(null);
             try {
                 await revokeUserApiKey();
+                // Update cache
+                cachedApiKey = null;
                 setApiKey(null);
             } catch (err: any) {
                 setError(err.message || 'Failed to revoke key.');
@@ -280,7 +302,7 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
             }
         }
     };
-    
+
     const handleCopyKey = () => {
         if (apiKey) {
             navigator.clipboard.writeText(apiKey);
@@ -289,95 +311,94 @@ const ApiKeyPage: React.FC<ApiKeyPageProps> = ({ onBack, onNavigate }) => {
         }
     };
 
-  return (
-    <div className="bg-white text-[#2B2B2B] overflow-x-hidden">
-        <header className="absolute top-0 left-0 w-full p-6 z-20">
-            <button onClick={onBack} className="flex items-center gap-2 font-semibold text-[#555555] hover:text-[#2B2B2B] transition-colors pulse-subtle">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-                Back to Home
-            </button>
-        </header>
+    return (
+        <div className="bg-white text-[#2B2B2B] overflow-x-hidden">
+            <header className="absolute top-0 left-0 w-full p-6 z-20">
+                <button onClick={onBack} className="flex items-center gap-2 font-semibold text-[#555555] hover:text-[#2B2B2B] transition-colors pulse-subtle">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                    Back to Home
+                </button>
+            </header>
 
-        <main>
-            <section className="relative flex items-center justify-center overflow-hidden api-hero-bg py-20 pt-32 md:pt-40">
-                <ParticleBackground />
-                <div className="container mx-auto px-6 z-10 text-center">
-                    <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
-                        <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
-                            Developer API Keys
-                        </h1>
-                        <p className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-[#555555]">
-                            Integrate CubeGen AI into your own applications, scripts, and CI/CD pipelines with our Public API and SDK.
-                        </p>
-                    </motion.div>
-                </div>
-            </section>
+            <main>
+                <section className="relative flex items-center justify-center overflow-hidden api-hero-bg py-20 pt-32 md:pt-40">
+                    <ParticleBackground />
+                    <div className="container mx-auto px-6 z-10 text-center">
+                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
+                            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
+                                Developer API Keys
+                            </h1>
+                            <p className="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-[#555555]">
+                                Integrate CubeGen AI into your own applications, scripts, and CI/CD pipelines with our Public API and SDK.
+                            </p>
+                        </motion.div>
+                    </div>
+                </section>
 
-            <section className="relative py-16 sm:py-24 bg-white">
-                <div className="container mx-auto px-6 max-w-2xl z-10">
-                    <AnimatePresence mode="wait">
-                        {isLoading ? (
-                             <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex justify-center items-center h-64">
-                                <Loader />
-                             </motion.div>
-                        ) : !isPremiumUser ? (
-                            <motion.div key="upgrade" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="api-credential-card p-8 rounded-2xl text-center">
-                                <ArchitectureIcon type={IconType.SecretsManager} className="w-16 h-16 text-gray-300 mx-auto opacity-50" />
-                                <h2 className="text-2xl font-bold mt-4">Developer Keys are a Pro Feature</h2>
-                                <p className="mt-2 text-gray-600">Upgrade to a Pro or Business plan to generate a key for programmatic access.</p>
-                                <a href="#api" className="mt-6 shimmer-button text-[#A61E4D] font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 inline-block">
-                                    View Plans & Upgrade
-                                </a>
-                            </motion.div>
-                        ) : apiKey ? (
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-16">
-                                <CredentialCard 
-                                    apiKey={apiKey} 
-                                    isRevealing={isRevealing}
-                                    onCopy={handleCopyKey}
-                                    isCopied={isKeyCopied}
-                                    onRevoke={handleRevokeKey}
-                                />
-                                <div className="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">
-                                    <h4 className="font-bold">Two Different Use Cases</h4>
-                                    <p className="text-sm mt-1">
-                                        This key is for the <strong>Public API and SDK</strong> to integrate CubeGen AI into your own applications. To bypass generation limits <strong>within this web app</strong>, add your personal Google Gemini key in the <strong className="font-semibold">Settings sidebar</strong>.
-                                    </p>
-                                    <p className="text-sm mt-2">
-                                        <strong>Public API/SDK:</strong> For integrating diagram generation into your own apps and services.
-                                        <strong>In-App Key:</strong> For bypassing usage limits within the CubeGen AI web application.
-                                    </p>
-                                </div>
-                                <IDECodeBlock apiKey={apiKey} />
-                            </motion.div>
-                        ) : (
-                             <motion.div key="generate-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                                <div className="text-center api-credential-card p-10 rounded-2xl border-dashed">
-                                    <ArchitectureIcon type={IconType.Api} className="w-16 h-16 text-gray-300 mx-auto" />
-                                    <h2 className="text-2xl font-bold mt-4">You don't have a personal key yet.</h2>
-                                    <p className="mt-2 text-gray-600 max-w-md mx-auto">Generate a key to integrate CubeGen AI with your own applications and tools.</p>
-                                    <motion.button 
-                                      onClick={handleGenerateKey} 
-                                      className="mt-6 shimmer-button text-[#A61E4D] font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 relative"
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.98 }}
-                                    >
-                                        Generate Your Personal Key
-                                        <ConfettiBurst isBursting={isBursting} />
-                                    </motion.button>
-                                </div>
-                             </motion.div>
-                        )}
-                    </AnimatePresence>
-                    {error && <p className="text-red-500 text-center mt-6">{error}</p>}
-                </div>
-            </section>
-        </main>
+                <section className="relative py-16 sm:py-24 bg-white">
+                    <div className="container mx-auto px-6 max-w-2xl z-10">
+                        <AnimatePresence mode="wait">
+                            {isLoading ? (
+                                <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex justify-center items-center h-64">
+                                    <Loader />
+                                </motion.div>
+                            ) : !isPremiumUser ? (
+                                <motion.div key="upgrade" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="api-credential-card p-8 rounded-2xl text-center">
+                                    <ArchitectureIcon type={IconType.SecretsManager} className="w-16 h-16 text-gray-300 mx-auto opacity-50" />
+                                    <h2 className="text-2xl font-bold mt-4">Developer Keys are a Pro Feature</h2>
+                                    <p className="mt-2 text-gray-600">Upgrade to a Pro or Business plan to generate a key for programmatic access.</p>
+                                    <a href="#api" className="mt-6 shimmer-button text-[#A61E4D] font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 inline-block">
+                                        View Plans & Upgrade
+                                    </a>
+                                </motion.div>
+                            ) : apiKey ? (
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-16">
+                                    <CredentialCard
+                                        apiKey={apiKey}
+                                        isRevealing={isRevealing}
+                                        onCopy={handleCopyKey}
+                                        isCopied={isKeyCopied}
+                                        onRevoke={handleRevokeKey}
+                                    />
+                                    <div className="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded-r-lg">
+                                        <h4 className="font-bold">Two Different Use Cases</h4>
+                                        <p className="text-sm mt-1">
+                                            This key is for the <strong>Public API and SDK</strong> to integrate CubeGen AI into your own applications. To bypass generation limits <strong>within this web app</strong>, add your personal Google Gemini key in the <strong className="font-semibold">Settings sidebar</strong>.
+                                        </p>
+                                        <p className="text-sm mt-2">
+                                            <strong>Public API/SDK:</strong> For integrating diagram generation into your own apps and services.
+                                            <strong>In-App Key:</strong> For bypassing usage limits within the CubeGen AI web application.
+                                        </p>
+                                    </div>
+                                    <IDECodeBlock apiKey={apiKey} />
+                                </motion.div>
+                            ) : (
+                                <motion.div key="generate-view" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                    <div className="text-center api-credential-card p-10 rounded-2xl border-dashed">
+                                        <ArchitectureIcon type={IconType.Api} className="w-16 h-16 text-gray-300 mx-auto" />
+                                        <h2 className="text-2xl font-bold mt-4">You don't have a personal key yet.</h2>
+                                        <p className="mt-2 text-gray-600 max-w-md mx-auto">Generate a key to integrate CubeGen AI with your own applications and tools.</p>
+                                        <motion.button
+                                            onClick={handleGenerateKey}
+                                            className="mt-6 shimmer-button text-[#A61E4D] font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 relative"
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.98 }}
+                                        >
+                                            Generate Your Personal Key
+                                            <ConfettiBurst isBursting={isBursting} />
+                                        </motion.button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        {error && <p className="text-red-500 text-center mt-6">{error}</p>}
+                    </div>
+                </section>
+            </main>
 
-        <SharedFooter onNavigate={onNavigate} />
-    </div>
-  );
+            <SharedFooter onNavigate={onNavigate} />
+        </div>
+    );
 };
 
 export default ApiKeyPage;
-
