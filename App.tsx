@@ -19,12 +19,13 @@ import PaymentStatusPage from './components/PaymentStatusPage'; // Import the ne
 import SdkPage from './components/SdkPage';
 import BlogListPage from './components/BlogListPage';
 import BlogPostPage from './components/BlogPostPage';
+import PlaygroundPage from './components/PlaygroundPage';
 import { useAuth } from './contexts/AuthContext';
 import { useAdminAuth } from './contexts/AdminAuthContext';
 import InstallPromptToast from './components/InstallPromptToast';
 import { AnimatePresence } from 'framer-motion';
 
-type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost';
+type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost' | 'playground';
 
 const getPageFromHash = (): { page: Page; subpage?: string } => {
   const hash = window.location.hash.substring(1).split('?')[0];
@@ -32,13 +33,13 @@ const getPageFromHash = (): { page: Page; subpage?: string } => {
     return { page: 'landing' };
   }
   const [mainPage, subpage] = hash.split('/');
-  
+
   // Special handling for blog post pages like #blog/my-post-slug
   if (mainPage === 'blog' && subpage) {
     return { page: 'blogPost', subpage };
   }
-  
-  const validPages: Page[] = ['landing', 'auth', 'app', 'contact', 'about', 'api', 'apiKey', 'privacy', 'terms', 'docs', 'neuralNetwork', 'careers', 'research', 'admin', 'adminLogin', 'sdk', 'blog'];
+
+  const validPages: Page[] = ['landing', 'auth', 'app', 'contact', 'about', 'api', 'apiKey', 'privacy', 'terms', 'docs', 'neuralNetwork', 'careers', 'research', 'admin', 'adminLogin', 'sdk', 'blog', 'playground'];
   if (validPages.includes(mainPage as Page)) {
     return { page: mainPage as Page };
   }
@@ -52,7 +53,7 @@ const App: React.FC = () => {
   const [page, setPage] = useState<{ page: Page; subpage?: string } | null>(null);
 
   const [hash, setHash] = useState(() => window.location.hash);
-  
+
   // --- PWA Install Prompt State ---
   const [installPromptEvent, setInstallPromptEvent] = useState<Event | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -90,9 +91,9 @@ const App: React.FC = () => {
       setShowInstallPrompt(false);
     });
   };
-  
+
   const handleDismissInstall = () => {
-      setShowInstallPrompt(false);
+    setShowInstallPrompt(false);
   };
 
   useEffect(() => {
@@ -104,7 +105,7 @@ const App: React.FC = () => {
   const onNavigate = useCallback((targetPage: Page | string) => {
     const newHash = `#${targetPage}`;
     const newUrl = window.location.pathname + newHash;
-    
+
     window.scrollTo(0, 0);
     // Use pushState to make the URL clean and navigate.
     window.history.pushState(null, '', newUrl);
@@ -116,39 +117,39 @@ const App: React.FC = () => {
     if (authLoading || adminAuthLoading) return;
 
     const currentPageInfo = getPageFromHash();
-    
+
     // --- Admin Route Handling (Highest Priority) ---
     if (currentPageInfo.page === 'admin' || currentPageInfo.page === 'adminLogin') {
-        const targetPage = isAdminAuthenticated ? 'admin' : 'adminLogin';
-        
-        // If we are on the right page, set the state to render it.
-        // Otherwise, navigate, which will re-trigger this effect.
-        if (currentPageInfo.page === targetPage) {
-            setPage({ page: targetPage });
-        } else {
-            onNavigate(targetPage);
-        }
-        return; // IMPORTANT: Prevent other logic from running for admin routes.
+      const targetPage = isAdminAuthenticated ? 'admin' : 'adminLogin';
+
+      // If we are on the right page, set the state to render it.
+      // Otherwise, navigate, which will re-trigger this effect.
+      if (currentPageInfo.page === targetPage) {
+        setPage({ page: targetPage });
+      } else {
+        onNavigate(targetPage);
+      }
+      return; // IMPORTANT: Prevent other logic from running for admin routes.
     }
-    
+
     // --- General Redirect Rules for Regular Users ---
     if (currentUser && currentPageInfo.page === 'auth') {
       onNavigate('app');
       return;
     }
-    
-    const isProtectedPage = ['app', 'neuralNetwork', 'apiKey'].includes(currentPageInfo.page);
+
+    const isProtectedPage = ['app', 'neuralNetwork', 'apiKey', 'playground'].includes(currentPageInfo.page);
     if (!currentUser && isProtectedPage) {
       onNavigate('landing');
       return;
     }
-    
+
     // If no other rules matched, render the page from the hash.
     setPage(currentPageInfo);
 
   }, [authLoading, adminAuthLoading, currentUser, isAdminAuthenticated, onNavigate, hash]);
 
-  
+
   if (page === null || authLoading || adminAuthLoading) {
     return (
       <div className="fixed inset-0 bg-white flex items-center justify-center">
@@ -165,9 +166,9 @@ const App: React.FC = () => {
   const paymentSuccessInHash = hashParams.get('payment') === 'success';
 
   if ((paymentId && paymentStatus === 'succeeded') || paymentSuccessInHash) {
-      return <PaymentStatusPage onNavigate={onNavigate} />;
+    return <PaymentStatusPage onNavigate={onNavigate} />;
   }
-  
+
   // --- Page rendering logic ---
   const renderPage = () => {
     switch (page.page) {
@@ -187,6 +188,7 @@ const App: React.FC = () => {
       case 'research': return <ResearchPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
       case 'sdk': return <SdkPage onBack={() => onNavigate('landing')} onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
       case 'app': return <GeneralArchitecturePage onNavigate={onNavigate} />;
+      case 'playground': return <PlaygroundPage onNavigate={onNavigate} />;
       case 'blog': return <BlogListPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
       case 'blogPost':
         if (page.subpage) {
