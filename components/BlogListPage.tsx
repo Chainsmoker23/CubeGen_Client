@@ -12,49 +12,74 @@ interface BlogListPageProps {
   onNavigate: (page: Page | string) => void;
 }
 
+// MODULE-LEVEL CACHE - persists across component mount/unmount cycles
+let cachedBlogPosts: BlogPost[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 300000; // 5 minutes
+
 const PostCard: React.FC<{ post: BlogPost; onNavigate: (slug: string) => void }> = ({ post, onNavigate }) => {
-    const excerpt = post.content.substring(0, 120) + '...';
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -5, boxShadow: '0 10px 25px rgba(233, 30, 99, 0.15)' }}
-            className="bg-white rounded-2xl shadow-md border border-pink-100 overflow-hidden flex flex-col cursor-pointer"
-            onClick={() => onNavigate(`blog/${post.slug}`)}
-        >
-            <img src={post.feature_image_url} alt={post.title} className="w-full h-48 object-cover" />
-            <div className="p-6 flex flex-col flex-grow">
-                <h2 className="text-xl font-bold mb-2 text-gray-800">{post.title}</h2>
-                <p className="text-sm text-gray-600 flex-grow">{excerpt}</p>
-                <div className="mt-4 pt-4 border-t border-pink-100 text-xs text-gray-500 flex justify-between items-center">
-                    <span>By {post.author_name}</span>
-                    <span>{new Date(post.published_at!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                </div>
-            </div>
-        </motion.div>
-    );
+  const excerpt = post.content.substring(0, 120) + '...';
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -5, boxShadow: '0 10px 25px rgba(233, 30, 99, 0.15)' }}
+      className="bg-white rounded-2xl shadow-md border border-pink-100 overflow-hidden flex flex-col cursor-pointer"
+      onClick={() => onNavigate(`blog/${post.slug}`)}
+    >
+      <img src={post.feature_image_url} alt={post.title} className="w-full h-48 object-cover" />
+      <div className="p-6 flex flex-col flex-grow">
+        <h2 className="text-xl font-bold mb-2 text-gray-800">{post.title}</h2>
+        <p className="text-sm text-gray-600 flex-grow">{excerpt}</p>
+        <div className="mt-4 pt-4 border-t border-pink-100 text-xs text-gray-500 flex justify-between items-center">
+          <span>By {post.author_name}</span>
+          <span>{new Date(post.published_at!).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+        </div>
+      </div>
+    </motion.div>
+  );
 };
 
 const BlogListPage: React.FC<BlogListPageProps> = ({ onBack, onNavigate }) => {
-    const [posts, setPosts] = useState<BlogPost[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+  // Initialize from cache immediately - no loading flash!
+  const [posts, setPosts] = useState<BlogPost[]>(cachedBlogPosts || []);
+  const [isLoading, setIsLoading] = useState(cachedBlogPosts === null);
+  const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        const fetchPosts = async () => {
-            setIsLoading(true);
-            try {
-                const fetchedPosts = await getPublishedBlogPosts();
-                setPosts(fetchedPosts);
-            } catch (err: any) {
-                setError(err.message || 'Failed to load blog posts.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchPosts();
-    }, []);
-  
+  useEffect(() => {
+    const fetchPosts = async () => {
+      const now = Date.now();
+
+      // Use cache if valid - don't fetch
+      if (cachedBlogPosts !== null && (now - cacheTimestamp < CACHE_DURATION)) {
+        setPosts(cachedBlogPosts);
+        setIsLoading(false);
+        return;
+      }
+
+      // First time only - show loading
+      if (cachedBlogPosts === null) {
+        setIsLoading(true);
+      }
+
+      try {
+        const fetchedPosts = await getPublishedBlogPosts();
+
+        // Update module-level cache
+        cachedBlogPosts = fetchedPosts;
+        cacheTimestamp = now;
+
+        setPosts(fetchedPosts);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load blog posts.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPosts();
+  }, []);
+
   return (
     <div className="bg-white text-[#2B2B2B] overflow-x-hidden">
       <header className="absolute top-0 left-0 w-full p-6 z-20">
@@ -79,21 +104,21 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ onBack, onNavigate }) => {
         </section>
 
         <section className="py-24 bg-white">
-            <div className="container mx-auto px-6 max-w-6xl">
-                {isLoading ? (
-                    <div className="flex justify-center py-20"><Loader /></div>
-                ) : error ? (
-                    <p className="text-center text-red-500">{error}</p>
-                ) : posts.length === 0 ? (
-                    <p className="text-center text-gray-500">No blog posts have been published yet. Check back soon!</p>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {posts.map(post => (
-                            <PostCard key={post.id} post={post} onNavigate={onNavigate} />
-                        ))}
-                    </div>
-                )}
-            </div>
+          <div className="container mx-auto px-6 max-w-6xl">
+            {isLoading ? (
+              <div className="flex justify-center py-20"><Loader /></div>
+            ) : error ? (
+              <p className="text-center text-red-500">{error}</p>
+            ) : posts.length === 0 ? (
+              <p className="text-center text-gray-500">No blog posts have been published yet. Check back soon!</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {posts.map(post => (
+                  <PostCard key={post.id} post={post} onNavigate={onNavigate} />
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </main>
 
