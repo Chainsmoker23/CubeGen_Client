@@ -8,6 +8,7 @@ import { ZoomTransform, zoomIdentity } from 'd3-zoom';
 import AddNodePanel from './AddNodePanel';
 import Toast from './Toast';
 import ContextualActionBar from './ContextualActionBar';
+import ExitConfirmationModal from './ExitConfirmationModal';
 
 const nanoid = customAlphabet('1234567890abcdef', 10);
 
@@ -26,17 +27,32 @@ interface MobilePlaygroundProps {
     canvasType?: 'general' | 'neural-network';
 }
 
-const MobileToolbarButton: React.FC<{ 'aria-label': string; onClick?: () => void; isDisabled?: boolean; children: React.ReactNode; }> =
- ({ 'aria-label': ariaLabel, onClick, isDisabled = false, children }) => (
-    <button
-        aria-label={ariaLabel}
-        onClick={onClick}
-        disabled={isDisabled}
-        className="flex flex-col items-center justify-center text-[var(--color-text-secondary)] disabled:opacity-50 w-16 h-16"
-    >
-        {children}
-    </button>
-);
+// Haptic feedback utility
+const triggerHaptic = (pattern: number | number[] = 10) => {
+    if (navigator.vibrate) {
+        navigator.vibrate(pattern);
+    }
+};
+
+const MobileToolbarButton: React.FC<{ 'aria-label': string; onClick?: () => void; isDisabled?: boolean; isActive?: boolean; children: React.ReactNode; }> =
+    ({ 'aria-label': ariaLabel, onClick, isDisabled = false, isActive = false, children }) => (
+        <button
+            aria-label={ariaLabel}
+            onClick={() => {
+                triggerHaptic(8);
+                onClick?.();
+            }}
+            disabled={isDisabled}
+            className={`
+            flex flex-col items-center justify-center w-[72px] h-[72px] rounded-2xl
+            transition-all duration-150 active:scale-95 active:bg-[var(--color-button-bg-hover)]
+            ${isActive ? 'bg-[var(--color-accent-soft)] text-[var(--color-accent-text)]' : 'text-[var(--color-text-secondary)]'}
+            ${isDisabled ? 'opacity-40 pointer-events-none' : ''}
+        `}
+        >
+            {children}
+        </button>
+    );
 
 const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
     const { data, onDataChange, onExit, selectedIds, setSelectedIds, canUndo, canRedo, onUndo, onRedo, onExplain, isExplaining } = props;
@@ -50,6 +66,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
 
     const [isPropertiesSheetOpen, setIsPropertiesSheetOpen] = useState(false);
     const [actionBarPosition, setActionBarPosition] = useState<{ x: number; y: number } | null>(null);
+    const [showExitModal, setShowExitModal] = useState(false);
 
     const svgRef = useRef<SVGSVGElement>(null);
     const fitScreenRef = useRef<(() => void) | null>(null);
@@ -65,7 +82,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
         setIsMoreMenuOpen(false);
         showToast('Fit to screen');
     };
-    
+
     const handleAddNode = (type: IconType) => {
         const canvasEl = svgRef.current;
         if (!canvasEl) return;
@@ -79,8 +96,8 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
             type: type,
             x: viewX,
             y: viewY,
-            width: 140,
-            height: 70,
+            width: 180,  // Larger for easier touch
+            height: 90,
             borderStyle: 'solid',
             borderWidth: 'medium',
             borderColor: '#000000',
@@ -89,6 +106,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
         onDataChange(newData);
         setIsAddNodePanelOpen(false);
         setSelectedIds([newNode.id]);
+        triggerHaptic(15); // Success haptic
         showToast(`${newNode.label} added`);
     };
 
@@ -117,7 +135,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
             setActionBarPosition(null);
         }
     }, [selectedIds, data, viewTransform]);
-    
+
     const handleDelete = () => {
         if (selectedIds.length === 0) return;
         const selectedIdSet = new Set(selectedIds);
@@ -132,17 +150,19 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
         });
         onDataChange({ ...data, nodes: newNodes, containers: newContainers, links: newLinks });
         setSelectedIds([]);
+        triggerHaptic([10, 50, 10]); // Delete haptic pattern
         showToast(`${selectedIds.length} item(s) deleted`);
     };
-    
+
     const handleDuplicate = () => {
         if (selectedIds.length === 0) return;
         const nodesToDup = data.nodes.filter(n => selectedIds.includes(n.id));
         if (nodesToDup.length === 0) return;
 
-        const newNodes = nodesToDup.map(n => ({...n, id: nanoid(), x: n.x + 20, y: n.y + 20}));
+        const newNodes = nodesToDup.map(n => ({ ...n, id: nanoid(), x: n.x + 30, y: n.y + 30 }));
         onDataChange({ ...data, nodes: [...data.nodes, ...newNodes] });
         setSelectedIds(newNodes.map(n => n.id));
+        triggerHaptic(12); // Duplicate haptic
         showToast(`${nodesToDup.length} item(s) duplicated`);
     };
 
@@ -169,7 +189,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                     showToast('Link cancelled: Cannot link a node to itself.');
                 }
             } else {
-                 showToast('Link cancelled');
+                showToast('Link cancelled');
             }
             setLinkingState(null);
             setPreviewLinkTarget(null);
@@ -177,7 +197,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
             setSelectedIds([]);
         }
     };
-    
+
     return (
         <div className="fixed inset-0 bg-[var(--color-bg)] flex flex-col z-30">
             <AnimatePresence>
@@ -185,8 +205,13 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
             </AnimatePresence>
 
             <header className="p-4 flex justify-between items-center bg-[var(--color-panel-bg)] border-b border-[var(--color-border)]">
-                 <h1 className="text-lg font-bold truncate pr-4">{data.title}</h1>
-                 <button onClick={onExit} className="text-sm font-semibold bg-[var(--color-button-bg)] px-4 py-2 rounded-lg">Exit</button>
+                <h1 className="text-lg font-bold truncate pr-4">{data.title}</h1>
+                <button
+                    onClick={() => setShowExitModal(true)}
+                    className="text-sm font-semibold bg-[var(--color-button-bg)] px-4 py-2.5 rounded-xl active:scale-95 transition-transform"
+                >
+                    Exit
+                </button>
             </header>
 
             <main className="flex-1 relative" ref={canvasContainerRef}>
@@ -201,11 +226,11 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                     interactionMode="select" // Simplified for mobile
                     onTransformChange={setViewTransform}
                     onCanvasClick={handleCanvasClick}
-                    onLinkStart={() => {}} // Use custom linking logic
+                    onLinkStart={() => { }} // Use custom linking logic
                     linkingState={linkingState}
                     previewLinkTarget={previewLinkTarget}
                 />
-                 {actionBarPosition && selectedIds.length > 0 && (
+                {actionBarPosition && selectedIds.length > 0 && (
                     <ContextualActionBar
                         position={actionBarPosition}
                         onDelete={handleDelete}
@@ -228,11 +253,11 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                 </MobileToolbarButton>
                 <MobileToolbarButton aria-label="Undo" onClick={onUndo} isDisabled={!canUndo}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" /></svg>
-                     <span className="text-xs mt-1">Undo</span>
+                    <span className="text-xs mt-1">Undo</span>
                 </MobileToolbarButton>
-                 <MobileToolbarButton aria-label="Redo" onClick={onRedo} isDisabled={!canRedo}>
+                <MobileToolbarButton aria-label="Redo" onClick={onRedo} isDisabled={!canRedo}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 15l3-3m0 0l-3-3m3 3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                     <span className="text-xs mt-1">Redo</span>
+                    <span className="text-xs mt-1">Redo</span>
                 </MobileToolbarButton>
                 <div className="relative" ref={moreMenuRef}>
                     <MobileToolbarButton aria-label="More Options" onClick={() => setIsMoreMenuOpen(p => !p)}>
@@ -241,7 +266,7 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                     </MobileToolbarButton>
                     <AnimatePresence>
                         {isMoreMenuOpen && (
-                            <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} exit={{opacity: 0, y: 10}} className="absolute bottom-full right-0 mb-2 w-40 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute bottom-full right-0 mb-2 w-40 bg-[var(--color-panel-bg)] border border-[var(--color-border)] rounded-xl shadow-lg p-1 z-30">
                                 <button onClick={handleFitToScreen} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Fit to Screen</button>
                                 <button onClick={() => { onExplain(); setIsMoreMenuOpen(false); }} disabled={isExplaining} className="w-full text-left block px-3 py-2 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-button-bg-hover)] rounded-md">Explain</button>
                             </motion.div>
@@ -249,39 +274,78 @@ const MobilePlayground: React.FC<MobilePlaygroundProps> = (props) => {
                     </AnimatePresence>
                 </div>
             </footer>
-            
+
             {/* Add Node Panel */}
             <AnimatePresence>
                 {isAddNodePanelOpen && (
-                    <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsAddNodePanelOpen(false)} />
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                        onClick={() => setIsAddNodePanelOpen(false)}
+                    />
                 )}
                 {isAddNodePanelOpen && (
-                     <motion.div initial={{y: "100%"}} animate={{y: 0}} exit={{y: "100%"}} transition={{type: 'spring', stiffness: 400, damping: 40}} className="fixed bottom-0 left-0 right-0 h-[70vh] z-50">
+                    <motion.div
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+                        className="fixed bottom-0 left-0 right-0 h-[70vh] z-50 bg-[var(--color-panel-bg)] rounded-t-3xl shadow-2xl"
+                    >
+                        {/* Drag Handle */}
+                        <div className="flex justify-center pt-3 pb-2">
+                            <div className="w-10 h-1.5 bg-[var(--color-border)] rounded-full" />
+                        </div>
                         <AddNodePanel onSelectNodeType={handleAddNode} onClose={() => setIsAddNodePanelOpen(false)} />
-                     </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
             {/* Properties Sheet */}
             <AnimatePresence>
                 {isPropertiesSheetOpen && selectedItem && (
-                     <motion.div initial={{opacity: 0}} animate={{opacity: 1}} exit={{opacity: 0}} className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsPropertiesSheetOpen(false)} />
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                        onClick={() => setIsPropertiesSheetOpen(false)}
+                    />
                 )}
                 {isPropertiesSheetOpen && selectedItem && (
-                    <motion.div initial={{y: "100%"}} animate={{y: 0}} exit={{y: "100%"}} transition={{type: 'spring', stiffness: 400, damping: 40}} className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[var(--color-panel-bg)] rounded-t-2xl border-t border-[var(--color-border)] shadow-2xl z-50 flex flex-col">
-                        
+                    <motion.div
+                        initial={{ y: "100%" }}
+                        animate={{ y: 0 }}
+                        exit={{ y: "100%" }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+                        className="fixed bottom-0 left-0 right-0 h-[80vh] bg-[var(--color-panel-bg)] rounded-t-3xl border-t border-[var(--color-border)] shadow-2xl z-50 flex flex-col"
+                    >
+                        {/* Drag Handle */}
+                        <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
+                            <div className="w-10 h-1.5 bg-[var(--color-border)] rounded-full" />
+                        </div>
+
                         <div className="flex-1 overflow-y-auto">
-                             <PropertiesSidebar 
+                            <PropertiesSidebar
                                 item={selectedItem}
                                 onPropertyChange={handlePropertyChange}
                                 selectedCount={1}
                                 onClose={() => setIsPropertiesSheetOpen(false)}
-                             />
+                            />
                         </div>
-                       
+
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            {/* Exit Confirmation Modal */}
+            <ExitConfirmationModal
+                isOpen={showExitModal}
+                onConfirm={onExit}
+                onCancel={() => setShowExitModal(false)}
+            />
         </div>
     );
 };
