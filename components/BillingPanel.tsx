@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getActiveUserPlans } from '../services/geminiService';
 
 interface BillingPanelProps {
@@ -7,43 +7,46 @@ interface BillingPanelProps {
     isOpen: boolean;
 }
 
+// MODULE-LEVEL CACHE - persists across component mount/unmount cycles
+let cachedSubscriptions: any[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 300000; // 5 minutes
+
 const BillingPanel: React.FC<BillingPanelProps> = ({ isPremiumUser, isOpen }) => {
-    const [activeSubs, setActiveSubs] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    // Initialize from cache immediately - no loading flash!
+    const [activeSubs, setActiveSubs] = useState<any[]>(cachedSubscriptions || []);
+    const [isLoading, setIsLoading] = useState(cachedSubscriptions === null);
     const [error, setError] = useState<string | null>(null);
-    const hasFetchedRef = useRef<boolean>(false);
-    const lastFetchRef = useRef<number>(0);
-    const CACHE_DURATION = 120000; // 2 minutes cache - much longer to avoid re-fetching
 
     useEffect(() => {
         if (!isOpen || !isPremiumUser) {
-            if (!isPremiumUser) {
-                setActiveSubs([]);
-                hasFetchedRef.current = false;
-            }
             return;
         }
 
         const fetchSubs = async () => {
             const now = Date.now();
 
-            // If we already have data and it's within cache duration, don't refetch
-            if (hasFetchedRef.current && activeSubs.length > 0 && (now - lastFetchRef.current < CACHE_DURATION)) {
+            // Use cache if valid - don't fetch
+            if (cachedSubscriptions !== null && (now - cacheTimestamp < CACHE_DURATION)) {
+                setActiveSubs(cachedSubscriptions);
                 setIsLoading(false);
                 return;
             }
 
-            // Only show loading on first fetch, not on background refreshes
-            if (!hasFetchedRef.current) {
+            // First time only - show loading
+            if (cachedSubscriptions === null) {
                 setIsLoading(true);
             }
 
             try {
                 const plans = await getActiveUserPlans();
                 const filteredPlans = plans.filter(p => p.plan_name !== 'free' && p.plan_name !== 'hobbyist');
+
+                // Update module-level cache
+                cachedSubscriptions = filteredPlans;
+                cacheTimestamp = now;
+
                 setActiveSubs(filteredPlans);
-                hasFetchedRef.current = true;
-                lastFetchRef.current = now;
                 setError(null);
             } catch (err: any) {
                 setError(err.message || "Failed to load subscriptions.");
@@ -59,7 +62,7 @@ const BillingPanel: React.FC<BillingPanelProps> = ({ isPremiumUser, isOpen }) =>
         return null;
     }
 
-    // Beautiful skeleton loader
+    // Beautiful skeleton loader - only shows on very first load ever
     const SkeletonLoader = () => (
         <div className="animate-pulse">
             <div className="flex items-center gap-3">
