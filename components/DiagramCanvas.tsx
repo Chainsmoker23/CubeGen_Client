@@ -597,24 +597,29 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
           <pattern id="grid" width={GRID_SIZE} height={GRID_SIZE} patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="1" fill="var(--color-grid-dot)"></circle>
           </pattern>
-          {/* Default arrowheads */}
-          <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" orient="auto" markerWidth="6" markerHeight="6">
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+
+          {/* Smart Arrowheads - Refined design with precise edge docking */}
+          {/* refX=10 positions the TIP exactly where the line ends (at node edge) */}
+          <marker id="arrowhead" viewBox="0 0 12 12" refX="10" refY="6" orient="auto" markerWidth="8" markerHeight="8">
+            {/* Sleek tapered arrow with slight curve for modern look */}
+            <path d="M 1 1 Q 3 6 1 11 L 11 6 Z" fill="currentColor" />
           </marker>
-          <marker id="arrowhead-reverse" viewBox="0 0 10 10" refX="2" refY="5" orient="auto" markerWidth="6" markerHeight="6">
-            <path d="M 10 0 L 0 5 L 10 10 z" fill="currentColor" />
+          <marker id="arrowhead-reverse" viewBox="0 0 12 12" refX="2" refY="6" orient="auto" markerWidth="8" markerHeight="8">
+            <path d="M 11 1 Q 9 6 11 11 L 1 6 Z" fill="currentColor" />
           </marker>
-          {/* Color-coded arrowheads for relational coloring */}
+
+          {/* Color-coded smart arrowheads for relational coloring */}
           {LINK_COLORS.map((color, idx) => (
             <React.Fragment key={`arrow-${idx}`}>
-              <marker id={`arrowhead-${color.replace('#', '')}`} viewBox="0 0 10 10" refX="8" refY="5" orient="auto" markerWidth="6" markerHeight="6">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill={color} />
+              <marker id={`arrowhead-${color.replace('#', '')}`} viewBox="0 0 12 12" refX="10" refY="6" orient="auto" markerWidth="8" markerHeight="8">
+                <path d="M 1 1 Q 3 6 1 11 L 11 6 Z" fill={color} />
               </marker>
-              <marker id={`arrowhead-reverse-${color.replace('#', '')}`} viewBox="0 0 10 10" refX="2" refY="5" orient="auto" markerWidth="6" markerHeight="6">
-                <path d="M 10 0 L 0 5 L 10 10 z" fill={color} />
+              <marker id={`arrowhead-reverse-${color.replace('#', '')}`} viewBox="0 0 12 12" refX="2" refY="6" orient="auto" markerWidth="8" markerHeight="8">
+                <path d="M 11 1 Q 9 6 11 11 L 1 6 Z" fill={color} />
               </marker>
             </React.Fragment>
           ))}
+
           <filter id="drop-shadow" x="-50%" y="-50%" width="200%" height="200%">
             <feDropShadow dx="1" dy="2" stdDeviation="2" floodColor="var(--color-shadow)" floodOpacity="0.1" />
           </filter>
