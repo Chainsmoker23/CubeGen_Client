@@ -40,12 +40,13 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
     const [resizingNodeId, setResizingNodeId] = useState<string | null>(null);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [showExitModal, setShowExitModal] = useState(false);
+    const [isViewMode, setIsViewMode] = useState(false); // Distraction-free view mode
 
     // State for the new drag-to-connect feature
     const [linkingState, setLinkingState] = useState<{ sourceNodeId: string; startPos: { x: number, y: number } } | null>(null);
     const [previewLinkTarget, setPreviewLinkTarget] = useState<{ x: number; y: number; targetNodeId?: string } | null>(null);
 
-    const isPropertiesPanelOpen = selectedIds.length > 0;
+    const isPropertiesPanelOpen = selectedIds.length > 0 && !isViewMode;
 
     const svgRef = useRef<SVGSVGElement>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -65,6 +66,37 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
             setToastMessage('Action redone');
         }
     }, [canRedo, onRedo]);
+
+    // View Mode toggle
+    const toggleViewMode = useCallback(() => {
+        setIsViewMode(prev => {
+            const newMode = !prev;
+            if (newMode) {
+                setSelectedIds([]); // Deselect all items when entering view mode
+                setInteractionMode('select');
+            }
+            return newMode;
+        });
+    }, [setSelectedIds]);
+
+    // Keyboard shortcuts for view mode
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Don't trigger if user is typing in an input field
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+                return;
+            }
+
+            if ((e.key === 'v' || e.key === 'V') && e.shiftKey) {
+                toggleViewMode();
+            } else if (e.key === 'Escape' && isViewMode) {
+                setIsViewMode(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isViewMode, toggleViewMode]);
 
     const handleAddContainer = (containerType: 'tier' | 'vpc' | 'region' | 'availability-zone' | 'subnet' = 'availability-zone') => {
         if (!canvasContainerRef.current) return;
@@ -103,6 +135,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            if (isViewMode) return;
             const activeEl = document.activeElement;
             if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
                 return;
@@ -137,7 +170,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handleUndo, handleRedo]);
+    }, [handleUndo, handleRedo, isViewMode]);
 
     const nodesAndContainersById = useMemo(() => {
         const map = new Map<string, ArchNode | Container | Link>();
@@ -545,46 +578,56 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                 )}
             </AnimatePresence>
 
-            <div className="order-2 md:order-1 h-full flex flex-col md:flex-row">
-                <PlaygroundToolbar
-                    interactionMode={interactionMode}
-                    onSetInteractionMode={handleSetInteractionMode}
-                    onAddContainer={handleAddContainer}
-                    onFitToScreen={handleFitToScreen}
-                    onUndo={handleUndo}
-                    onRedo={handleRedo}
-                    canUndo={canUndo}
-                    canRedo={canRedo}
-                    onExplain={onExplain}
-                    isExplaining={isExplaining}
-                    onExport={handleExport}
-                    onImport={() => fileInputRef.current?.click()}
-                />
-                <AnimatePresence>
-                    {interactionMode === 'addNode' && (
-                        <motion.div
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-                            className="fixed bottom-0 left-0 right-0 z-20 md:relative md:bottom-auto md:left-auto md:right-auto"
-                        >
-                            <AddNodePanel
-                                onSelectNodeType={onAddNode}
-                                onClose={() => setInteractionMode('select')}
-                                onCustomImageUpload={handleCustomImageUpload}
-                            />
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+            {!isViewMode && (
+                <div className="order-2 md:order-1 h-full flex flex-col md:flex-row">
+                    <PlaygroundToolbar
+                        interactionMode={interactionMode}
+                        onSetInteractionMode={handleSetInteractionMode}
+                        onAddContainer={handleAddContainer}
+                        onFitToScreen={handleFitToScreen}
+                        onUndo={handleUndo}
+                        onRedo={handleRedo}
+                        canUndo={canUndo}
+                        canRedo={canRedo}
+                        onExplain={onExplain}
+                        isExplaining={isExplaining}
+                        onExport={handleExport}
+                        onImport={() => fileInputRef.current?.click()}
+                        isViewMode={isViewMode}
+                        onToggleViewMode={toggleViewMode}
+                    />
+                    <AnimatePresence>
+                        {interactionMode === 'addNode' && (
+                            <motion.div
+                                initial={{ x: '-100%' }}
+                                animate={{ x: 0 }}
+                                exit={{ x: '-100%' }}
+                                transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+                                className="fixed bottom-0 left-0 right-0 z-20 md:relative md:bottom-auto md:left-auto md:right-auto"
+                            >
+                                <AddNodePanel
+                                    onSelectNodeType={onAddNode}
+                                    onClose={() => setInteractionMode('select')}
+                                    onCustomImageUpload={handleCustomImageUpload}
+                                />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            )}
 
             <main className="order-1 md:order-2 flex-1 flex flex-col relative" ref={canvasContainerRef}>
                 <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
-                    <button onClick={() => setShowExitModal(true)} className="bg-[var(--color-panel-bg)] text-[var(--color-text-primary)] font-semibold py-2 px-4 rounded-full shadow-lg border border-[var(--color-border)] pointer-events-auto hover:bg-[var(--color-button-bg-hover)] transition-colors">
-                        &larr; Exit Playground
-                    </button>
-                    {actionBarPosition && selectedIds.length > 0 && (
+                    {!isViewMode ? (
+                        <button onClick={() => setShowExitModal(true)} className="bg-[var(--color-panel-bg)] text-[var(--color-text-primary)] font-semibold py-2 px-4 rounded-full shadow-lg border border-[var(--color-border)] pointer-events-auto hover:bg-[var(--color-button-bg-hover)] transition-colors">
+                            &larr; Exit Playground
+                        </button>
+                    ) : (
+                        <button onClick={() => setIsViewMode(false)} className="bg-[var(--color-panel-bg)] text-[var(--color-text-primary)] font-semibold py-2 px-4 rounded-full shadow-lg border border-[var(--color-border)] pointer-events-auto hover:bg-[var(--color-button-bg-hover)] transition-colors opacity-50 hover:opacity-100">
+                            Exit View Mode (Esc)
+                        </button>
+                    )}
+                    {actionBarPosition && selectedIds.length > 0 && !isViewMode && (
                         <ContextualActionBar position={actionBarPosition} onDelete={handleDeleteSelected} onDuplicate={handleDuplicateSelected} selectedCount={selectedIds.length} />
                     )}
                 </div>
@@ -595,7 +638,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                     onDataChange={onDataChange}
                     selectedIds={selectedIds}
                     setSelectedIds={setSelectedIds}
-                    isEditable={true}
+                    isEditable={!isViewMode}
                     interactionMode={interactionMode}
                     onTransformChange={setViewTransform}
                     resizingNodeId={resizingNodeId}
