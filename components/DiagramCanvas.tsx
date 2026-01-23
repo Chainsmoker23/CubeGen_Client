@@ -8,8 +8,8 @@ import ArchitectureIcon from './ArchitectureIcon';
 import ContextMenu from './ContextMenu';
 import { motion } from 'framer-motion';
 
-
 import { generateLinkColors, LINK_COLORS } from '../utils/linkColorAssigner';
+import { calculateAdaptiveCurveTension, getAnimatedFlowClass } from '../utils/linkPathUtils';
 
 const GRID_SIZE = 10;
 
@@ -235,8 +235,11 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
         // Use custom curvature from link properties or default
         const curvaturePercent = link.curvature || 30;
         const maxCurve = Math.min(Math.abs(dx), Math.abs(dy)) * (curvaturePercent / 100);
-        // Enhanced corner radius for smoother, professional arrow turns
-        const cornerRadius = Math.min(14, maxCurve / 2); // was 8, now 14 for smoother curves
+
+        // ADVANCED: Distance-Adaptive Curve Tension
+        // Short distance → tighter curves, Long distance → smoother, wider curves
+        const adaptiveCurve = calculateAdaptiveCurveTension(sourceNode, targetNode, curvaturePercent);
+        const cornerRadius = Math.min(adaptiveCurve.cornerRadius, maxCurve / 2);
 
         let p1: { x: number, y: number }, p2: { x: number, y: number }, p3: { x: number, y: number }, p4: { x: number, y: number };
 
@@ -733,6 +736,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
                     fill="none"
                     markerEnd={link.endMarker !== false && !isNeuronLink ? `url(#${arrowheadId})` : undefined}
                     markerStart={link.startMarker ? `url(#${arrowheadReverseId.replace('-reverse-reverse', '-reverse')})` : undefined}
+                    className={link.animated ? getAnimatedFlowClass(true, selected) : ''}
                   />
 
                   {/* Interactive label area for adding/editing link labels */}
