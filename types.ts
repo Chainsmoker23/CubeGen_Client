@@ -39,6 +39,8 @@ export interface ArchNode {
   borderStyle?: 'solid' | 'dotted' | 'dashed' | 'double' | 'none';
   borderWidth?: 'thin' | 'medium' | 'thick';
   borderColor?: string;
+  // Shape/background opacity (0-100, 0 = invisible, 100 = fully visible)
+  shapeOpacity?: number;
   // NEW: Position hint for standalone nodes
   positionHint?: 'left' | 'right' | 'top' | 'bottom' | 'center';
 }
