@@ -280,6 +280,33 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         setSelectedIds([newNode.id]);
     };
 
+    // Handler for custom image uploads (Pro feature)
+    const handleCustomImageUpload = (imageData: string) => {
+        if (!canvasContainerRef.current) return;
+        const canvasRect = canvasContainerRef.current.getBoundingClientRect();
+        const [viewX, viewY] = viewTransform.invert([canvasRect.width / 2, canvasRect.height / 2]);
+
+        const newNode: ArchNode = {
+            id: nanoid(),
+            label: 'Custom Image',
+            type: 'custom-image',
+            x: viewX,
+            y: viewY,
+            width: 200,
+            height: 150,
+            customIcon: imageData,
+            customIconSize: 100,
+            borderStyle: 'none',
+            borderWidth: 'medium',
+            borderColor: 'transparent',
+        };
+        const newData = { ...data, nodes: [...data.nodes, newNode] };
+        onDataChange(newData);
+        setInteractionMode('select');
+        setSelectedIds([newNode.id]);
+        setToastMessage('Custom image added!');
+    };
+
     const handleLinkStart = useCallback((sourceNodeId: string, startPos: { x: number, y: number }) => {
         setLinkingState({ sourceNodeId, startPos });
     }, []);
@@ -541,7 +568,11 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
                             className="fixed bottom-0 left-0 right-0 z-20 md:relative md:bottom-auto md:left-auto md:right-auto"
                         >
-                            <AddNodePanel onSelectNodeType={onAddNode} onClose={() => setInteractionMode('select')} />
+                            <AddNodePanel
+                                onSelectNodeType={onAddNode}
+                                onClose={() => setInteractionMode('select')}
+                                onCustomImageUpload={handleCustomImageUpload}
+                            />
                         </motion.div>
                     )}
                 </AnimatePresence>
