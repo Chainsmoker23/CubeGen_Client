@@ -513,10 +513,15 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
     const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.1, 4])
       .filter(event => {
-        if (!isEditable) return event.type === 'wheel'; // Allow zoom only if not editable
+        if (event.type === 'wheel') return true;
+        // Allow panning in 'pan' mode regardless of editable state
+        if (interactionMode === 'pan') return !event.button || event.button === 0;
+
+        if (!isEditable) return false; // Otherwise enforce editable check
+
         if (event.defaultPrevented) return false;
         const isBackgroundDrag = (event.target as HTMLElement)?.tagName === 'svg';
-        return event.type === 'wheel' || event.button === 2 || (interactionMode === 'select' && isBackgroundDrag);
+        return event.button === 2 || (interactionMode === 'select' && isBackgroundDrag);
       })
       .on('zoom', (event) => {
         setViewTransform(event.transform);
@@ -586,6 +591,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   }
 
   const getCursor = () => {
+    if (interactionMode === 'pan') return 'grab';
     if (!isEditable) return 'default';
     if (linkingState) return 'crosshair';
     switch (interactionMode) {
