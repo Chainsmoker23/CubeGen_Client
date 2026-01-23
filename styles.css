@@ -120,11 +120,10 @@
       .token.operator { color: #FC5FA3; }
       .token.plain-text { color: #E5E5E5; }
       .token.comment { color: #64748b; }
-
+      
+      /* Additional Token Classes for NPM Package Code */
       .token.command { color: #0a78f7; font-weight: bold; } /* yellow-400 */
       .token.url { color: #58a6ff; font-weight: bold; text-decoration: underline; } /* blue-400 */
-
-    
 
       /* --- NEW CREATIVE STYLES FOR APP PAGE --- */
       .app-bg {
@@ -608,4 +607,34 @@
       @keyframes confetti-fall {
         0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
         100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+      }
+
+      /* --- Advanced Link Flow Animation --- */
+      /* Animated dashes flowing along the arrow path */
+      @keyframes link-flow {
+        0% { stroke-dashoffset: 30; }
+        100% { stroke-dashoffset: 0; }
+      }
+
+      @keyframes link-flow-fast {
+        0% { stroke-dashoffset: 50; }
+        100% { stroke-dashoffset: 0; }
+      }
+
+      /* Active animation (selected links) */
+      .link-flow-animated {
+        stroke-dasharray: 10 5 !important;
+        animation: link-flow-fast 0.8s linear infinite;
+      }
+
+      /* Subtle animation (non-selected but enabled) */
+      .link-flow-animated-subtle {
+        stroke-dasharray: 15 8 !important;
+        animation: link-flow 2s linear infinite;
+      }
+
+      /* Glow effect for animated links */
+      .link-flow-animated,
+      .link-flow-animated-subtle {
+        filter: drop-shadow(0 0 2px currentColor);
       }
