@@ -1559,7 +1559,9 @@ const DiagramNode = memo<{
 
   const commonProps = {
     fill: node.color || "var(--color-node-bg)",
+    fillOpacity: (node.shapeOpacity ?? 100) / 100, // Apply shape opacity (0-100 -> 0-1)
     stroke: node.borderColor || (isLinkHoverTarget ? "var(--color-accent-text)" : (isSelected ? "var(--color-accent-text)" : "var(--color-border)")),
+    strokeOpacity: (node.shapeOpacity ?? 100) / 100, // Also apply to stroke/border
     strokeWidth: node.borderWidth === 'thin' ? 1 : (node.borderWidth === 'thick' ? 3 : (isLinkHoverTarget ? 3 : (isSelected ? 2.5 : 1.5))),
     strokeDasharray: node.borderStyle === 'dotted' ? '2 2' : (node.borderStyle === 'dashed' ? '6 4' : (node.borderStyle === 'double' ? '6 2 6' : 'none')),
   };
