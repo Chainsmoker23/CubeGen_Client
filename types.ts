@@ -64,6 +64,8 @@ export interface Link {
   strokeWidth?: number;      // 1-10 pixels
   dashPattern?: string;      // e.g., "5,5" or "10,5,2,5"
   angle?: number;           // Custom angle in degrees (0-360)
+  // Advanced features
+  animated?: boolean;        // Enable animated flow indicator
 }
 
 export interface Container {
