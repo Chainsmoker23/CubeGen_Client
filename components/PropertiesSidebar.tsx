@@ -493,6 +493,34 @@ const PropertiesSidebar: React.FC<PropertiesSidebarProps> = ({ item, onPropertyC
                 <option value="thick">Thick</option>
               </select>
             </div>
+
+            {/* Animated Flow Toggle */}
+            <div className="mt-3 p-3 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-xl border border-violet-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <label htmlFor="animatedFlow" className="text-sm font-semibold text-violet-700">Animated Flow</label>
+                </div>
+                <button
+                  id="animatedFlow"
+                  type="button"
+                  onClick={() => {
+                    const newValue = !(item as any).animated;
+                    handlePropertyUpdate({ animated: newValue });
+                  }}
+                  className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-violet-400 ${(item as any).animated ? 'bg-violet-500' : 'bg-gray-300'
+                    }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${(item as any).animated ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-violet-500 mt-1.5">Shows data flow direction on the arrow</p>
+            </div>
           </>
         )}
       </div>
