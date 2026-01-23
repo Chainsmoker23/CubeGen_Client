@@ -68,7 +68,12 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
 
     useEffect(() => {
         const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            // Show warning on first load if mobile
+            if (mobile && !showMobileWarning) {
+                setShowMobileWarning(true);
+            }
         };
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -276,9 +281,26 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
             isExplaining: false,
         };
 
-        return isMobile
-            ? <MobilePlayground {...playgroundProps} />
-            : <Playground {...playgroundProps} />;
+        return (
+            <>
+                {isMobile
+                    ? <MobilePlayground {...playgroundProps} />
+                    : <Playground {...playgroundProps} />}
+
+                {/* Mobile Warning Modal */}
+                <AnimatePresence>
+                    {showMobileWarning && (
+                        <MobileWarning
+                            onProceed={() => setShowMobileWarning(false)}
+                            onCancel={() => {
+                                setShowMobileWarning(false);
+                                onNavigate('app'); // Go back to general architecture
+                            }}
+                        />
+                    )}
+                </AnimatePresence>
+            </>
+        );
     }
 
     // Fallback view (shouldn't normally reach here since we start in playground mode)
