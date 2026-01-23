@@ -296,6 +296,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
             height: 150,
             customIcon: imageData,
             customIconSize: 100,
+            shapeOpacity: 0, // No background by default
             borderStyle: 'none',
             borderWidth: 'medium',
             borderColor: 'transparent',
