@@ -248,4 +248,7 @@ export enum IconType {
   Edit = 'edit',
   Gear = 'gear',
   Generic = 'generic',
+
+  // --- Custom User Content ---
+  CustomImage = 'custom-image',
 }
