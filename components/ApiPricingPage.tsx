@@ -110,6 +110,8 @@ try {
               { name: 'Generate a personal API key for in-app usage', icon: 'check', iconColor: 'text-blue-500' },
               { name: 'Use your personal key with our SDK in your own applications', icon: 'check', iconColor: 'text-orange-500' },
               { name: 'Priority support', icon: 'check', iconColor: 'text-purple-500' },
+              { name: 'All editing feature', icon: 'check', iconColor: 'text-purple-400' },
+              { name: 'Access to new feature', icon: 'check', iconColor: 'text-purple-200' },
             ]
           }
         ];
