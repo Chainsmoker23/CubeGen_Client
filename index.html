@@ -1,53 +1,57 @@
-
 <!DOCTYPE html>
 <html lang="en" style="scroll-behavior: smooth;">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CubeGen AI: Instant AI Architecture Diagrams</title>
-    
-    <!-- Primary Meta Tags - Will be dynamically updated by React Helmet or similar -->
-    <meta name="description" content="Generate professional software architecture diagrams for free, instantly from a single prompt with CubeGen AI. AI-powered design for AWS, GCP, Azure, microservices, and more." />
-    <meta name="keywords" content="AI, architecture generator, generative AI, diagram as code, system design, software architecture, diagram tool, cloud architecture, AWS, GCP, Azure, microservices, DevOps, CI/CD, neural network diagram, RAG architecture, LLM, AI-powered design, instant diagrams, free architecture tool, online diagram maker, UML alternative" />
-    <link rel="canonical" href="https://cubegenai.com/" />
-    
-    <!-- SEO Enhancement Meta Tags -->
-    <meta name="robots" content="index, follow" />
-    <meta name="author" content="CubeGen AI" />
-    <meta name="copyright" content="© 2025 CubeGen AI" />
-    <meta name="distribution" content="global" />
-    <meta name="geo.region" content="US" />
-    <meta name="geo.placename" content="United States" />
-    <meta name="revisit-after" content="7 days" />
-    <meta name="rating" content="safe for kids" />
 
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CubeGen AI: Instant AI Architecture Diagrams</title>
 
-    <!-- Web App Manifest for PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#D6336C" />
+  <!-- Primary Meta Tags - Will be dynamically updated by React Helmet or similar -->
+  <meta name="description"
+    content="Generate professional software architecture diagrams for free, instantly from a single prompt with CubeGen AI. AI-powered design for AWS, GCP, Azure, microservices, and more." />
+  <meta name="keywords"
+    content="AI, architecture generator, generative AI, diagram as code, system design, software architecture, diagram tool, cloud architecture, AWS, GCP, Azure, microservices, DevOps, CI/CD, neural network diagram, RAG architecture, LLM, AI-powered design, instant diagrams, free architecture tool, online diagram maker, UML alternative" />
+  <link rel="canonical" href="https://cubegenai.com/" />
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://cubegenai.com/">
-    <meta property="og:site_name" content="CubeGen AI">
-    <meta property="og:title" content="CubeGen AI — AI Software Architecture Generator">
-    <meta property="og:description" content="Generate professional software architecture diagrams instantly from a single prompt with CubeGen AI.">
-    <meta property="og:image" content="https://cubegenai.com/social-preview.svg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:type" content="image/svg+xml">
+  <!-- SEO Enhancement Meta Tags -->
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="CubeGen AI" />
+  <meta name="copyright" content="© 2025 CubeGen AI" />
+  <meta name="distribution" content="global" />
+  <meta name="geo.region" content="US" />
+  <meta name="geo.placename" content="United States" />
+  <meta name="revisit-after" content="7 days" />
+  <meta name="rating" content="safe for kids" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://cubegenai.com/">
-    <meta property="twitter:title" content="CubeGen AI — AI Software Architecture Generator">
-    <meta property="twitter:description" content="Generate professional software architecture diagrams instantly from a single prompt with CubeGen AI.">
-    <meta property="twitter:image" content="https://cubegenai.com/social-preview.svg">
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/styles.css" />
+  <!-- Web App Manifest for PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#D6336C" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cubegenai.com/">
+  <meta property="og:site_name" content="CubeGen AI">
+  <meta property="og:title" content="CubeGen AI — AI Software Architecture Generator">
+  <meta property="og:description"
+    content="Generate professional software architecture diagrams instantly from a single prompt with CubeGen AI.">
+  <meta property="og:image" content="https://cubegenai.com/social-preview.svg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:type" content="image/svg+xml">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://cubegenai.com/">
+  <meta property="twitter:title" content="CubeGen AI — AI Software Architecture Generator">
+  <meta property="twitter:description"
+    content="Generate professional software architecture diagrams instantly from a single prompt with CubeGen AI.">
+  <meta property="twitter:image" content="https://cubegenai.com/social-preview.svg">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/styles.css" />
   <script type="importmap">
 {
   "imports": {
@@ -77,10 +81,10 @@
   }
 }
 </script>
-    <!-- === ADVANCED SEO & STRUCTURED DATA (JSON-LD) === -->
+  <!-- === ADVANCED SEO & STRUCTURED DATA (JSON-LD) === -->
 
-    <!-- 1. Organization Schema: Defines your brand for Google's Knowledge Graph -->
-    <script type="application/ld+json">
+  <!-- 1. Organization Schema: Defines your brand for Google's Knowledge Graph -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "Organization",
@@ -90,9 +94,9 @@
       "sameAs": []
     }
     </script>
-    
-    <!-- 2. WebSite Schema: Influences site name, Sitelinks Search Box, and hints at Sitelinks -->
-    <script type="application/ld+json">
+
+  <!-- 2. WebSite Schema: Influences site name, Sitelinks Search Box, and hints at Sitelinks -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
@@ -103,7 +107,7 @@
         "@type": "SearchAction",
         "target": {
           "@type": "EntryPoint",
-          "urlTemplate": "https://cubegenai.com/#app?q={search_term_string}"
+          "urlTemplate": "https://cubegenai.com/app?q={search_term_string}"
         },
         "query-input": "required name=search_term_string"
       },
@@ -111,39 +115,39 @@
         {
             "@type": "SiteNavigationElement",
             "name": "About",
-            "url": "https://cubegenai.com/#about"
+            "url": "https://cubegenai.com/about"
         },
         {
             "@type": "SiteNavigationElement",
             "name": "Blog",
-            "url": "https://cubegenai.com/#blog"
+            "url": "https://cubegenai.com/blog"
         },
         {
             "@type": "SiteNavigationElement",
             "name": "API & Pricing",
-            "url": "https://cubegenai.com/#api"
+            "url": "https://cubegenai.com/api"
         },
         {
             "@type": "SiteNavigationElement",
             "name": "Docs",
-            "url": "https://cubegenai.com/#docs"
+            "url": "https://cubegenai.com/docs"
         },
         {
             "@type": "SiteNavigationElement",
             "name": "Research",
-            "url": "https://cubegenai.com/#research"
+            "url": "https://cubegenai.com/research"
         },
         {
             "@type": "SiteNavigationElement",
             "name": "API Keys",
-            "url": "https://cubegenai.com/#apiKey"
+            "url": "https://cubegenai.com/apiKey"
         }
       ]
     }
     </script>
-    
-    <!-- 3. Enriched SoftwareApplication Schema: For rich snippets like ratings -->
-    <script type="application/ld+json">
+
+  <!-- 3. Enriched SoftwareApplication Schema: For rich snippets like ratings -->
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
@@ -166,9 +170,11 @@
     }
     </script>
 </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
 
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+
+</body>
+
 </html>
