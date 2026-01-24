@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import SharedFooter from './SharedFooter';
 import ArchitectureIcon from './ArchitectureIcon';
 import { IconType } from '../types';
+import SEO from './SEO';
 
 type Page = 'contact' | 'about' | 'api' | 'privacy' | 'terms' | 'docs' | 'apiKey' | 'careers' | 'research' | 'sdk';
 
@@ -30,13 +31,18 @@ const AboutPage: React.FC<AboutPageProps> = ({ onBack, onLaunch, onNavigate }) =
   ];
 
   const modelPillars = [
-      { icon: IconType.WebServer, title: 'Service Maintenance', description: 'Keeping the servers running, the APIs responsive, and the service reliable for all users.' },
-      { icon: IconType.User, title: 'Team Support', description: 'Fairly compensating our small, dedicated team for their ongoing work and innovation.' },
-      { icon: IconType.Brain, title: 'Future Research', description: 'Investing in R&D to explore new features and work towards an open-source model.' },
+    { icon: IconType.WebServer, title: 'Service Maintenance', description: 'Keeping the servers running, the APIs responsive, and the service reliable for all users.' },
+    { icon: IconType.User, title: 'Team Support', description: 'Fairly compensating our small, dedicated team for their ongoing work and innovation.' },
+    { icon: IconType.Brain, title: 'Future Research', description: 'Investing in R&D to explore new features and work towards an open-source model.' },
   ];
 
   return (
     <div className="bg-white text-[#2B2B2B] overflow-x-hidden">
+      <SEO
+        title="About Us - CubeGen AI"
+        description="CubeGen AI is a non-profit dedicated to democratizing software architecture design. Meet our team of visionaries."
+        canonical="https://cubegenai.com/about"
+      />
       <header className="absolute top-0 left-0 w-full p-6 z-20">
         <button onClick={onBack} className="flex items-center gap-2 font-semibold text-[#555555] hover:text-[#2B2B2B] transition-colors pulse-subtle">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
@@ -58,36 +64,36 @@ const AboutPage: React.FC<AboutPageProps> = ({ onBack, onLaunch, onNavigate }) =
             </motion.div>
           </div>
         </section>
-        
+
         {/* Team Section */}
         <section className="py-24 bg-white">
-            <div className="container mx-auto px-6">
-                <h2 className="text-4xl font-bold text-center mb-12">Meet the Team</h2>
-                <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {teamMembers.map((member, index) => {
-                       const colorClasses = ['bg-pink-100 text-pink-700', 'bg-blue-100 text-blue-700'];
-                       const colorClass = colorClasses[index % colorClasses.length];
+          <div className="container mx-auto px-6">
+            <h2 className="text-4xl font-bold text-center mb-12">Meet the Team</h2>
+            <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+              {teamMembers.map((member, index) => {
+                const colorClasses = ['bg-pink-100 text-pink-700', 'bg-blue-100 text-blue-700'];
+                const colorClass = colorClasses[index % colorClasses.length];
 
-                       return (
-                        <motion.div 
-                            key={member.name}
-                            initial={{ y: 20, opacity: 0 }}
-                            whileInView={{ y: 0, opacity: 1 }}
-                            viewport={{ once: true, amount: 0.5 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="bg-white p-8 rounded-2xl shadow-md text-center border border-[#F9D7E3] hover:shadow-xl transition-shadow"
-                        >
-                            <div className={`w-20 h-20 mx-auto rounded-full ${colorClass} flex items-center justify-center font-bold text-2xl mb-4`}>
-                                {member.avatar}
-                            </div>
-                            <h3 className="text-xl font-bold">{member.name}</h3>
-                            <p className="text-[#D6336C] font-semibold mb-3">{member.role}</p>
-                            <p className="text-[#555555] text-sm">{member.bio}</p>
-                        </motion.div>
-                       )
-                    })}
-                </div>
+                return (
+                  <motion.div
+                    key={member.name}
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-white p-8 rounded-2xl shadow-md text-center border border-[#F9D7E3] hover:shadow-xl transition-shadow"
+                  >
+                    <div className={`w-20 h-20 mx-auto rounded-full ${colorClass} flex items-center justify-center font-bold text-2xl mb-4`}>
+                      {member.avatar}
+                    </div>
+                    <h3 className="text-xl font-bold">{member.name}</h3>
+                    <p className="text-[#D6336C] font-semibold mb-3">{member.role}</p>
+                    <p className="text-[#555555] text-sm">{member.bio}</p>
+                  </motion.div>
+                )
+              })}
             </div>
+          </div>
         </section>
 
         {/* Sustainable Model Section */}
@@ -98,22 +104,22 @@ const AboutPage: React.FC<AboutPageProps> = ({ onBack, onLaunch, onNavigate }) =
               As a non-profit, our focus is on impact, not profit. API charges from our API and power-users with personal keys directly fund our mission.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {modelPillars.map((pillar, index) => (
-                    <motion.div 
-                        key={pillar.title}
-                        initial={{ y: 20, opacity: 0 }}
-                        whileInView={{ y: 0, opacity: 1 }}
-                        viewport={{ once: true, amount: 0.5 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-white p-8 rounded-2xl shadow-md text-center border border-[#F9D7E3]"
-                    >
-                        <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
-                            <ArchitectureIcon type={pillar.icon} className="w-8 h-8 text-[#D6336C]" />
-                        </div>
-                        <h3 className="text-xl font-bold mb-2">{pillar.title}</h3>
-                        <p className="text-[#555555] text-sm">{pillar.description}</p>
-                    </motion.div>
-                ))}
+              {modelPillars.map((pillar, index) => (
+                <motion.div
+                  key={pillar.title}
+                  initial={{ y: 20, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white p-8 rounded-2xl shadow-md text-center border border-[#F9D7E3]"
+                >
+                  <div className="flex items-center justify-center h-16 w-16 mx-auto rounded-full bg-gradient-to-br from-white to-[#FFF0F5] border-2 border-[#F9D7E3] shadow-lg mb-4">
+                    <ArchitectureIcon type={pillar.icon} className="w-8 h-8 text-[#D6336C]" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{pillar.title}</h3>
+                  <p className="text-[#555555] text-sm">{pillar.description}</p>
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
