@@ -127,7 +127,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
     }
   ];
 
-  const trustedByIcons = [IconType.Google, IconType.Microsoft, IconType.Docker, IconType.Kubernetes, IconType.NextJs, IconType.Python];
+  const trustedByIcons = [IconType.ChatGpt, IconType.Gemini, IconType.Anthropic, IconType.AwsLambda, IconType.Kubernetes, IconType.Docker];
 
   return (
     <div className="bg-white text-[#2B2B2B] overflow-x-hidden">
@@ -176,7 +176,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">POWERING DIAGRAMS FOR TEAMS USING</p>
               <div className="mt-6 flex justify-center items-center gap-8 md:gap-12 flex-wrap">
                 {trustedByIcons.map((iconType, index) => (
-                  <ArchitectureIcon key={index} type={iconType} className="h-8 w-8 text-gray-400" />
+                  <ArchitectureIcon key={index} type={iconType} className="h-10 w-10 hover:scale-110 transition-transform duration-300" />
                 ))}
               </div>
             </motion.div>
