@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 
 import { generateLinkColors, LINK_COLORS } from '../utils/linkColorAssigner';
 import { calculateAdaptiveCurveTension, getAnimatedFlowClass } from '../utils/linkPathUtils';
+import { SmartArrow } from './SmartArrow';
 
 const GRID_SIZE = 10;
 
@@ -98,383 +99,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
     return generateLinkColors(data.links, data.nodes);
   }, [data.links, data.nodes]);
 
-  const renderableLinks = useMemo(() => {
-    return data.links.map(link => {
-      const sourceNode = nodesById.get(typeof link.source === 'string' ? link.source : link.source.id);
-      const targetNode = nodesById.get(typeof link.target === 'string' ? link.target : link.target.id);
 
-      if (!sourceNode || !targetNode) return null;
-
-      const sourceId = sourceNode.id;
-      const targetId = targetNode.id;
-
-      // Enhanced connection point detection with bidirectional separation
-      const getConnectionPoint = (node: ArchNode, otherNode: ArchNode, isSource: boolean, isBidirectional: boolean = false, isReverse: boolean = false) => {
-        const dx = otherNode.x - node.x;
-        const dy = otherNode.y - node.y;
-        const isHorizontal = Math.abs(dx) > Math.abs(dy);
-
-        // Determine which side to connect to
-        let side: 'top' | 'right' | 'bottom' | 'left';
-        if (isHorizontal) {
-          side = dx > 0 ? 'right' : 'left';
-        } else {
-          side = dy > 0 ? 'bottom' : 'top';
-        }
-
-        // Get all connections on this side
-        const sideConnections = data.links.filter(l => {
-          const lSourceId = typeof l.source === 'string' ? l.source : l.source.id;
-          const lTargetId = typeof l.target === 'string' ? l.target : l.target.id;
-          const isConnectedToNode = lSourceId === node.id || lTargetId === node.id;
-
-          if (!isConnectedToNode) return false;
-
-          // Check if this link uses the same side
-          const otherConnectedNode = lSourceId === node.id ?
-            data.nodes.find(n => n.id === lTargetId) :
-            data.nodes.find(n => n.id === lSourceId);
-
-          if (!otherConnectedNode) return false;
-
-          const otherDx = otherConnectedNode.x - node.x;
-          const otherDy = otherConnectedNode.y - node.y;
-          const otherIsHorizontal = Math.abs(otherDx) > Math.abs(otherDy);
-
-          if (otherIsHorizontal) {
-            const otherSide = otherDx > 0 ? 'right' : 'left';
-            return otherSide === side;
-          } else {
-            const otherSide = otherDy > 0 ? 'bottom' : 'top';
-            return otherSide === side;
-          }
-        });
-
-        // Calculate position index for this specific connection
-        const connectionIndex = sideConnections.findIndex(l =>
-          (typeof l.source === 'string' ? l.source : l.source.id) === (isSource ? sourceId : targetId) &&
-          (typeof l.target === 'string' ? l.target : l.target.id) === (isSource ? targetId : sourceId)
-        );
-
-        const totalConnections = sideConnections.length;
-        const baseSpacing = 15;
-
-        // For bidirectional links, offset them to avoid overlap
-        let offsetMultiplier = 0;
-        if (isBidirectional) {
-          offsetMultiplier = isReverse ? -1 : 1;
-        }
-
-        // Calculate offset position
-        let x, y;
-        switch (side) {
-          case 'top':
-            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
-            y = node.y - node.height / 2 + (offsetMultiplier * 8);
-            break;
-          case 'right':
-            x = node.x + node.width / 2 + (offsetMultiplier * 8);
-            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
-            break;
-          case 'bottom':
-            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
-            y = node.y + node.height / 2 + (offsetMultiplier * 8);
-            break;
-          case 'left':
-            x = node.x - node.width / 2 + (offsetMultiplier * 8);
-            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
-            break;
-        }
-
-        return { x, y, side };
-      };
-
-      // Check if this is part of a bidirectional pair
-      const key = [sourceId, targetId].sort().join('--');
-      const group = linkGroups.get(key) || { fwd: [], bwd: [] };
-      const isBidirectional = group.fwd.length > 0 && group.bwd.length > 0;
-      const isForward = group.fwd.includes(link.id);
-      const isReverse = group.bwd.includes(link.id);
-
-      // Get connection points for both ends
-      const sourcePoint = getConnectionPoint(sourceNode, targetNode, true, isBidirectional, false);
-      const targetPoint = getConnectionPoint(targetNode, sourceNode, false, isBidirectional, isReverse);
-
-      const LINK_SPACING = 12; // Reduced spacing for individual link offset
-
-      const allLinksInGroup = [...group.fwd, ...group.bwd];
-      const linkIndex = allLinksInGroup.indexOf(link.id);
-      const totalLinks = allLinksInGroup.length;
-
-      const groupOffset = (linkIndex - (totalLinks - 1) / 2) * LINK_SPACING;
-
-      const isNeuronLink = sourceNode.type === 'neuron' && targetNode.type === 'neuron';
-
-      // --- Path & Label Calculation with enhanced styling ---
-      let pathD: string;
-      let labelPos: { x: number, y: number } | null = null;
-
-      if (isNeuronLink) {
-        const dx = targetPoint.x - sourcePoint.x;
-        const dy = targetPoint.y - sourcePoint.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist === 0) {
-          pathD = '';
-        } else {
-          const sourceRadius = sourceNode.width / 2;
-          const targetRadius = targetNode.width / 2;
-          const p1 = { x: sourcePoint.x + (dx / dist) * sourceRadius, y: sourcePoint.y + (dy / dist) * sourceRadius };
-          const p4 = { x: targetPoint.x - (dx / dist) * targetRadius, y: targetPoint.y - (dy / dist) * targetRadius };
-          pathD = `M ${p1.x} ${p1.y} L ${p4.x} ${p4.y}`;
-        }
-      } else {
-        const dx = targetPoint.x - sourcePoint.x;
-        const dy = targetPoint.y - sourcePoint.y;
-        const isPrimarilyHorizontal = Math.abs(dx) > Math.abs(dy);
-
-        // Use custom curvature from link properties or default
-        const curvaturePercent = link.curvature || 30;
-        const maxCurve = Math.min(Math.abs(dx), Math.abs(dy)) * (curvaturePercent / 100);
-
-        // ADVANCED: Distance-Adaptive Curve Tension
-        // Short distance → tighter curves, Long distance → smoother, wider curves
-        const adaptiveCurve = calculateAdaptiveCurveTension(sourceNode, targetNode, curvaturePercent);
-        const cornerRadius = Math.min(adaptiveCurve.cornerRadius, maxCurve / 2);
-
-        let p1: { x: number, y: number }, p2: { x: number, y: number }, p3: { x: number, y: number }, p4: { x: number, y: number };
-
-        const hasBidirectionalPair = group.fwd.length > 0 && group.bwd.length > 0;
-        const directionMultiplier = hasBidirectionalPair ? (isForward ? -1 : 1) : -1;
-
-        if (isPrimarilyHorizontal) {
-          // H-V-H path with enhanced bidirectional separation and obstacle avoidance
-          p1 = { x: sourcePoint.x, y: sourcePoint.y };
-          p4 = { x: targetPoint.x, y: targetPoint.y };
-
-          // Calculate the midpoint X, but offset it to avoid crossing through nodes
-          let midX = (p1.x + p4.x) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
-
-          // Smart offset: if nodes are at different Y levels, route around not through
-          const yDiff = Math.abs(p1.y - p4.y);
-          const xDiff = Math.abs(p1.x - p4.x);
-
-          // If the Y difference is significant but X difference is larger (horizontal flow)
-          // route the vertical segment outside the node area
-          if (yDiff > 30 && xDiff > 100) {
-            // Offset the midpoint to route around intermediate nodes
-            const routeOffset = xDiff * 0.1; // 10% offset
-            midX = p4.x - routeOffset; // Route closer to target to avoid middle nodes
-          }
-
-          p2 = { x: midX, y: p1.y };
-          p3 = { x: midX, y: p4.y };
-
-          // Apply custom angle if specified
-          if (link.angle) {
-            const angleRad = (link.angle * Math.PI) / 180;
-            const offsetX = Math.cos(angleRad) * (link.offsetDistance || 20);
-            const offsetY = Math.sin(angleRad) * (link.offsetDistance || 20);
-            p2.x += offsetX;
-            p2.y += offsetY;
-            p3.x += offsetX;
-            p3.y += offsetY;
-          }
-
-          pathD = `M ${p1.x} ${p1.y} H ${p2.x - cornerRadius * Math.sign(p2.x - p1.x)} Q ${p2.x} ${p2.y}, ${p2.x} ${p2.y + cornerRadius * Math.sign(p3.y - p2.y)} V ${p3.y - cornerRadius * Math.sign(p3.y - p2.y)} Q ${p3.x} ${p3.y}, ${p3.x + cornerRadius * Math.sign(p4.x - p3.x)} ${p3.y} H ${p4.x}`;
-
-          if (link.label) {
-            const labelX = p2.x;
-            const labelY = (p2.y + p3.y) / 2;
-            const xOffset = 15 * directionMultiplier;
-            labelPos = { x: labelX + xOffset, y: labelY };
-          }
-        } else {
-          // V-H-V path with enhanced bidirectional separation and obstacle avoidance
-          p1 = { x: sourcePoint.x, y: sourcePoint.y };
-          p4 = { x: targetPoint.x, y: targetPoint.y };
-
-          // Calculate the midpoint Y, but offset it to avoid crossing through nodes
-          let midY = (p1.y + p4.y) / 2 + groupOffset + (isBidirectional ? directionMultiplier * 15 : 0);
-
-          // Smart offset: if nodes are at different X levels, route around not through
-          const yDiff = Math.abs(p1.y - p4.y);
-          const xDiff = Math.abs(p1.x - p4.x);
-
-          // If the X difference is significant but Y difference is larger (vertical flow)
-          // route the horizontal segment outside the node area
-          if (xDiff > 30 && yDiff > 100) {
-            // Offset the midpoint to route around intermediate nodes
-            const routeOffset = yDiff * 0.1; // 10% offset
-            midY = p4.y - routeOffset; // Route closer to target to avoid middle nodes
-          }
-
-          p2 = { x: p1.x, y: midY };
-          p3 = { x: p4.x, y: midY };
-
-          // Apply custom angle if specified
-          if (link.angle) {
-            const angleRad = (link.angle * Math.PI) / 180;
-            const offsetX = Math.cos(angleRad) * (link.offsetDistance || 20);
-            const offsetY = Math.sin(angleRad) * (link.offsetDistance || 20);
-            p2.x += offsetX;
-            p2.y += offsetY;
-            p3.x += offsetX;
-            p3.y += offsetY;
-          }
-
-          pathD = `M ${p1.x} ${p1.y} V ${p2.y - cornerRadius * Math.sign(p2.y - p1.y)} Q ${p2.x} ${p2.y}, ${p2.x + cornerRadius * Math.sign(p3.x - p2.x)} ${p2.y} H ${p3.x - cornerRadius * Math.sign(p3.x - p2.x)} Q ${p3.x} ${p3.y}, ${p3.x} ${p3.y + cornerRadius * Math.sign(p4.y - p3.y)} V ${p4.y}`;
-
-          if (link.label) {
-            const labelX = (p2.x + p3.x) / 2;
-            const labelY = p2.y;
-            const yOffset = 15 * directionMultiplier;
-            labelPos = { x: labelX, y: labelY + yOffset };
-          }
-        }
-      }
-
-      return {
-        link,
-        pathD,
-        labelPos,
-        isNeuronLink,
-        sourcePoint,
-        targetPoint,
-        isBidirectional,
-        isForward,
-        isReverse
-      };
-    }).filter(Boolean) as {
-      link: Link;
-      pathD: string;
-      labelPos: { x: number, y: number } | null;
-      isNeuronLink: boolean;
-      sourcePoint: { x: number, y: number },
-      targetPoint: { x: number, y: number },
-      isBidirectional: boolean,
-      isForward: boolean,
-      isReverse: boolean
-    }[];
-
-    // Store the filtered links for intelligent label adjustment
-    const linksWithPaths = data.links.map(link => {
-      const sourceNode = nodesById.get(typeof link.source === 'string' ? link.source : link.source.id);
-      const targetNode = nodesById.get(typeof link.target === 'string' ? link.target : link.target.id);
-      if (!sourceNode || !targetNode) return null;
-
-      const sourceId = sourceNode.id;
-      const targetId = targetNode.id;
-      const key = [sourceId, targetId].sort().join('--');
-      const group = linkGroups.get(key) || { fwd: [], bwd: [] };
-      const isBidirectional = group.fwd.length > 0 && group.bwd.length > 0;
-      const isForward = group.fwd.includes(link.id);
-      const isReverse = group.bwd.includes(link.id);
-
-      // Find from our already calculated results
-      return {
-        link, pathD: '', labelPos: null as { x: number, y: number } | null,
-        isNeuronLink: false, sourcePoint: { x: sourceNode.x, y: sourceNode.y },
-        targetPoint: { x: targetNode.x, y: targetNode.y }, isBidirectional, isForward, isReverse
-      };
-    }).filter(Boolean) as {
-      link: Link;
-      pathD: string;
-      labelPos: { x: number, y: number } | null;
-      isNeuronLink: boolean;
-      sourcePoint: { x: number, y: number },
-      targetPoint: { x: number, y: number },
-      isBidirectional: boolean,
-      isForward: boolean,
-      isReverse: boolean
-    }[];
-
-    // =========================================================================
-    // INTELLIGENT LABEL POSITIONING - Collision avoidance & smart placement
-    // =========================================================================
-    const adjustedLinks: typeof linksWithPaths = [];
-
-    // Track occupied areas (starts with nodes)
-    const occupiedZones: { x: number, y: number, w: number, h: number }[] = data.nodes.map(node => ({
-      x: node.x,
-      y: node.y,
-      w: node.width || 120,
-      h: node.height || 60
-    }));
-
-    // Serial processing to ensure later labels avoid earlier ones
-    linksWithPaths.forEach((linkData) => {
-      if (!linkData.labelPos || !linkData.link.label) {
-        adjustedLinks.push(linkData);
-        return;
-      }
-
-      const labelWidth = linkData.link.label.length * 7 + 28;
-      const labelHeight = 24;
-      let bestPos = linkData.labelPos;
-      let foundCleanSpot = false;
-
-      // Define candidates: Original -> Vertical offsets -> Horizontal offsets -> Diagonals -> Extended offsets
-      const candidates = [
-        { x: 0, y: 0 },
-        { x: 0, y: -25 }, { x: 0, y: 25 },     // Close Vertical
-        { x: 0, y: -45 }, { x: 0, y: 45 },     // Far Vertical
-        { x: 30, y: 0 }, { x: -30, y: 0 },     // Close Horizontal
-        { x: 20, y: -20 }, { x: -20, y: -20 }, // Diagonals
-        { x: 20, y: 20 }, { x: -20, y: 20 },
-        { x: 50, y: 0 }, { x: -50, y: 0 }      // Far Horizontal
-      ];
-
-      for (const offset of candidates) {
-        const testX = linkData.labelPos.x + offset.x;
-        const testY = linkData.labelPos.y + offset.y;
-
-        // Define label rect with padding
-        const labelRect = {
-          left: testX - labelWidth / 2 - 4, // 4px extra buffer
-          right: testX + labelWidth / 2 + 4,
-          top: testY - labelHeight / 2 - 4,
-          bottom: testY + labelHeight / 2 + 4
-        };
-
-        const hasCollision = occupiedZones.some(zone => {
-          const zoneLeft = zone.x - zone.w / 2;
-          const zoneRight = zone.x + zone.w / 2;
-          const zoneTop = zone.y - zone.h / 2;
-          const zoneBottom = zone.y + zone.h / 2;
-
-          return !(labelRect.right < zoneLeft || labelRect.left > zoneRight ||
-            labelRect.bottom < zoneTop || labelRect.top > zoneBottom);
-        });
-
-        if (!hasCollision) {
-          bestPos = { x: testX, y: testY };
-          foundCleanSpot = true;
-          break;
-        }
-      }
-
-      // If no clean spot, try a "desperate" fallback that shifts based on index to avoid total stacking
-      if (!foundCleanSpot) {
-        const shift = (adjustedLinks.length % 3) * 20; // 0, 20, 40
-        bestPos = { x: bestPos.x + 40, y: bestPos.y - 40 - shift };
-      }
-
-      // Register this label's final position as occupied
-      occupiedZones.push({
-        x: bestPos.x,
-        y: bestPos.y,
-        w: labelWidth,
-        h: labelHeight
-      });
-
-      adjustedLinks.push({
-        ...linkData,
-        labelPos: bestPos
-      });
-    });
-
-    return adjustedLinks;
-  }, [data.links, data.nodes, nodesById, linkGroups]);
 
   const isSelected = (id: string) => selectedIds.includes(id);
 
@@ -658,130 +283,32 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
 
           {/* Link Paths Layer */}
           <g>
-            {renderableLinks.map(({ link, pathD, labelPos, isNeuronLink, sourcePoint, targetPoint, isBidirectional, isForward, isReverse }) => {
-              const selected = isSelected(link.id);
+            {data.links.map(link => {
+              const sourceNode = nodesById.get(typeof link.source === 'string' ? link.source : link.source.id);
+              const targetNode = nodesById.get(typeof link.target === 'string' ? link.target : link.target.id);
+              if (!sourceNode || !targetNode) return null;
 
-              // Use relational colors from linkColorMap, falling back to custom or default
-              const assignedColor = linkColorMap.get(link.id);
-              const color = selected
-                ? 'var(--color-accent-text)'
-                : (link.color || assignedColor || 'var(--color-link)');
-
-              // Get the arrowhead marker ID based on the color
-              const getArrowheadId = (colorValue: string) => {
-                if (colorValue.startsWith('#')) {
-                  return `arrowhead-${colorValue.replace('#', '')}`;
-                }
-                return 'arrowhead'; // Fallback to default
-              };
-
-              const arrowheadId = getArrowheadId(color);
-              const arrowheadReverseId = getArrowheadId(color) + '-reverse';
-
-              // ADVANCED: Smart flow-aware stroke width calculation
-              const getSmartStrokeWidth = () => {
-                // If custom stroke width is set, use it
-                if (link.strokeWidth) return link.strokeWidth;
-                if (isNeuronLink) return 0.5;
-
-                // Calculate based on connection importance
-                const linkSourceId = typeof link.source === 'string' ? link.source : link.source.id;
-                const linkTargetId = typeof link.target === 'string' ? link.target : link.target.id;
-                const allLinks = data.links || [];
-                const sourceConnections = allLinks.filter(l => {
-                  const sid = typeof l.source === 'string' ? l.source : l.source.id;
-                  return sid === linkSourceId;
-                }).length;
-                const targetConnections = allLinks.filter(l => {
-                  const tid = typeof l.target === 'string' ? l.target : l.target.id;
-                  return tid === linkTargetId;
-                }).length;
-
-                // Main distributor nodes get thicker arrows
-                const importance = Math.max(sourceConnections, targetConnections);
-                if (importance >= 4) return 2.5;  // Major hub
-                if (importance >= 3) return 2.2;  // Secondary hub
-                if (importance >= 2) return 2;    // Normal flow
-                return 1.8;  // Leaf connection
-              };
-              const strokeWidth = getSmartStrokeWidth();
-
-              // Handle dash patterns
-              let dashArray = 'none';
-              if (link.dashPattern && link.dashPattern !== 'none') {
-                dashArray = link.dashPattern;
-              } else if (link.style === 'dashed') {
-                dashArray = '8 6';
-              } else if (link.style === 'dotted') {
-                dashArray = '2 4';
-              }
+              const key = [sourceNode.id, targetNode.id].sort().join('--');
+              const group = linkGroups.get(key) || { fwd: [], bwd: [] };
+              const allLinks = [...group.fwd, ...group.bwd];
+              const linkIndex = allLinks.indexOf(link.id);
+              const totalLinks = allLinks.length;
+              const isBidirectional = group.fwd.length > 0 && group.bwd.length > 0;
+              const isReverse = group.bwd.includes(link.id);
 
               return (
-                <g
-                  key={link.id}
-                  onClick={(e) => {
-                    handleItemSelection(e, link.id);
-                    // Set this link as the one being edited for label/properties
-                    if (!editingLinkId) {
-                      setEditingLinkId(link.id);
-                      setLabelInputValue(link.label || '');
-                    }
-                  }}
-                  onContextMenu={(e) => handleItemContextMenu(e, link)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {/* Click target area */}
-                  <path d={pathD} stroke="transparent" strokeWidth={20} fill="none" />
-
-                  {/* Main link path with colored arrowhead */}
-                  <path
-                    d={pathD}
-                    stroke={color}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={dashArray === 'none' ? undefined : dashArray}
-                    fill="none"
-                    markerEnd={link.endMarker !== false && !isNeuronLink ? `url(#${arrowheadId})` : undefined}
-                    markerStart={link.startMarker ? `url(#${arrowheadReverseId.replace('-reverse-reverse', '-reverse')})` : undefined}
-                    className={link.animated ? getAnimatedFlowClass(true, selected) : ''}
+                <g key={link.id} onClick={(e) => handleItemSelection(e, link.id)} onContextMenu={(e) => handleItemContextMenu(e, link)}>
+                  <SmartArrow
+                    link={link}
+                    sourceNode={sourceNode}
+                    targetNode={targetNode}
+                    isSelected={isSelected(link.id)}
+                    linkIndex={linkIndex}
+                    totalLinks={totalLinks}
+                    isBidirectional={isBidirectional}
+                    isReverse={isReverse}
+                    mode="body"
                   />
-
-                  {/* Interactive label area for adding/editing link labels */}
-                  {labelPos && (
-                    <g onClick={(e) => {
-                      e.stopPropagation();
-                      // Set this link as the one being edited for label
-                      setEditingLinkId(link.id);
-                      setLabelInputValue(link.label || '');
-                    }}>
-                      <circle
-                        cx={labelPos.x}
-                        cy={labelPos.y}
-                        r="10"
-                        fill="transparent"
-                        stroke="transparent"
-                        strokeWidth="2"
-                        className="cursor-pointer hover:fill-[var(--color-accent-soft)]"
-                      />
-                    </g>
-                  )}
-
-                  {/* Alternative click area for adding labels if no label exists yet */}
-                  {!labelPos && (
-                    <g onClick={(e) => {
-                      e.stopPropagation();
-                      // Set this link as the one being edited for label
-                      setEditingLinkId(link.id);
-                      setLabelInputValue('');
-                    }}>
-                      <path d={pathD} stroke="transparent" strokeWidth={15} fill="none" className="cursor-pointer" />
-                    </g>
-                  )}
-
-                  {/* Visualize connection points and bidirectional separation (debug) */}
-                  {/*
-                  <circle cx={sourcePoint.x} cy={sourcePoint.y} r="3" fill={isBidirectional ? (isForward ? "red" : "orange") : "green"} />
-                  <circle cx={targetPoint.x} cy={targetPoint.y} r="3" fill={isBidirectional ? (isReverse ? "purple" : "blue") : "blue"} />
-                  */}
                 </g>
               );
             })}
@@ -827,61 +354,32 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
 
           {/* Link Labels Layer (On Top) - ADVANCED SMART LABELS */}
           <g>
-            {renderableLinks.map(({ link, labelPos }) => {
-              if (!link.label || !labelPos) return null;
+            {data.links.map(link => {
+              const sourceNode = nodesById.get(typeof link.source === 'string' ? link.source : link.source.id);
+              const targetNode = nodesById.get(typeof link.target === 'string' ? link.target : link.target.id);
+              if (!sourceNode || !targetNode) return null;
 
-              const labelText = link.label;
-              // Smart width calculation based on text length
-              const charWidth = 7;
-              const paddingX = 14;
-              const paddingY = 6;
-              const labelWidth = Math.max(labelText.length * charWidth + paddingX * 2, 50);
-              const labelHeight = 24;
-              const borderRadius = labelHeight / 2; // Pill shape
-
-              // Get link color for accent border
-              const assignedColor = linkColorMap.get(link.id);
-              const linkColor = link.color || assignedColor || 'var(--color-link)';
+              const key = [sourceNode.id, targetNode.id].sort().join('--');
+              const group = linkGroups.get(key) || { fwd: [], bwd: [] };
+              const allLinks = [...group.fwd, ...group.bwd];
+              const linkIndex = allLinks.indexOf(link.id);
+              const totalLinks = allLinks.length;
+              const isBidirectional = group.fwd.length > 0 && group.bwd.length > 0;
+              const isReverse = group.bwd.includes(link.id);
 
               return (
                 <g key={`${link.id}-label`} style={{ pointerEvents: 'none' }}>
-                  {/* Shadow layer for depth */}
-                  <rect
-                    x={labelPos.x - labelWidth / 2 + 1}
-                    y={labelPos.y - labelHeight / 2 + 2}
-                    width={labelWidth}
-                    height={labelHeight}
-                    rx={borderRadius}
-                    ry={borderRadius}
-                    fill="rgba(0, 0, 0, 0.08)"
+                  <SmartArrow
+                    link={link}
+                    sourceNode={sourceNode}
+                    targetNode={targetNode}
+                    isSelected={isSelected(link.id)}
+                    linkIndex={linkIndex}
+                    totalLinks={totalLinks}
+                    isBidirectional={isBidirectional}
+                    isReverse={isReverse}
+                    mode="label"
                   />
-                  {/* Background pill with subtle gradient feel */}
-                  <rect
-                    x={labelPos.x - labelWidth / 2}
-                    y={labelPos.y - labelHeight / 2}
-                    width={labelWidth}
-                    height={labelHeight}
-                    rx={borderRadius}
-                    ry={borderRadius}
-                    fill="var(--color-canvas-bg)"
-                    stroke={linkColor}
-                    strokeWidth="1.5"
-                    style={{ filter: 'drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1))' }}
-                  />
-                  {/* Label text with improved typography */}
-                  <text
-                    x={labelPos.x}
-                    y={labelPos.y}
-                    dy=".35em"
-                    textAnchor="middle"
-                    fill="var(--color-text-primary)"
-                    fontSize="11px"
-                    fontWeight="600"
-                    fontFamily="Inter, system-ui, sans-serif"
-                    letterSpacing="0.2px"
-                  >
-                    {labelText}
-                  </text>
                 </g>
               );
             })}
