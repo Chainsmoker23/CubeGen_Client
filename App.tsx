@@ -15,7 +15,7 @@ import GeneralArchitecturePage from './components/GeneralArchitecturePage';
 import AdminPage from './components/AdminPage';
 import AdminLoginPage from './components/AdminLoginPage';
 import Loader from './components/Loader';
-import PaymentStatusPage from './components/PaymentStatusPage'; // Import the new component
+import PaymentStatusPage from './components/PaymentStatusPage';
 import SdkPage from './components/SdkPage';
 import BlogListPage from './components/BlogListPage';
 import BlogPostPage from './components/BlogPostPage';
@@ -27,14 +27,15 @@ import { AnimatePresence } from 'framer-motion';
 
 type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost' | 'playground';
 
-const getPageFromHash = (): { page: Page; subpage?: string } => {
-  const hash = window.location.hash.substring(1).split('?')[0];
-  if (!hash) {
-    return { page: 'landing' };
-  }
-  const [mainPage, subpage] = hash.split('/');
+// Helper to parse route string into Page object
+const parseRoute = (route: string): { page: Page; subpage?: string } => {
+  if (!route || route === '/') return { page: 'landing' };
 
-  // Special handling for blog post pages like #blog/my-post-slug
+  // Remove leading slash or hash
+  const cleanRoute = route.replace(/^[\/#]+/, '');
+  const [mainPage, subpage] = cleanRoute.split('/');
+
+  // Special handling for blog post pages like /blog/my-post-slug
   if (mainPage === 'blog' && subpage) {
     return { page: 'blogPost', subpage };
   }
@@ -46,13 +47,29 @@ const getPageFromHash = (): { page: Page; subpage?: string } => {
   return { page: 'landing' };
 };
 
+// Hybrid Router: Checks Hash first (legacy), then Path (SEO)
+const getCurrentPageInfo = (): { page: Page; subpage?: string } => {
+  // 1. Priority: Hash (Legacy support & Deep links)
+  const hash = window.location.hash.split('?')[0];
+  if (hash && hash.length > 1) {
+    return parseRoute(hash);
+  }
+
+  // 2. Secondary: Pathname (SEO / Modern)
+  const path = window.location.pathname;
+  if (path && path !== '/') {
+    return parseRoute(path);
+  }
+
+  return { page: 'landing' };
+};
 
 const App: React.FC = () => {
   const { currentUser, loading: authLoading } = useAuth();
   const { isAdminAuthenticated, loading: adminAuthLoading } = useAdminAuth();
-  const [page, setPage] = useState<{ page: Page; subpage?: string } | null>(null);
 
-  const [hash, setHash] = useState(() => window.location.hash);
+  // Initialize state based on current URL
+  const [pageInfo, setPageInfo] = useState<{ page: Page; subpage?: string } | null>(null);
 
   // --- PWA Install Prompt State ---
   const [installPromptEvent, setInstallPromptEvent] = useState<Event | null>(null);
@@ -61,96 +78,90 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setInstallPromptEvent(e);
-      // Show our custom UI
       setShowInstallPrompt(true);
-      console.log('`beforeinstallprompt` event was fired.');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   const handleInstall = () => {
     if (!installPromptEvent) return;
-    // @ts-ignore - The 'prompt' method exists on the BeforeInstallPromptEvent
+    // @ts-ignore
     installPromptEvent.prompt();
     // @ts-ignore
     installPromptEvent.userChoice.then((choiceResult) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the A2HS prompt');
-      } else {
-        console.log('User dismissed the A2HS prompt');
-      }
-      // We can only prompt once. Clear the event.
       setInstallPromptEvent(null);
       setShowInstallPrompt(false);
     });
   };
 
-  const handleDismissInstall = () => {
-    setShowInstallPrompt(false);
-  };
+  const handleDismissInstall = () => setShowInstallPrompt(false);
+
+  // --- Routing Logic ---
+  const handleUrlChange = useCallback(() => {
+    setPageInfo(getCurrentPageInfo());
+  }, []);
 
   useEffect(() => {
-    const handleHashChange = () => setHash(window.location.hash);
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    // Initial Load
+    handleUrlChange();
+
+    // Listen to Back/Forward navigation
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange); // Support hash changes too
+
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, [handleUrlChange]);
 
   const onNavigate = useCallback((targetPage: Page | string) => {
-    const newHash = `#${targetPage}`;
-    const newUrl = window.location.pathname + newHash;
+    // Convert logic: if simple string, assume root page. If path, keep it.
+    // We want clean URLs: /about
+
+    const targetUrl = targetPage.toString().startsWith('/') ? targetPage : `/${targetPage}`;
+
+    // Update History
+    // If we are currently on hash, maybe we should clear hash? 
+    // For now, simple pushState.
+    window.history.pushState(null, '', targetUrl);
+
+    // Manually trigger update since pushState doesn't fire popstate
+    handleUrlChange();
 
     window.scrollTo(0, 0);
-    // Use pushState to make the URL clean and navigate.
-    window.history.pushState(null, '', newUrl);
-    // Manually update the state to trigger the app's reactive loop.
-    setHash(newHash);
-  }, []);
+  }, [handleUrlChange]);
 
   useEffect(() => {
-    if (authLoading || adminAuthLoading) return;
+    if (authLoading || adminAuthLoading || !pageInfo) return;
 
-    const currentPageInfo = getPageFromHash();
-
-    // --- Admin Route Handling (Highest Priority) ---
-    if (currentPageInfo.page === 'admin' || currentPageInfo.page === 'adminLogin') {
+    // --- Admin Route Handling ---
+    if (pageInfo.page === 'admin' || pageInfo.page === 'adminLogin') {
       const targetPage = isAdminAuthenticated ? 'admin' : 'adminLogin';
-
-      // If we are on the right page, set the state to render it.
-      // Otherwise, navigate, which will re-trigger this effect.
-      if (currentPageInfo.page === targetPage) {
-        setPage({ page: targetPage });
-      } else {
+      if (pageInfo.page !== targetPage) {
         onNavigate(targetPage);
       }
-      return; // IMPORTANT: Prevent other logic from running for admin routes.
+      return;
     }
 
-    // --- General Redirect Rules for Regular Users ---
-    if (currentUser && currentPageInfo.page === 'auth') {
+    // --- Auth Redirects ---
+    if (currentUser && pageInfo.page === 'auth') {
       onNavigate('app');
       return;
     }
 
-    const isProtectedPage = ['app', 'neuralNetwork', 'apiKey', 'playground'].includes(currentPageInfo.page);
+    const isProtectedPage = ['app', 'neuralNetwork', 'apiKey', 'playground'].includes(pageInfo.page);
     if (!currentUser && isProtectedPage) {
       onNavigate('landing');
       return;
     }
-
-    // If no other rules matched, render the page from the hash.
-    setPage(currentPageInfo);
-
-  }, [authLoading, adminAuthLoading, currentUser, isAdminAuthenticated, onNavigate, hash]);
+  }, [authLoading, adminAuthLoading, currentUser, isAdminAuthenticated, onNavigate, pageInfo]);
 
 
-  if (page === null || authLoading || adminAuthLoading) {
+  if (pageInfo === null || authLoading || adminAuthLoading) {
     return (
       <div className="fixed inset-0 bg-white flex items-center justify-center">
         <Loader />
@@ -158,11 +169,13 @@ const App: React.FC = () => {
     );
   }
 
-  // --- Automatic Payment Verification (Top Priority) ---
+  // --- Payment Verification ---
   const searchParams = new URLSearchParams(window.location.search);
   const paymentId = searchParams.get('payment_id');
   const paymentStatus = searchParams.get('status');
-  const hashParams = new URLSearchParams(hash.split('?')[1]);
+  // Check hash params too just in case
+  const hashVal = window.location.hash.split('?')[1];
+  const hashParams = new URLSearchParams(hashVal);
   const paymentSuccessInHash = hashParams.get('payment') === 'success';
 
   if ((paymentId && paymentStatus === 'succeeded') || paymentSuccessInHash) {
@@ -171,7 +184,7 @@ const App: React.FC = () => {
 
   // --- Page rendering logic ---
   const renderPage = () => {
-    switch (page.page) {
+    switch (pageInfo.page) {
       case 'landing': return <LandingPage onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
       case 'auth': return <AuthPage onBack={() => onNavigate('landing')} />;
       case 'admin': return <AdminPage onNavigate={onNavigate} />;
@@ -191,8 +204,8 @@ const App: React.FC = () => {
       case 'playground': return <PlaygroundPage onNavigate={onNavigate} />;
       case 'blog': return <BlogListPage onBack={() => onNavigate('landing')} onNavigate={onNavigate} />;
       case 'blogPost':
-        if (page.subpage) {
-          return <BlogPostPage slug={page.subpage} onBack={() => onNavigate('blog')} onNavigate={onNavigate} />;
+        if (pageInfo.subpage) {
+          return <BlogPostPage slug={pageInfo.subpage} onBack={() => onNavigate('blog')} onNavigate={onNavigate} />;
         }
         return <LandingPage onLaunch={() => onNavigate('auth')} onNavigate={onNavigate} />; // Fallback
       default: return <LandingPage onLaunch={() => onNavigate('auth')} onNavigate={onNavigate} />;
