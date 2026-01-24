@@ -116,8 +116,14 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
 
         const cx = node.x;
         const cy = node.y;
-        const w = (node.width || 120) / 2;
-        const h = (node.height || 60) / 2;
+        let w = (node.width || 120) / 2;
+        let h = (node.height || 60) / 2;
+
+        // Custom Icon Tighter Docking: Shrink bounding box effectively so arrows touch the image
+        if ((node as any).customIcon) {
+          w = w * 0.85;
+          h = h * 0.85;
+        }
 
         const targetX = otherNode.x;
         const targetY = otherNode.y;
