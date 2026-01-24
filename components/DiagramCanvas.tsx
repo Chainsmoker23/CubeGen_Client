@@ -108,85 +108,69 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       const sourceId = sourceNode.id;
       const targetId = targetNode.id;
 
-      // Enhanced connection point detection with bidirectional separation
+      // Enhanced connection point detection using Ray Casting for Continuous Docking
       const getConnectionPoint = (node: ArchNode, otherNode: ArchNode, isSource: boolean, isBidirectional: boolean = false, isReverse: boolean = false) => {
-        const dx = otherNode.x - node.x;
-        const dy = otherNode.y - node.y;
-        const isHorizontal = Math.abs(dx) > Math.abs(dy);
+        // Continuous Docking Logic:
+        // Instead of snapping to Top/Right/Bottom/Left midpoints, calculate the EXACT intersection
+        // of the line (center-to-center) with the node's bounding box.
 
-        // Determine which side to connect to
+        const cx = node.x;
+        const cy = node.y;
+        const w = (node.width || 120) / 2;
+        const h = (node.height || 60) / 2;
+
+        const targetX = otherNode.x;
+        const targetY = otherNode.y;
+
+        const dx = targetX - cx;
+        const dy = targetY - cy;
+
+        // Avoid division by zero
+        if (dx === 0 && dy === 0) return { x: cx, y: cy, side: 'top' as const };
+
+        // Ray equation: P = Center + t * Direction
+        // Find smallest positive t where P hits the boundary (x = +/- w or y = +/- h)
+
+        // t for vertical edges (x = +/- w)
+        // t_x * dx = +/- w  => t_x = w / |dx|
+        const t_x = dx === 0 ? Infinity : w / Math.abs(dx);
+
+        // t for horizontal edges (y = +/- h)
+        // t_y * dy = +/- h  => t_y = h / |dy|
+        const t_y = dy === 0 ? Infinity : h / Math.abs(dy);
+
+        // The intersection is at the smaller t
+        const t = Math.min(t_x, t_y);
+
+        let finalX = cx + t * dx;
+        let finalY = cy + t * dy;
+
+        // Determine side for potential metadata/arrowhead rotation hint
         let side: 'top' | 'right' | 'bottom' | 'left';
-        if (isHorizontal) {
+        if (t_x < t_y) {
           side = dx > 0 ? 'right' : 'left';
         } else {
           side = dy > 0 ? 'bottom' : 'top';
         }
 
-        // Get all connections on this side
-        const sideConnections = data.links.filter(l => {
-          const lSourceId = typeof l.source === 'string' ? l.source : l.source.id;
-          const lTargetId = typeof l.target === 'string' ? l.target : l.target.id;
-          const isConnectedToNode = lSourceId === node.id || lTargetId === node.id;
-
-          if (!isConnectedToNode) return false;
-
-          // Check if this link uses the same side
-          const otherConnectedNode = lSourceId === node.id ?
-            data.nodes.find(n => n.id === lTargetId) :
-            data.nodes.find(n => n.id === lSourceId);
-
-          if (!otherConnectedNode) return false;
-
-          const otherDx = otherConnectedNode.x - node.x;
-          const otherDy = otherConnectedNode.y - node.y;
-          const otherIsHorizontal = Math.abs(otherDx) > Math.abs(otherDy);
-
-          if (otherIsHorizontal) {
-            const otherSide = otherDx > 0 ? 'right' : 'left';
-            return otherSide === side;
-          } else {
-            const otherSide = otherDy > 0 ? 'bottom' : 'top';
-            return otherSide === side;
-          }
-        });
-
-        // Calculate position index for this specific connection
-        const connectionIndex = sideConnections.findIndex(l =>
-          (typeof l.source === 'string' ? l.source : l.source.id) === (isSource ? sourceId : targetId) &&
-          (typeof l.target === 'string' ? l.target : l.target.id) === (isSource ? targetId : sourceId)
-        );
-
-        const totalConnections = sideConnections.length;
-        const baseSpacing = 15;
-
-        // For bidirectional links, offset them to avoid overlap
-        let offsetMultiplier = 0;
+        // Apply bidirectional offset if needed
+        // For continuous docking, we offset perpendicular to the line
         if (isBidirectional) {
-          offsetMultiplier = isReverse ? -1 : 1;
+          const offsetDist = 10;
+          const multiplier = isReverse ? -1 : 1;
+
+          // Calculate perpendicular vector
+          const len = Math.sqrt(dx * dx + dy * dy);
+          if (len > 0) {
+            const perpX = -dy / len;
+            const perpY = dx / len;
+
+            finalX += perpX * offsetDist * multiplier;
+            finalY += perpY * offsetDist * multiplier;
+          }
         }
 
-        // Calculate offset position
-        let x, y;
-        switch (side) {
-          case 'top':
-            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
-            y = node.y - node.height / 2 + (offsetMultiplier * 8);
-            break;
-          case 'right':
-            x = node.x + node.width / 2 + (offsetMultiplier * 8);
-            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
-            break;
-          case 'bottom':
-            x = node.x + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
-            y = node.y + node.height / 2 + (offsetMultiplier * 8);
-            break;
-          case 'left':
-            x = node.x - node.width / 2 + (offsetMultiplier * 8);
-            y = node.y + (connectionIndex - (totalConnections - 1) / 2) * baseSpacing;
-            break;
-        }
-
-        return { x, y, side };
+        return { x: finalX, y: finalY, side };
       };
 
       // Check if this is part of a bidirectional pair
