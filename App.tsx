@@ -1,25 +1,27 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import LandingPage from './components/LandingPage';
-import ContactPage from './components/ContactPage';
-import AboutPage from './components/AboutPage';
-import ApiPricingPage from './components/ApiPricingPage';
-import AuthPage from './components/AuthPage';
-import ApiKeyPage from './components/ApiKeyPage';
-import PrivacyPage from './components/PrivacyPage';
-import TermsPage from './components/TermsPage';
-import DocsPage from './components/DocsPage';
-import NeuralNetworkPage from './components/NeuralNetworkPage';
-import CareersPage from './components/CareersPage';
-import ResearchPage from './components/ResearchPage';
-import GeneralArchitecturePage from './components/GeneralArchitecturePage';
-import AdminPage from './components/AdminPage';
-import AdminLoginPage from './components/AdminLoginPage';
+import React, { useState, useCallback, useEffect, Suspense } from 'react';
+// Lazy Load Pages for Performance
+const LandingPage = React.lazy(() => import('./components/LandingPage'));
+const ContactPage = React.lazy(() => import('./components/ContactPage'));
+const AboutPage = React.lazy(() => import('./components/AboutPage'));
+const ApiPricingPage = React.lazy(() => import('./components/ApiPricingPage'));
+const AuthPage = React.lazy(() => import('./components/AuthPage'));
+const ApiKeyPage = React.lazy(() => import('./components/ApiKeyPage'));
+const PrivacyPage = React.lazy(() => import('./components/PrivacyPage'));
+const TermsPage = React.lazy(() => import('./components/TermsPage'));
+const DocsPage = React.lazy(() => import('./components/DocsPage'));
+const NeuralNetworkPage = React.lazy(() => import('./components/NeuralNetworkPage'));
+const CareersPage = React.lazy(() => import('./components/CareersPage'));
+const ResearchPage = React.lazy(() => import('./components/ResearchPage'));
+const GeneralArchitecturePage = React.lazy(() => import('./components/GeneralArchitecturePage'));
+const AdminPage = React.lazy(() => import('./components/AdminPage'));
+const AdminLoginPage = React.lazy(() => import('./components/AdminLoginPage'));
+const PaymentStatusPage = React.lazy(() => import('./components/PaymentStatusPage'));
+const SdkPage = React.lazy(() => import('./components/SdkPage'));
+const BlogListPage = React.lazy(() => import('./components/BlogListPage'));
+const BlogPostPage = React.lazy(() => import('./components/BlogPostPage'));
+const PlaygroundPage = React.lazy(() => import('./components/PlaygroundPage'));
+
 import Loader from './components/Loader';
-import PaymentStatusPage from './components/PaymentStatusPage';
-import SdkPage from './components/SdkPage';
-import BlogListPage from './components/BlogListPage';
-import BlogPostPage from './components/BlogPostPage';
-import PlaygroundPage from './components/PlaygroundPage';
 import { useAuth } from './contexts/AuthContext';
 import { useAdminAuth } from './contexts/AdminAuthContext';
 import InstallPromptToast from './components/InstallPromptToast';
@@ -214,7 +216,13 @@ const App: React.FC = () => {
 
   return (
     <>
-      {renderPage()}
+      <Suspense fallback={
+        <div className="fixed inset-0 bg-white flex items-center justify-center">
+          <Loader />
+        </div>
+      }>
+        {renderPage()}
+      </Suspense>
       <AnimatePresence>
         {showInstallPrompt && (
           <InstallPromptToast onInstall={handleInstall} onDismiss={handleDismissInstall} />
