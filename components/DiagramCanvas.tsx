@@ -641,7 +641,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
             <feDropShadow dx="1" dy="2" stdDeviation="2" floodColor="var(--color-shadow)" floodOpacity="0.1" />
           </filter>
         </defs>
-        <rect width="100%" height="100%" fill={showGrid ? "url(#grid)" : "var(--color-bg-secondary)"} />
+        <rect width="100%" height="100%" fill={showGrid ? "url(#grid)" : "transparent"} />
 
         <g className="diagram-content" transform={viewTransform.toString()}>
           {/* Containers Layer */}
