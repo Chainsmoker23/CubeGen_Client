@@ -32,6 +32,8 @@ interface DiagramCanvasProps {
   onLinkStart: (sourceNodeId: string, startPos: { x: number, y: number }) => void;
   linkingState: { sourceNodeId: string; startPos: { x: number, y: number } } | null;
   previewLinkTarget: { x: number; y: number; targetNodeId?: string } | null;
+  showGrid?: boolean;
+  autoFit?: boolean;
 }
 
 // ====================================================================================
@@ -44,6 +46,8 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
   interactionMode = 'select',
   onTransformChange, resizingNodeId = null, onNodeDoubleClick, onCanvasClick,
   onLinkStart, linkingState, previewLinkTarget,
+  showGrid = true,
+  autoFit = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewTransform, setViewTransform] = useState<ZoomTransform>(() => zoomIdentity);
@@ -520,8 +524,8 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
 
     svg.call(zoomBehavior).on("dblclick.zoom", null);
 
-    const fitToScreen = () => {
-      const contentGroup = svg.select<SVGGElement>('#diagram-content').node();
+    const fitToScreen = (instant = false) => {
+      const contentGroup = svg.select<SVGGElement>('.diagram-content').node();
       if (!contentGroup || !parent || data.nodes.length === 0) return;
       const bounds = contentGroup.getBBox();
       const parentWidth = parent.clientWidth; const parentHeight = parent.clientHeight;
@@ -530,10 +534,24 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       const scale = Math.min(4, 0.95 / Math.max(diagramWidth / parentWidth, diagramHeight / parentHeight));
       const tx = parentWidth / 2 - (diagramX + diagramWidth / 2) * scale;
       const ty = parentHeight / 2 - (diagramY + diagramHeight / 2) * scale;
-      svg.transition().duration(750).call(zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(scale));
+
+      if (instant) {
+        svg.call(zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(scale));
+      } else {
+        svg.transition().duration(750).call(zoomBehavior.transform, zoomIdentity.translate(tx, ty).scale(scale));
+      }
     };
 
-    if (fitScreenRef) fitScreenRef.current = fitToScreen;
+    if (fitScreenRef) fitScreenRef.current = () => fitToScreen(false);
+
+    // Auto-fit on mount (with slight delay to ensure layout)
+    if (autoFit && data.nodes.length > 0) {
+      // Use a timeout to ensure DOM is ready and bounds are calculable
+      const timer = setTimeout(() => {
+        fitToScreen(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
 
     const handleCanvasClick = (event: PointerEvent) => {
       if (!event.defaultPrevented && (event.target as SVGSVGElement).tagName === 'svg') {
@@ -554,7 +572,7 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
       svg.on('.zoom', null);
       if (fitScreenRef) fitScreenRef.current = null;
     }
-  }, [forwardedRef, setSelectedIds, data, fitScreenRef, isEditable, interactionMode, onTransformChange, onCanvasClick]);
+  }, [forwardedRef, setSelectedIds, data, fitScreenRef, isEditable, interactionMode, onTransformChange, onCanvasClick, autoFit]);
 
   const handleItemContextMenu = (e: React.MouseEvent, item: ArchNode | Link | Container) => {
     e.preventDefault(); e.stopPropagation();
@@ -623,9 +641,9 @@ const DiagramCanvas: React.FC<DiagramCanvasProps> = ({
             <feDropShadow dx="1" dy="2" stdDeviation="2" floodColor="var(--color-shadow)" floodOpacity="0.1" />
           </filter>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
+        <rect width="100%" height="100%" fill={showGrid ? "url(#grid)" : "var(--color-bg-secondary)"} />
 
-        <g id="diagram-content" transform={viewTransform.toString()}>
+        <g className="diagram-content" transform={viewTransform.toString()}>
           {/* Containers Layer */}
           <g>
             {data.containers?.map(container => (
