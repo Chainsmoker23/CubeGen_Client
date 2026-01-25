@@ -59,7 +59,7 @@ const TemplateCard: React.FC<{ template: any, onSelect: (t: any) => void }> = ({
         >
             {/* Diagram Preview Area */}
             <div className="flex-1 w-full bg-[#FFF0F5] relative overflow-hidden">
-                <div className="absolute inset-0 pointer-events-none"> {/* Disable interaction for preview */}
+                <div className="absolute inset-0 pointer-events-none transition-transform duration-700 ease-out group-hover:scale-105"> {/* Disable interaction for preview */}
                     <DiagramCanvas
                         data={template.data}
                         onDataChange={() => { }} // Read-only
@@ -120,14 +120,10 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
         try { return window.localStorage.getItem('user-api-key'); } catch { return null; }
     });
 
+    // PURE Resizer - No warning triggers
     useEffect(() => {
         const checkMobile = () => {
-            const mobile = window.innerWidth < 768;
-            setIsMobile(mobile);
-            // Show warning on first load if mobile
-            if (mobile && !showMobileWarning) {
-                setShowMobileWarning(true);
-            }
+            setIsMobile(window.innerWidth < 768);
         };
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -307,13 +303,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
         fitScreenRef.current?.();
     };
 
-    const handleEnterPlayground = () => {
-        if (isMobile) {
-            setShowMobileWarning(true);
-        } else {
-            setIsPlaygroundMode(true);
-        }
-    };
+    // Removed unused handleEnterPlayground to prevent accidental warnings
 
     const handleExitPlayground = () => {
         // Navigate back to app
@@ -405,7 +395,11 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
                                 onClick={() => {
                                     setHistory([createEmptyDiagram()]);
                                     setHistoryIndex(0);
-                                    setIsPlaygroundMode(true);
+                                    if (isMobile) {
+                                        setShowMobileWarning(true);
+                                    } else {
+                                        setIsPlaygroundMode(true);
+                                    }
                                 }}
                             >
                                 <div className="w-16 h-16 rounded-full bg-[var(--color-bg-secondary)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
@@ -423,7 +417,11 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
                                     onSelect={(t) => {
                                         setHistory([t.data]);
                                         setHistoryIndex(0);
-                                        setIsPlaygroundMode(true);
+                                        if (isMobile) {
+                                            setShowMobileWarning(true);
+                                        } else {
+                                            setIsPlaygroundMode(true);
+                                        }
                                     }}
                                 />
                             ))}
