@@ -54,11 +54,11 @@ const TemplateCard: React.FC<{ template: any, onSelect: (t: any) => void }> = ({
     return (
         <motion.div
             whileHover={{ y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
-            className="bg-[var(--color-panel-bg)] rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-accent)] cursor-pointer transition-all flex flex-col h-[300px] relative overflow-hidden group"
+            className="bg-[var(--color-panel-bg)] rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-accent)] cursor-pointer transition-all flex flex-col h-[380px] relative overflow-hidden group"
             onClick={() => onSelect(template)}
         >
             {/* Diagram Preview Area */}
-            <div className="flex-1 w-full bg-[var(--color-bg-secondary)] relative overflow-hidden">
+            <div className="flex-1 w-full bg-[#FFF0F5] relative overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none"> {/* Disable interaction for preview */}
                     <DiagramCanvas
                         data={template.data}
