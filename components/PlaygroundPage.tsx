@@ -45,6 +45,59 @@ const pageItemVariants: Variants = {
     },
 };
 
+const TemplateCard: React.FC<{ template: any, onSelect: (t: any) => void }> = ({ template, onSelect }) => {
+    const svgRef = useRef<SVGSVGElement>(null);
+    const fitScreenRef = useRef<(() => void) | null>(null);
+    // Dummy state for read-only canvas
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    return (
+        <motion.div
+            whileHover={{ y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
+            className="bg-[var(--color-panel-bg)] rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-accent)] cursor-pointer transition-all flex flex-col h-[300px] relative overflow-hidden group"
+            onClick={() => onSelect(template)}
+        >
+            {/* Diagram Preview Area */}
+            <div className="flex-1 w-full bg-[var(--color-bg-secondary)] relative overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none"> {/* Disable interaction for preview */}
+                    <DiagramCanvas
+                        data={template.data}
+                        onDataChange={() => { }} // Read-only
+                        selectedIds={selectedIds}
+                        setSelectedIds={setSelectedIds}
+                        forwardedRef={svgRef}
+                        fitScreenRef={fitScreenRef}
+                        isEditable={false}
+                        interactionMode="pan"
+                        onLinkStart={() => { }}
+                        linkingState={null}
+                        previewLinkTarget={null}
+                        showGrid={false}
+                        autoFit={true}
+                    />
+                </div>
+                {/* Overlay to intercept clicks and add hover effect */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-panel-bg)] via-transparent to-transparent opacity-20 group-hover:opacity-0 transition-opacity" />
+            </div>
+
+            {/* Info Area */}
+            <div className="p-5 relative z-10 bg-[var(--color-panel-bg)] border-t border-[var(--color-border)]">
+                <h3 className="text-lg font-bold mb-1 truncate" title={template.title}>{template.title}</h3>
+                <p className="text-xs text-[var(--color-text-secondary)] line-clamp-2 mb-3 h-8">
+                    {template.description}
+                </p>
+
+                <div className="flex items-center text-[var(--color-accent)] text-sm font-semibold">
+                    <span>Use Template</span>
+                    <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 
 const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
     const { currentUser } = useAuth();
@@ -137,7 +190,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
             }
         });
 
-        const contentGroup = svgElement.querySelector('#diagram-content');
+        const contentGroup = svgElement.querySelector('.diagram-content');
         if (!contentGroup) return;
         const bbox = (contentGroup as SVGGraphicsElement).getBBox();
 
@@ -159,7 +212,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
         bgRect.setAttribute('fill', bgColor);
         exportRoot.appendChild(bgRect);
 
-        const clonedContentGroup = svgClone.querySelector('#diagram-content');
+        const clonedContentGroup = svgClone.querySelector('.diagram-content');
         if (clonedContentGroup instanceof globalThis.Element) {
             clonedContentGroup.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding})`);
             exportRoot.appendChild(clonedContentGroup);
@@ -364,36 +417,15 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
 
                             {/* Template Options */}
                             {TEMPLATES.map((template) => (
-                                <motion.div
+                                <TemplateCard
                                     key={template.id}
-                                    whileHover={{ y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
-                                    className="bg-[var(--color-panel-bg)] rounded-2xl p-8 border border-[var(--color-border)] hover:border-[var(--color-accent)] cursor-pointer transition-all flex flex-col min-h-[250px] relative overflow-hidden group"
-                                    onClick={() => {
-                                        setHistory([template.data]);
+                                    template={template}
+                                    onSelect={(t) => {
+                                        setHistory([t.data]);
                                         setHistoryIndex(0);
                                         setIsPlaygroundMode(true);
                                     }}
-                                >
-                                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <ArchitectureIcon type={IconType.Sparkles} className="w-24 h-24 rotate-12" />
-                                    </div>
-
-                                    <div className="w-12 h-12 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center mb-6 z-10">
-                                        <ArchitectureIcon type={IconType.Sparkles} className="w-6 h-6" />
-                                    </div>
-
-                                    <h3 className="text-xl font-bold mb-2 z-10 relative">{template.title}</h3>
-                                    <p className="text-sm text-[var(--color-text-secondary)] flex-grow z-10 relative leading-relaxed">
-                                        {template.description}
-                                    </p>
-
-                                    <div className="mt-6 flex items-center text-[var(--color-accent)] text-sm font-semibold z-10">
-                                        <span>Use Template</span>
-                                        <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                        </svg>
-                                    </div>
-                                </motion.div>
+                                />
                             ))}
                         </div>
                     </div>
