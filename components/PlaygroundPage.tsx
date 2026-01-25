@@ -14,6 +14,7 @@ import Logo from './Logo';
 import { useAuth } from '../contexts/AuthContext';
 import MobileWarning from './MobileWarning';
 import Toast from './Toast';
+import { TEMPLATES } from './content/templateData';
 
 type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'playground';
 
@@ -54,7 +55,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
 
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(true); // Start in playground mode
+    const [isPlaygroundMode, setIsPlaygroundMode] = useState<boolean>(false); // Start in Template Selection mode
 
     const [isMobile, setIsMobile] = useState(false);
     const [showMobileWarning, setShowMobileWarning] = useState<boolean>(false);
@@ -332,24 +333,70 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
                     </h1>
                 </header>
 
-                <main className="flex-1 flex items-center justify-center p-8">
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="text-center"
-                    >
-                        <ArchitectureIcon type={IconType.Edit} className="h-20 w-20 text-[var(--color-text-tertiary)] mx-auto" />
-                        <h2 className="mt-4 text-2xl font-semibold">Custom Playground</h2>
-                        <p className="mt-2 text-[var(--color-text-secondary)] max-w-md">
-                            Create your architecture manually without AI. Add nodes, containers, and connections yourself.
-                        </p>
-                        <button
-                            onClick={handleEnterPlayground}
-                            className="mt-6 shimmer-button text-[#A61E4D] font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                <main className="flex-1 overflow-y-auto p-8">
+                    <div className="max-w-6xl mx-auto">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center mb-12"
                         >
-                            Enter Playground
-                        </button>
-                    </motion.div>
+                            <h2 className="text-3xl font-bold mb-4">Start Designing</h2>
+                            <p className="text-[var(--color-text-secondary)]">Choose a template to jumpstart your architecture or start from scratch.</p>
+                        </motion.div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+                            {/* Blank Canvas Option */}
+                            <motion.div
+                                whileHover={{ y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
+                                className="bg-[var(--color-panel-bg)] rounded-2xl p-8 border-2 border-dashed border-[var(--color-border)] hover:border-[var(--color-accent)] cursor-pointer transition-all group flex flex-col items-center justify-center text-center min-h-[250px]"
+                                onClick={() => {
+                                    setHistory([createEmptyDiagram()]);
+                                    setHistoryIndex(0);
+                                    setIsPlaygroundMode(true);
+                                }}
+                            >
+                                <div className="w-16 h-16 rounded-full bg-[var(--color-bg-secondary)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                    <ArchitectureIcon type={IconType.Edit} className="w-8 h-8 text-[var(--color-text-secondary)] group-hover:text-[var(--color-accent)]" />
+                                </div>
+                                <h3 className="text-xl font-bold mb-2">Blank Canvas</h3>
+                                <p className="text-sm text-[var(--color-text-secondary)]">Start with an empty grid</p>
+                            </motion.div>
+
+                            {/* Template Options */}
+                            {TEMPLATES.map((template) => (
+                                <motion.div
+                                    key={template.id}
+                                    whileHover={{ y: -5, boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}
+                                    className="bg-[var(--color-panel-bg)] rounded-2xl p-8 border border-[var(--color-border)] hover:border-[var(--color-accent)] cursor-pointer transition-all flex flex-col min-h-[250px] relative overflow-hidden group"
+                                    onClick={() => {
+                                        setHistory([template.data]);
+                                        setHistoryIndex(0);
+                                        setIsPlaygroundMode(true);
+                                    }}
+                                >
+                                    <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <ArchitectureIcon type={IconType.Sparkles} className="w-24 h-24 rotate-12" />
+                                    </div>
+
+                                    <div className="w-12 h-12 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center mb-6 z-10">
+                                        <ArchitectureIcon type={IconType.Sparkles} className="w-6 h-6" />
+                                    </div>
+
+                                    <h3 className="text-xl font-bold mb-2 z-10 relative">{template.title}</h3>
+                                    <p className="text-sm text-[var(--color-text-secondary)] flex-grow z-10 relative leading-relaxed">
+                                        {template.description}
+                                    </p>
+
+                                    <div className="mt-6 flex items-center text-[var(--color-accent)] text-sm font-semibold z-10">
+                                        <span>Use Template</span>
+                                        <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                        </svg>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
                 </main>
             </motion.div>
 
