@@ -67,17 +67,18 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
         }
     }, [canRedo, onRedo]);
 
+    // View Mode side effects
+    useEffect(() => {
+        if (isViewMode) {
+            setSelectedIds([]);
+            setInteractionMode('pan');
+        } else {
+            setInteractionMode('select');
+        }
+    }, [isViewMode, setSelectedIds]);
+
     // View Mode toggle
-    const toggleViewMode = useCallback(() => {
-        setIsViewMode(prev => {
-            const newMode = !prev;
-            if (newMode) {
-                setSelectedIds([]); // Deselect all items when entering view mode
-                setInteractionMode('select');
-            }
-            return newMode;
-        });
-    }, [setSelectedIds]);
+    const toggleViewMode = useCallback(() => setIsViewMode(prev => !prev), []);
 
     // Keyboard shortcuts for view mode
     useEffect(() => {
@@ -627,9 +628,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
                             Exit View Mode (Esc)
                         </button>
                     )}
-                    {actionBarPosition && selectedIds.length > 0 && !isViewMode && (
-                        <ContextualActionBar position={actionBarPosition} onDelete={handleDeleteSelected} onDuplicate={handleDuplicateSelected} selectedCount={selectedIds.length} />
-                    )}
+                    {/* Contextual Action Bar removed as per user request to reduce clutter */}
                 </div>
                 <DiagramCanvas
                     forwardedRef={svgRef}
