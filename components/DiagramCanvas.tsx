@@ -1403,6 +1403,7 @@ const DiagramNode = memo<{
   const { node, isSelected, onContextMenu, interactionMode, isEditable, resizingNodeId, onNodeDoubleClick, onLinkStart, isLinkHoverTarget, onSelect, isDragging, setIsDragging } = props;
   const ref = useRef<SVGGElement>(null);
   const dataRef = useRef(props.data);
+  const [isHovered, setIsHovered] = useState(false);
   dataRef.current = props.data;
 
   // Enhanced connection handle positions - up to 3 ports per side with dynamic spacing
@@ -1598,6 +1599,8 @@ const DiagramNode = memo<{
       onClick={(e) => onSelect(e, node.id)}
       onDoubleClick={() => onNodeDoubleClick?.(node.id)}
       onContextMenu={(e) => onContextMenu(e, node)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{ cursor: isEditable && (interactionMode === 'select' || interactionMode === 'pan') ? 'move' : 'default' }}
       className={`diagram-node node-id-${node.id}`}
     >
@@ -1640,7 +1643,7 @@ const DiagramNode = memo<{
                     fill="var(--color-text-primary)"
                     fontSize="12px"
                     fontWeight="500"
-                    style={{ pointerEvents: 'none' }}
+                    style={{ pointerEvents: 'none', userSelect: 'none' }}
                   >
                     {node.label}
                   </text>
@@ -1665,7 +1668,7 @@ const DiagramNode = memo<{
               fill="var(--color-text-primary)"
               fontSize="13px"
               fontWeight="500"
-              style={{ pointerEvents: 'none' }}
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
             >
               {node.label}
             </text>
@@ -1675,7 +1678,7 @@ const DiagramNode = memo<{
       {isResizing && isSelected && ['tl', 'tr', 'bl', 'br'].map(h => <ResizeHandle key={h} handle={h as 'br' | 'bl' | 'tr' | 'tl'} />)}
 
       {/* Connection Handles - Enhanced with multiple ports per side */}
-      {isSelected && isEditable && Object.entries(getConnectionHandles).map(([side, positions]) => (
+      {(isSelected || isHovered) && isEditable && Object.entries(getConnectionHandles).map(([side, positions]) => (
         (positions as Array<{ x: number, y: number, index: number }>).map((pos, index) => (
           <g key={`${side}-${index}`}>
             <circle
