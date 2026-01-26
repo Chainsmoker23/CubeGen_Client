@@ -1633,22 +1633,43 @@ const DiagramNode = memo<{
                   style={{ pointerEvents: 'none' }}
                 />
                 {node.label && (
-                  <foreignObject x={8} y={node.height - labelHeight} width={node.width - 16} height={labelHeight - 4} style={{ pointerEvents: 'none' }}>
-                    <div className="w-full h-full flex items-center justify-center text-center">
-                      <span className="label-text font-medium leading-tight text-xs" style={{ wordBreak: 'break-word' }}>{node.label}</span>
-                    </div>
-                  </foreignObject>
+                  <text
+                    x={node.width / 2}
+                    y={node.height - 4}
+                    textAnchor="middle"
+                    fill="var(--color-text-primary)"
+                    fontSize="12px"
+                    fontWeight="500"
+                    style={{ pointerEvents: 'none' }}
+                  >
+                    {node.label}
+                  </text>
                 )}
               </>
             );
           })()
         ) : (
-          <foreignObject x={8} y={8} width={node.width - 16} height={node.height - 16} style={{ pointerEvents: 'none' }}>
-            <div className="w-full h-full flex flex-col items-center justify-center text-center p-1 gap-1">
-              {node.type !== 'layer-label' && node.type !== 'group-label' && <ArchitectureIcon type={node.type} className="w-8 h-8 flex-shrink-0" />}
-              <span className="label-text font-medium leading-tight text-sm" style={{ wordBreak: 'break-word' }}>{node.label}</span>
-            </div>
-          </foreignObject>
+          <g>
+            {/* Center icon and text manually */}
+            {node.type !== 'layer-label' && node.type !== 'group-label' && (
+              <foreignObject x={8} y={8} width={node.width - 16} height={node.height - 30} style={{ pointerEvents: 'none' }}>
+                <div className="w-full h-full flex items-center justify-center">
+                  <ArchitectureIcon type={node.type} className="w-8 h-8" />
+                </div>
+              </foreignObject>
+            )}
+            <text
+              x={node.width / 2}
+              y={node.height - 15}
+              textAnchor="middle"
+              fill="var(--color-text-primary)"
+              fontSize="13px"
+              fontWeight="500"
+              style={{ pointerEvents: 'none' }}
+            >
+              {node.label}
+            </text>
+          </g>
         )}
       </motion.g>
       {isResizing && isSelected && ['tl', 'tr', 'bl', 'br'].map(h => <ResizeHandle key={h} handle={h as 'br' | 'bl' | 'tr' | 'tl'} />)}
