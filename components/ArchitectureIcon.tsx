@@ -10,15 +10,30 @@ interface ArchitectureIconProps {
 
 const ArchitectureIcon: React.FC<ArchitectureIconProps> = ({ type, className = 'w-6 h-6' }) => {
   const normalizedType = type.toLowerCase().replace(/[\s_]/g, '-') as IconType;
-  
+
   // Directly get the icon from the local constants.
   // This is fast and removes all network requests, significantly improving performance.
   const displayIcon = ICONS[normalizedType] || ICONS[IconType.Generic];
 
+  // Check if it's a data URI (string) or ReactNode
+  if (typeof displayIcon === 'string' && displayIcon.startsWith('data:image')) {
+    return (
+      <motion.img
+        key={normalizedType}
+        src={displayIcon}
+        alt={type}
+        className={className}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+      />
+    );
+  }
+
   return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 24 24" 
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
       className={className}
       fill="currentColor" // Set top-level fill
     >
@@ -32,7 +47,7 @@ const ArchitectureIcon: React.FC<ArchitectureIconProps> = ({ type, className = '
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
       >
-        {displayIcon}
+        {displayIcon as React.ReactNode}
       </motion.g>
     </svg>
   );
