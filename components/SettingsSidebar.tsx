@@ -6,7 +6,7 @@ import ArchitectureIcon from './ArchitectureIcon';
 import { IconType } from '../types';
 import UserPlansPanel from './UserPlansPanel';
 import BillingPanel from './BillingPanel'; // Import the new component
-import { FREE_GENERATION_LIMIT } from './constants';
+import { FREE_GENERATION_LIMIT, HOBBYIST_GENERATION_LIMIT } from './constants';
 
 
 type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'sdk';
@@ -45,27 +45,34 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
   const plan = currentUser?.user_metadata?.plan || 'free';
   const isPremiumUser = ['pro'].includes(plan);
 
-  // NEW: Generation balance logic
-  const generationBalance = currentUser?.user_metadata?.generation_balance;
+  // NEW: Generation balance logic - Derived from count for robustness
+  const generationCount = currentUser?.user_metadata?.generation_count ?? 0;
+
   let usageDisplay;
   if (plan === 'pro') {
     usageDisplay = <p className="text-sm font-semibold text-green-600">Unlimited Generations</p>;
-  } else if (plan === 'hobbyist') {
-    usageDisplay = <p className="text-sm font-semibold">{generationBalance ?? 0} <span className="text-[var(--color-text-secondary)] font-normal">credits remaining</span></p>;
-  } else { // free
-    const balance = generationBalance ?? FREE_GENERATION_LIMIT;
-    const usagePercentage = Math.max(0, (balance / FREE_GENERATION_LIMIT) * 100);
-    usageDisplay = (
-      <>
-        <div className="flex justify-between items-center mb-1">
-          <p className="text-sm text-[var(--color-text-secondary)]">Generations Remaining</p>
-          <p className="text-sm font-semibold">{balance} / {FREE_GENERATION_LIMIT}</p>
-        </div>
-        <div className="w-full bg-[var(--color-bg)] rounded-full h-2.5 border border-[var(--color-border)] overflow-hidden">
-          <div className="bg-gradient-to-r from-[var(--color-accent)] to-pink-400 h-2 rounded-full" style={{ width: `${usagePercentage}%` }}></div>
-        </div>
-      </>
-    );
+  } else {
+    // Determine limit based on plan
+    const limit = plan === 'hobbyist' ? HOBBYIST_GENERATION_LIMIT : FREE_GENERATION_LIMIT;
+    // Calculate remaining balance
+    const balance = Math.max(0, limit - generationCount);
+
+    if (plan === 'hobbyist') {
+      usageDisplay = <p className="text-sm font-semibold">{balance} <span className="text-[var(--color-text-secondary)] font-normal">credits remaining</span></p>;
+    } else { // free
+      const usagePercentage = Math.max(0, (balance / FREE_GENERATION_LIMIT) * 100);
+      usageDisplay = (
+        <>
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-sm text-[var(--color-text-secondary)]">Generations Remaining</p>
+            <p className="text-sm font-semibold">{balance} / {FREE_GENERATION_LIMIT}</p>
+          </div>
+          <div className="w-full bg-[var(--color-bg)] rounded-full h-2.5 border border-[var(--color-border)] overflow-hidden">
+            <div className="bg-gradient-to-r from-[var(--color-accent)] to-pink-400 h-2 rounded-full" style={{ width: `${usagePercentage}%` }}></div>
+          </div>
+        </>
+      );
+    }
   }
 
   useEffect(() => {
