@@ -297,19 +297,26 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
       const apiKeyToUse = keyOverride || userApiKey;
       const { diagram, newGenerationCount } = await generateDiagramData(prompt, apiKeyToUse || undefined);
 
-      if (currentUser && newGenerationCount !== null && newGenerationCount !== undefined) {
+      if (currentUser) {
         const plan = currentUser.user_metadata?.plan || 'free';
         let balanceUpdate = {};
 
+        // ROBUST COUNTER INCREMENT:
+        // Prioritize newGenerationCount from backend. 
+        // If missing/stale, FORCE increment local count to ensure UI update.
+        const currentCount = currentUser.user_metadata?.generation_count ?? 0;
+        const effectiveCount = (newGenerationCount !== null && newGenerationCount !== undefined && newGenerationCount > currentCount)
+          ? newGenerationCount
+          : currentCount + 1;
+
         if (plan !== 'pro') {
           const limit = plan === 'hobbyist' ? HOBBYIST_GENERATION_LIMIT : FREE_GENERATION_LIMIT;
-          // Assuming newGenerationCount is the total usage count
-          const newBalance = Math.max(0, limit - newGenerationCount);
+          const newBalance = Math.max(0, limit - effectiveCount);
           balanceUpdate = { generation_balance: newBalance };
         }
 
         updateCurrentUserMetadata({
-          generation_count: newGenerationCount,
+          generation_count: effectiveCount,
           ...balanceUpdate
         });
       } else if (currentUser) {
