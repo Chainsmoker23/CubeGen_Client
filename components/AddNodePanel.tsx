@@ -26,6 +26,23 @@ const AddNodePanel: React.FC<AddNodePanelProps> = ({ onSelectNodeType, onClose, 
         }
     };
 
+    // VIRTUALIZATION: Limit initial render count to prevent UI lag with 1000+ icons
+    const [displayLimit, setDisplayLimit] = useState(60);
+
+    // Reset limit when search changes
+    useMemo(() => {
+        setDisplayLimit(60);
+    }, [searchTerm]);
+
+    const visibleIcons = filteredIcons.slice(0, displayLimit);
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, clientHeight, scrollHeight } = e.currentTarget;
+        if (scrollHeight - scrollTop <= clientHeight + 100) {
+            setDisplayLimit(prev => Math.min(prev + 60, filteredIcons.length));
+        }
+    };
+
     return (
         <div className="h-full md:h-full w-screen max-w-[320px] md:w-80 bg-[var(--color-panel-bg)] md:border-r md:border-[var(--color-border)] p-4 flex flex-col rounded-t-2xl md:rounded-none">
             <div className="w-12 h-1.5 bg-[var(--color-border)] rounded-full mx-auto mb-4 md:hidden" />
@@ -52,9 +69,12 @@ const AddNodePanel: React.FC<AddNodePanelProps> = ({ onSelectNodeType, onClose, 
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full p-2 mb-4 bg-[var(--color-bg-input)] border border-[var(--color-border)] rounded-xl focus:ring-1 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
             />
-            <div className="flex-1 overflow-y-auto pr-2">
+            <div
+                className="flex-1 overflow-y-auto pr-2"
+                onScroll={handleScroll}
+            >
                 <div className="grid grid-cols-2 gap-2">
-                    {filteredIcons.map(iconKey => (
+                    {visibleIcons.map(iconKey => (
                         <button
                             key={iconKey}
                             onClick={() => onSelectNodeType(iconKey as IconType)}
@@ -68,6 +88,10 @@ const AddNodePanel: React.FC<AddNodePanelProps> = ({ onSelectNodeType, onClose, 
                         </button>
                     ))}
                 </div>
+                {/* Loader or spacer could go here */}
+                {visibleIcons.length < filteredIcons.length && (
+                    <div className="p-4 text-center text-xs text-[var(--color-text-secondary)]">Loading more...</div>
+                )}
             </div>
         </div>
     );
