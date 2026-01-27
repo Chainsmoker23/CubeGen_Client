@@ -121,9 +121,11 @@ const PricingTableOne: React.FC<PricingTableOneProps> = ({ title, description, o
                         <motion.div
                             key={plan.id}
                             className={`relative p-8 rounded-2xl border transition-all duration-300 flex flex-col h-full ${isHighlightedAsCurrent
-                                    ? 'bg-white border-2 border-[#D6336C] shadow-2xl scale-105'
-                                    : plan.highlight
-                                        ? 'bg-white shadow-2xl border-[#D6336C] md:-translate-y-4'
+                                ? 'bg-white border-2 border-[#D6336C] shadow-2xl scale-105'
+                                : plan.highlight
+                                    ? 'bg-white shadow-2xl border-[#D6336C] md:-translate-y-4'
+                                    : (userPlan === 'pro' && planId === 'hobbyist')
+                                        ? 'bg-white shadow-lg border-pink-100'
                                         : 'bg-white/70 shadow-lg border-pink-100'
                                 }`}
                         >
@@ -166,8 +168,8 @@ const PricingTableOne: React.FC<PricingTableOneProps> = ({ title, description, o
                                 onClick={() => onPlanSelect(plan.id)}
                                 disabled={isButtonDisabled}
                                 className={`mt-8 w-full font-bold py-3 px-6 rounded-full transition-all duration-300 flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed ${isButtonDisabled
-                                        ? 'bg-gray-200 text-gray-500 cursor-default'
-                                        : (plan.highlight || isHobbyistRepurchase ? 'shimmer-button text-[#A61E4D]' : 'bg-[#F9D7E3] text-[#A61E4D] hover:shadow-lg')
+                                    ? 'bg-gray-200 text-gray-500 cursor-default'
+                                    : (plan.highlight || isHobbyistRepurchase ? 'shimmer-button text-[#A61E4D]' : 'bg-[#F9D7E3] text-[#A61E4D] hover:shadow-lg')
                                     }`}
                             >
                                 {loadingPlan === plan.id
