@@ -489,7 +489,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 
                         // We prioritize stroke, fill, coloring, and font properties
                         // Copying ALL styles is too slow and huge.
-                        const essentialProps = ['fill', 'stroke', 'stroke-width', 'font-family', 'font-size', 'opacity', 'visibility', 'transform', 'width', 'height', 'transform-origin', 'transform-box'];
+                        const essentialProps = ['fill', 'stroke', 'stroke-width', 'font-family', 'font-size', 'opacity', 'visibility', 'transform', 'width', 'height', 'transform-origin', 'transform-box', 'display', 'flex-direction', 'justify-content', 'align-items'];
                         essentialProps.forEach(prop => {
                             const val = computedStyle.getPropertyValue(prop);
                             if (val && val !== 'none' && val !== 'auto' && val !== '0px') {
