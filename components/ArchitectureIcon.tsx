@@ -16,20 +16,6 @@ const ArchitectureIcon: React.FC<ArchitectureIconProps> = ({ type, className = '
   const displayIcon = ICONS[normalizedType] || ICONS[IconType.Generic];
 
   // Check if it's a data URI (string) or ReactNode
-  if (typeof displayIcon === 'string' && displayIcon.startsWith('data:image')) {
-    return (
-      <motion.img
-        key={normalizedType}
-        src={displayIcon}
-        alt={type}
-        className={className}
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-      />
-    );
-  }
-
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +33,11 @@ const ArchitectureIcon: React.FC<ArchitectureIconProps> = ({ type, className = '
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
       >
-        {displayIcon as React.ReactNode}
+        {typeof displayIcon === 'string' && displayIcon.startsWith('data:image') ? (
+          <image href={displayIcon} x="0" y="0" width="24" height="24" />
+        ) : (
+          displayIcon as React.ReactNode
+        )}
       </motion.g>
     </svg>
   );
