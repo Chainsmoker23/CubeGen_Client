@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
 import { TESTIMONIALS } from './content/landingContent';
@@ -131,9 +130,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
 
   const trustedByIcons = [IconType.ChatGpt, IconType.Gemini, IconType.Anthropic, IconType.AwsLambda, IconType.Kubernetes, IconType.Docker];
 
+  const appSchema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "CubeGen AI",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "featureList": "AI Architecture Generation, Cloud Diagramming, Export to PNG/SVG",
+    "screenshot": "https://cubegenai.com/social-preview.svg"
+  });
+
   return (
     <div className="bg-white text-[#2B2B2B] overflow-x-hidden">
-      <SEO />
+      <SEO schema={appSchema} />
       <Header onLaunch={onLaunch} onNavigate={onNavigate} isScrolled={isScrolled} />
       <main>
         {/* Hero Section */}
