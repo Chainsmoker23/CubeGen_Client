@@ -447,7 +447,7 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
             }
         });
 
-        const contentGroup = svgElement.querySelector('#diagram-content');
+        const contentGroup = svgElement.querySelector('.diagram-content');
         if (!contentGroup) {
             setToastMessage("Export failed: Diagram content not found.");
             return;
