@@ -54,8 +54,13 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
   } else {
     // Determine limit based on plan
     const limit = plan === 'hobbyist' ? HOBBYIST_GENERATION_LIMIT : FREE_GENERATION_LIMIT;
-    // Calculate remaining balance
-    const balance = Math.max(0, limit - generationCount);
+
+    // Calculate remaining balance, prioritizing explicit balance from metadata (e.g. set by error handlers)
+    // Fallback to calculation from count if explicit balance is missing.
+    let balance = currentUser?.user_metadata?.generation_balance;
+    if (balance === undefined || balance === null) {
+      balance = Math.max(0, limit - generationCount);
+    }
 
     if (plan === 'hobbyist') {
       usageDisplay = <p className="text-sm font-semibold">{balance} <span className="text-[var(--color-text-secondary)] font-normal">credits remaining</span></p>;
