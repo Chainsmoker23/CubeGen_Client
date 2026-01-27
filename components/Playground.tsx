@@ -1,6 +1,5 @@
 import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import domtoimage from 'dom-to-image-more';
 import { DiagramData, ArchNode, Link, Container, IconType } from '../types';
 import DiagramCanvas, { InteractionMode } from './DiagramCanvas';
 import PropertiesSidebar from './PropertiesSidebar';
@@ -468,27 +467,101 @@ const Playground: React.FC<PlaygroundProps> = (props) => {
 
         if (format === 'png') {
             try {
-                // Use dom-to-image-more for robust handling of styles, fonts, and nested SVG images
-                const dataUrl = await domtoimage.toPng(svgElement, {
-                    bgcolor: bgColor,
-                    width: exportWidth * 2, // 2x scale for retina/high quality
-                    height: exportHeight * 2,
-                    style: {
-                        transform: `scale(2)`,
-                        transformOrigin: 'top left',
-                        width: `${exportWidth}px`,
-                        height: `${exportHeight}px`
-                    },
-                    filter: (node) => {
-                        // Exclude UI controls if any are accidentally captured
-                        return (node.tagName !== 'BUTTON');
+                // 1. Clone the SVG to manipulate it for export without affecting the live view
+                const svgClone = svgElement.cloneNode(true) as SVGSVGElement;
+
+                // 2. Inline Computed Styles
+                // This is critical: Canvas doesn't know about external CSS classes.
+                // We must copy computed styles from the live elements to the cloned elements.
+                const originalElements = Array.from(svgElement.querySelectorAll('*'));
+                const clonedElements = Array.from(svgClone.querySelectorAll('*'));
+
+                // Note: deeply nested SVGs might misalign in count if shadow DOM is involved, 
+                // but for standard SVG structure this usually matches 1:1.
+                // We limit this to standard SVG elements to avoid massive perf hits on huge diagrams if needed,
+                // but checking all is safest for visual fidelity.
+                originalElements.forEach((sourceEl, index) => {
+                    const targetEl = clonedElements[index];
+                    if (targetEl && sourceEl instanceof Element && targetEl instanceof Element) {
+                        // Copy styles explicitly
+                        const computedStyle = window.getComputedStyle(sourceEl);
+                        const targetStyle = (targetEl as SVGElement).style; // Safe cast
+
+                        // We prioritize stroke, fill, coloring, and font properties
+                        // Copying ALL styles is too slow and huge.
+                        const essentialProps = ['fill', 'stroke', 'stroke-width', 'font-family', 'font-size', 'opacity', 'visibility', 'transform'];
+                        essentialProps.forEach(prop => {
+                            const val = computedStyle.getPropertyValue(prop);
+                            if (val && val !== 'none' && val !== 'auto' && val !== '0px') {
+                                targetStyle.setProperty(prop, val);
+                            }
+                        });
+
+                        // Copy CSS variables if needed? usually they are resolved by getComputedStyle into actual colors.
                     }
                 });
 
-                downloadBlob(await (await fetch(dataUrl)).blob(), `${filename}.png`);
+                // 3. Configure the Clone (Dimensions, ViewBox)
+                // Re-select content group from CLONE
+                const clonedContentGroup = svgClone.querySelector('.diagram-content');
+                if (clonedContentGroup instanceof SVGGraphicsElement) { // Check instance for safety
+                    // Adjust transform for padding
+                    clonedContentGroup.setAttribute('transform', `translate(${-bbox.x + padding}, ${-bbox.y + padding})`);
+                }
+
+                // Create a background rect
+                const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                bgRect.setAttribute('width', '100%');
+                bgRect.setAttribute('height', '100%');
+                bgRect.setAttribute('fill', bgColor);
+
+                // Prepend background
+                svgClone.insertBefore(bgRect, svgClone.firstChild);
+
+                svgClone.setAttribute('width', `${exportWidth}`);
+                svgClone.setAttribute('height', `${exportHeight}`);
+                svgClone.setAttribute('viewBox', `0 0 ${exportWidth} ${exportHeight}`);
+
+                // 4. Serialize to String
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(svgClone);
+
+                // 5. Draw to Canvas
+                const canvas = document.createElement('canvas');
+                const scale = 2; // Retina resolution
+                canvas.width = exportWidth * scale;
+                canvas.height = exportHeight * scale;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) throw new Error("Could not create canvas context");
+
+                ctx.scale(scale, scale);
+
+                const img = new Image();
+                // Use standard Base64 encoding for the SVG
+                // unescape(encodeURIComponent(x)) handles unicode properties correctly
+                const svgUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
+
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => {
+                        if (blob) {
+                            downloadBlob(blob, `${filename}.png`);
+                        } else {
+                            setToastMessage("Export failed: Empty blob.");
+                        }
+                    }, 'image/png');
+                };
+
+                img.onerror = (e) => {
+                    console.error("SVG Load Error", e);
+                    setToastMessage("Export failed: Browser could not render SVG to image.");
+                };
+
+                img.src = svgUrl;
+
             } catch (error) {
                 console.error("Export failed:", error);
-                setToastMessage("Export failed: Could not generate PNG.");
+                setToastMessage("Export failed: Error preparing diagram.");
             }
         }
     };
