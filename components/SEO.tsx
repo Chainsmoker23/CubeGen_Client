@@ -13,6 +13,7 @@ interface SEOProps {
   twitterTitle?: string;
   twitterDescription?: string;
   twitterImage?: string;
+  schema?: string;
 }
 
 const SEO = ({
@@ -28,6 +29,7 @@ const SEO = ({
   twitterTitle = 'CubeGen AI — AI Software Architecture Generator',
   twitterDescription = 'Generate professional software architecture diagrams instantly from a single prompt with CubeGen AI.',
   twitterImage = 'https://cubegenai.com/social-preview.svg',
+  schema,
 }: SEOProps) => {
   useEffect(() => {
     // Update title
@@ -98,13 +100,13 @@ const SEO = ({
     });
 
     // Update JSON-LD schema if needed
-    updateSchema(canonical, title, description);
-  }, [title, description, keywords, canonical, ogTitle, ogDescription, ogType, ogImage, twitterCard, twitterTitle, twitterDescription, twitterImage]);
+    updateSchema(canonical, title, description, schema);
+  }, [title, description, keywords, canonical, ogTitle, ogDescription, ogType, ogImage, twitterCard, twitterTitle, twitterDescription, twitterImage, schema]);
 
   return null;
 };
 
-const updateSchema = (url: string, title: string, description: string) => {
+const updateSchema = (url: string, title: string, description: string, customSchema?: string) => {
   // Remove existing schema script if it exists
   const existingSchema = document.querySelector('script[type="application/ld+json"][data-schema="dynamic"]');
   if (existingSchema) {
@@ -115,18 +117,23 @@ const updateSchema = (url: string, title: string, description: string) => {
   const schemaScript = document.createElement('script');
   schemaScript.type = 'application/ld+json';
   schemaScript.setAttribute('data-schema', 'dynamic');
-  schemaScript.textContent = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "url": url,
-    "name": title,
-    "description": description,
-    "publisher": {
-      "@type": "Organization",
-      "name": "CubeGen AI",
-      "url": "https://cubegenai.com/"
-    }
-  });
+
+  if (customSchema) {
+    schemaScript.textContent = customSchema;
+  } else {
+    schemaScript.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "url": url,
+      "name": title,
+      "description": description,
+      "publisher": {
+        "@type": "Organization",
+        "name": "CubeGen AI",
+        "url": "https://cubegenai.com/"
+      }
+    });
+  }
 
   document.head.appendChild(schemaScript);
 };
