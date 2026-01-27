@@ -34,7 +34,7 @@ const ArchitectureIcon: React.FC<ArchitectureIconProps> = ({ type, className = '
         transition={{ duration: 0.3, ease: 'easeOut' }}
       >
         {typeof displayIcon === 'string' && displayIcon.startsWith('data:image') ? (
-          <image href={displayIcon} x="0" y="0" width="24" height="24" />
+          <image href={displayIcon} xlinkHref={displayIcon} x="0" y="0" width="24" height="24" />
         ) : (
           displayIcon as React.ReactNode
         )}
