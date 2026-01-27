@@ -204,6 +204,10 @@ const NeuralNetworkPage: React.FC<NeuralNetworkPageProps> = ({ onNavigate }) => 
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
 
       if (errorMessage.includes('SHARED_KEY_QUOTA_EXCEEDED')) {
+        // FORCE UPDATE: If quota exceeded, we know balance is 0. Update optimistic UI.
+        if (currentUser) {
+          updateCurrentUserMetadata({ generation_balance: 0 });
+        }
         setShowApiKeyModal(true);
         setError(null);
       } else {
