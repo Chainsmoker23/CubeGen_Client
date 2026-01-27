@@ -327,6 +327,10 @@ const GeneralArchitecturePage: React.FC<GeneralArchitecturePageProps> = ({ onNav
       if (errorMessage.includes('SHARED_KEY_QUOTA_EXCEEDED')) {
         setShowApiKeyModal(true);
         setError(null);
+        // FORCE UPDATE: If quota exceeded, we know balance is 0. Update optimistic UI.
+        if (currentUser) {
+          updateCurrentUserMetadata({ generation_balance: 0 });
+        }
       } else {
         setError(errorMessage);
         setHistory([null]);
