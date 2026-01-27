@@ -11,8 +11,8 @@ const TiltCard = ({ src, title, description, badge }: { src: string, title: stri
     const mouseXSpring = useSpring(x);
     const mouseYSpring = useSpring(y);
 
-    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7deg", "-7deg"]);
-    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
+    const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["2deg", "-2deg"]);
+    const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-2deg", "2deg"]);
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!ref.current) return;
@@ -98,30 +98,8 @@ const ShowcaseSection = () => {
     return (
         <section className="py-24 bg-gradient-to-b from-white to-[#FFF0F5]/30 overflow-hidden" style={{ perspective: "1000px" }}>
             <div className="container mx-auto px-6">
-                <div className="text-center mb-16 max-w-3xl mx-auto">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                    >
-                        <span className="px-4 py-1.5 rounded-full bg-pink-50 text-[#D6336C] text-sm font-bold tracking-wide uppercase mb-4 inline-block">
-                            Engineered for Clarity
-                        </span>
-                        <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-gray-900 mb-6">
-                            Complex Systems, <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#D6336C] to-[#FF922B]">
-                                Beautifully Simplified.
-                            </span>
-                        </h2>
-                        <p className="text-xl text-gray-500">
-                            From AWS serverless architectures to multi-region deployments,
-                            CubeGen AI handles the complexity so you can focus on the design.
-                        </p>
-                    </motion.div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20 items-stretch">
+                <div className="flex flex-col gap-12 max-w-4xl mx-auto">
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -141,7 +119,6 @@ const ShowcaseSection = () => {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8, delay: 0.4 }}
-                        className="md:mt-12" // Staggered offset
                     >
                         <TiltCard
                             src={PREVIEW_IMAGE_2}
