@@ -12,6 +12,7 @@ import SharedFooter from './SharedFooter';
 import Logo from './Logo';
 import MultiModelIcon from './MultiModelIcon';
 import SEO from './SEO';
+import ShowcaseSection from './ShowcaseSection';
 
 interface LandingPageProps {
   onLaunch: () => void;
@@ -182,6 +183,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
             </motion.div>
           </div>
         </section>
+
+        {/* Showcase Section */}
+        <ShowcaseSection />
 
         {/* How It Works Section */}
         <section className="py-24 bg-white">
