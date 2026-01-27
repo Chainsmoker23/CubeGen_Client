@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { motion, Variants, AnimatePresence } from 'framer-motion';
 import { TESTIMONIALS } from './content/landingContent';
@@ -165,24 +166,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
         </section>
 
         {/* Trusted By Section */}
-        <section className="py-12 bg-white">
-          <div className="container mx-auto px-6">
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.5 }}
-              className="text-center"
-            >
-              <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">POWERING DIAGRAMS FOR TEAMS USING</p>
-              <div className="mt-6 flex justify-center items-center gap-8 md:gap-12 flex-wrap">
-                {trustedByIcons.map((iconType, index) => (
-                  <ArchitectureIcon key={index} type={iconType} className="h-10 w-10 hover:scale-110 transition-transform duration-300" />
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </section>
+
 
         {/* Showcase Section */}
         <ShowcaseSection />
