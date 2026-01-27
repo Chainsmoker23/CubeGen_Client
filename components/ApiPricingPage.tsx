@@ -12,14 +12,14 @@ import PricingTableOne from './billingsdk/PricingTableOne';
 type Page = 'contact' | 'about' | 'api' | 'privacy' | 'terms' | 'docs' | 'apiKey' | 'careers' | 'research' | 'auth' | 'sdk';
 
 interface ApiPricingPageProps {
-  onBack: () => void;
-  onNavigate: (page: Page) => void;
+    onBack: () => void;
+    onNavigate: (page: Page) => void;
 }
 
 const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
     // Simple approach: just escape HTML and return without syntax highlighting
     const escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    
+
     return (
         <pre className="p-4 text-sm text-gray-300 bg-[#1e1e1e] rounded-xl overflow-x-auto">
             <code dangerouslySetInnerHTML={{ __html: escapedCode }} />
@@ -51,7 +51,7 @@ try {
   console.error('Error generating diagram:', error.message);
 }
 `;
-    
+
     useEffect(() => {
         // Handle cancelled payments
         const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
@@ -67,53 +67,54 @@ try {
 
     const getPlans = () => {
         return [
-          {
-            id: 'free',
-            title: 'Free',
-            description: 'Perfect for getting started and occasional use.',
-            currency: '$',
-            monthlyPrice: '0',
-            buttonText: 'Sign Up for Free',
-            highlight: false,
-            features: [
-              { name: `${FREE_GENERATION_LIMIT} generation credits per month`, icon: 'check', iconColor: 'text-green-500' },
-              { name: 'Standard icon set', icon: 'check', iconColor: 'text-blue-500' },
-              { name: 'Community support', icon: 'check', iconColor: 'text-orange-500' },
-            ]
-          },
-          {
-            id: 'one_time',
-            title: 'Hobbyist',
-            description: 'A one-time credit pack for your next project.',
-            currency: '$',
-            monthlyPrice: '3',
-            buttonText: 'Buy for $3',
-            highlight: false,
-            features: [
-              { name: 'A block of 20 generation credits', icon: 'check', iconColor: 'text-green-500' },
-              { name: 'Custom icons', icon: 'check', iconColor: 'text-purple-500' },
-              { name: 'Credits never expire', icon: 'check', iconColor: 'text-blue-500' },
-              { name: 'Re-purchase anytime to add more', icon: 'check', iconColor: 'text-orange-500' },
-            ]
-          },
-          {
-            id: 'subscription',
-            title: 'Pro',
-            description: 'Full Pro access with ongoing updates and support.',
-            currency: '$',
-            monthlyPrice: '10',
-            buttonText: 'Subscribe for $10/mo',
-            highlight: true,
-            features: [
-              { name: 'Unlimited diagram generations', icon: 'check', iconColor: 'text-green-500' },
-              { name: 'Custom icons', icon: 'check', iconColor: 'text-purple-500' },
-              { name: 'Generate a personal API key for in-app usage', icon: 'check', iconColor: 'text-blue-500' },
-              { name: 'Use your personal key with our SDK in your own applications', icon: 'check', iconColor: 'text-orange-500' },
-              { name: 'Priority support', icon: 'check', iconColor: 'text-purple-500' },
-              { name: 'All editing feature', icon: 'check', iconColor: 'text-purple-400' },
-              { name: 'Access to new feature', icon: 'check', iconColor: 'text-purple-200' },
-            ]
-          }
+            {
+                id: 'free',
+                title: 'Free',
+                description: 'Perfect for getting started and occasional use.',
+                currency: '$',
+                monthlyPrice: '0',
+                buttonText: 'Sign Up for Free',
+                highlight: false,
+                features: [
+                    { name: `${FREE_GENERATION_LIMIT} generation credits per month`, icon: 'check', iconColor: 'text-green-500' },
+                    { name: 'Standard icon set', icon: 'check', iconColor: 'text-blue-500' },
+                    { name: 'Community support', icon: 'check', iconColor: 'text-orange-500' },
+                ]
+            },
+            {
+                id: 'one_time',
+                title: 'Hobbyist',
+                description: 'A one-time credit pack for your next project.',
+                currency: '$',
+                monthlyPrice: '3',
+                buttonText: 'Buy for $3',
+                highlight: false,
+                features: [
+                    { name: 'A block of 20 generation credits', icon: 'check', iconColor: 'text-green-500' },
+                    { name: 'Custom icons', icon: 'check', iconColor: 'text-purple-500' },
+                    { name: 'Credits never expire', icon: 'check', iconColor: 'text-blue-500' },
+                    { name: 'Re-purchase anytime to add more', icon: 'check', iconColor: 'text-orange-500' },
+                ]
+            },
+            {
+                id: 'subscription',
+                title: 'Pro',
+                description: 'Full Pro access with ongoing updates and support.',
+                currency: '$',
+                monthlyPrice: '10',
+                originalMonthlyPrice: '15', // 33% off -> roughly 35% visually
+                showCountdown: true,
+                buttonText: 'Subscribe for $10/mo',
+                highlight: true,
+                features: [
+                    { name: 'Unlimited diagram generations', icon: 'check', iconColor: 'text-green-500' },
+                    { name: 'Custom icons', icon: 'check', iconColor: 'text-purple-500' },
+                    { name: 'Generate a personal API key for in-app usage', icon: 'check', iconColor: 'text-blue-500' },
+                    { name: 'Use your personal key with our SDK in your own applications', icon: 'check', iconColor: 'text-orange-500' },
+                    { name: 'Priority support', icon: 'check', iconColor: 'text-purple-500' },
+                    { name: 'Best Editing Support', icon: 'check', iconColor: 'text-purple-500' },
+                ]
+            }
         ];
     };
 
@@ -165,7 +166,7 @@ try {
             // Now, parse the successful response
             const data = JSON.parse(responseText);
             console.log('[Checkout] Parsed server response:', data);
-            
+
             if (data.success && data.checkout_url) {
                 // Perform a direct browser redirect instead of using an SDK
                 window.location.href = data.checkout_url;
@@ -206,10 +207,10 @@ try {
                         </motion.div>
                     </div>
                 </section>
-                
-                 <section id="pricing" className="py-24 bg-gradient-to-b from-white to-[#FFF0F5]">
+
+                <section id="pricing" className="py-24 bg-gradient-to-b from-white to-[#FFF0F5]">
                     {isTestMode && (
-                        <motion.div 
+                        <motion.div
                             initial={{ y: -20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             className="container mx-auto px-6 mb-8 -mt-8"
@@ -255,7 +256,7 @@ try {
                     />
                 </section>
 
-                 <section className="py-24 bg-white">
+                <section className="py-24 bg-white">
                     <div className="container mx-auto px-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                             <motion.div
@@ -272,12 +273,12 @@ try {
                                     <div className="flex items-start gap-3"><ArchitectureIcon type={IconType.Cloud} className="w-6 h-6 text-[#D6336C] flex-shrink-0 mt-1" /><p><strong>Public API:</strong> Access to our public API and SDK for full automation in your projects.</p></div>
                                 </div>
                             </motion.div>
-                             <motion.div
+                            <motion.div
                                 initial={{ opacity: 0 }}
                                 whileInView={{ opacity: 1 }}
                                 viewport={{ once: true, amount: 0.5 }}
                                 transition={{ duration: 0.6, delay: 0.2 }}
-                             >
+                            >
                                 <div className="bg-[#2a2a2a] p-6 rounded-2xl shadow-2xl border border-pink-900/50">
                                     <div className="flex items-center gap-2 mb-4">
                                         <span className="w-3 h-3 bg-red-500 rounded-full"></span>
@@ -299,3 +300,4 @@ try {
 };
 
 export default ApiPricingPage;
+
