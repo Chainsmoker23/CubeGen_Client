@@ -383,7 +383,7 @@ const PlaygroundPage: React.FC<PlaygroundPageProps> = ({ onNavigate }) => {
                             animate={{ opacity: 1, y: 0 }}
                             className="text-center mb-12"
                         >
-                            <h2 className="text-3xl font-bold mb-4">Start Designing</h2>
+
                             <p className="text-[var(--color-text-secondary)]">Choose a template to jumpstart your architecture or start from scratch.</p>
                         </motion.div>
 
