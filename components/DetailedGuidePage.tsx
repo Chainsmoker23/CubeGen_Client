@@ -142,6 +142,54 @@ const DetailedGuidePage: React.FC<DetailedGuidePageProps> = ({ onNavigate, onLau
                             </ul>
                         </section>
 
+                        <hr className="my-12 border-gray-100" />
+
+                        {/* Section 4: Global Availability */}
+                        <section className="mb-16">
+                            <h2 className="flex items-center gap-3 text-3xl mb-6">
+                                <span className="text-3xl">🌍</span>
+                                Design in Any Language
+                            </h2>
+                            <p className="mb-6">
+                                CubeGen AI's LLM engine is multilingual. You don't need to translate your technical requirements into English. Simply describe your system in your native language, and our AI will understand the technical context to generate the correct diagram.
+                            </p>
+
+                            <div className="bg-gray-50 rounded-xl p-8 border border-gray-100">
+                                <h3 className="text-xl font-bold mb-4 text-center">Supported Prompt Languages</h3>
+                                <p className="text-center text-gray-500 mb-8 text-sm">We support prompting for architecture diagrams in:</p>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                                    <div className="space-y-2">
+                                        <h4 className="font-bold text-gray-900 border-b border-gray-200 pb-1 mb-2">Nordic & Baltic</h4>
+                                        <p><span className="text-gray-400 mr-2">🇫🇮</span> <strong>Finnish:</strong> Arkkitehtuurikaavio</p>
+                                        <p><span className="text-gray-400 mr-2">🇪🇪</span> <strong>Estonian:</strong> Arhitektuuri skeem</p>
+                                        <p><span className="text-gray-400 mr-2">🇸🇪</span> <strong>Swedish:</strong> Arkitekturdiagram</p>
+                                        <p><span className="text-gray-400 mr-2">🇳🇴</span> <strong>Norwegian:</strong> Arkitekturdiagram</p>
+                                        <p><span className="text-gray-400 mr-2">🇩🇰</span> <strong>Danish:</strong> Arkitekturdiagram</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h4 className="font-bold text-gray-900 border-b border-gray-200 pb-1 mb-2">Central Europe</h4>
+                                        <p><span className="text-gray-400 mr-2">🇩🇪</span> <strong>German:</strong> Softwarearchitektur-Diagramm</p>
+                                        <p><span className="text-gray-400 mr-2">🇵🇱</span> <strong>Polish:</strong> Diagram architektury</p>
+                                        <p><span className="text-gray-400 mr-2">🇫🇷</span> <strong>French:</strong> Diagramme d'architecture</p>
+                                        <p><span className="text-gray-400 mr-2">🇳🇱</span> <strong>Dutch:</strong> Architectuurdiagram</p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <h4 className="font-bold text-gray-900 border-b border-gray-200 pb-1 mb-2">Romance</h4>
+                                        <p><span className="text-gray-400 mr-2">🇪🇸</span> <strong>Spanish:</strong> Diagrama de arquitectura</p>
+                                        <p><span className="text-gray-400 mr-2">🇵🇹</span> <strong>Portuguese:</strong> Diagrama de arquitetura</p>
+                                        <p><span className="text-gray-400 mr-2">🇮🇹</span> <strong>Italian:</strong> Diagramma di architettura</p>
+                                    </div>
+                                </div>
+
+                                <p className="mt-8 text-center text-xs text-gray-400 italic">
+                                    * Also optimized for Russian (Диаграмма архитектуры), Turkish (Mimari diyagram), and Chinese (架构图).
+                                </p>
+                            </div>
+                        </section>
+
                         {/* CTA */}
                         <div className="bg-gradient-to-r from-[#D6336C] to-[#BE4BDB] text-white p-10 rounded-2xl text-center shadow-xl mt-12">
                             <h3 className="text-2xl font-bold mb-4 text-white">Ready to design your system?</h3>
