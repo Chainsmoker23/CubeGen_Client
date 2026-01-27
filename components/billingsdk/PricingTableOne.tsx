@@ -106,11 +106,21 @@ const PricingTableOne: React.FC<PricingTableOneProps> = ({ title, description, o
 
                     if (isCurrentPlan) {
                         if (planId === 'hobbyist') {
-                            buttonText = 'Add 50 Credits';
+                            // User has bought hobbyist before (or is just viewing it), but if they are currently PRO, they shouldn't buy more.
+                            if (userPlan === 'pro' || userPlan === 'subscription') {
+                                buttonText = 'Included in Pro';
+                                isButtonDisabled = true;
+                            } else {
+                                buttonText = 'Add 50 Credits';
+                            }
                         } else {
                             buttonText = 'Current Plan';
                             isButtonDisabled = true;
                         }
+                    } else if (userPlan === 'pro' && planId === 'hobbyist') {
+                        // Crucial Fix: Pro users have unlimited generations, so they can't buy credit packs
+                        buttonText = "Included in Pro";
+                        isButtonDisabled = true;
                     } else if (!currentUser && plan.id !== 'free') {
                         buttonText = "Sign In to Purchase";
                     } else if (currentUser && planId === 'free') {
@@ -124,9 +134,7 @@ const PricingTableOne: React.FC<PricingTableOneProps> = ({ title, description, o
                                 ? 'bg-white border-2 border-[#D6336C] shadow-2xl scale-105'
                                 : plan.highlight
                                     ? 'bg-white shadow-2xl border-[#D6336C] md:-translate-y-4'
-                                    : (userPlan === 'pro' && planId === 'hobbyist')
-                                        ? 'bg-white shadow-lg border-pink-100'
-                                        : 'bg-white/70 shadow-lg border-pink-100'
+                                    : 'bg-white/70 shadow-lg border-pink-100'
                                 }`}
                         >
                             {isHighlightedAsCurrent && (
