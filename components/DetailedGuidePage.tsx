@@ -25,6 +25,7 @@ const DetailedGuidePage: React.FC<DetailedGuidePageProps> = ({ onNavigate, onLau
                 canonical="https://cubegenai.com/guide"
                 ogTitle="Master AI Architecture Diagrams - CubeGen AI Guide"
                 ogDescription="The authoritative guide to generating and editing complex system diagrams with AI. Learn the best prompting techniques."
+                schema={faqSchema}
             />
 
             {/* Header */}
@@ -191,7 +192,7 @@ const DetailedGuidePage: React.FC<DetailedGuidePageProps> = ({ onNavigate, onLau
                         </section>
 
                         {/* CTA */}
-                        <div className="bg-gradient-to-r from-[#D6336C] to-[#BE4BDB] text-white p-10 rounded-2xl text-center shadow-xl mt-12">
+                        <div className="bg-gradient-to-r from-[#D6336C] to-[#BE4BDB] text-white p-10 rounded-2xl text-center shadow-xl mt-12 mb-20">
                             <h3 className="text-2xl font-bold mb-4 text-white">Ready to design your system?</h3>
                             <p className="mb-8 opacity-90 text-lg">
                                 Start generating professional diagrams in seconds with our AI engine.
@@ -204,6 +205,19 @@ const DetailedGuidePage: React.FC<DetailedGuidePageProps> = ({ onNavigate, onLau
                             </button>
                         </div>
 
+                        {/* Section 5: FAQ (Rich Results) */}
+                        <section className="mb-16">
+                            <h2 className="text-3xl font-bold mb-8 text-center">Frequently Asked Questions</h2>
+                            <div className="space-y-6">
+                                {faqData.map((faq, index) => (
+                                    <div key={index} className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                                        <h3 className="font-bold text-lg mb-2 text-gray-900">{faq.question}</h3>
+                                        <p className="text-gray-600">{faq.answer}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
                     </div>
                 </article>
             </main>
@@ -212,5 +226,39 @@ const DetailedGuidePage: React.FC<DetailedGuidePageProps> = ({ onNavigate, onLau
         </div>
     );
 };
+
+// FAQ Data for Structured Data
+const faqData = [
+    {
+        question: "Is CubeGen AI free to use?",
+        answer: "Yes, CubeGen AI offers a generous free tier that allows you to generate professional architecture diagrams instantly. No credit card is required to get started."
+    },
+    {
+        question: "Can I export my diagrams to other tools?",
+        answer: "Absolutely. You can export your diagrams as high-quality PNG images or SVG files, which can be imported into tools like draw.io or included directly in your technical documentation."
+    },
+    {
+        question: "Does it support AWS, Azure, and GCP?",
+        answer: "Yes. CubeGen AI's engine is trained on the official icons and design patterns of all major cloud providers including Amazon Web Services (AWS), Microsoft Azure, and Google Cloud Platform (GCP)."
+    },
+    {
+        question: "How accurate are the AI generated diagrams?",
+        answer: "Our specialized LLM is roughly 90-95% accurate for standard architectural patterns. For specific custom needs, we provide a full-featured drag-and-drop playground to refine the final 5-10% of the design."
+    }
+];
+
+// Generate JSON-LD for FAQPage
+const faqSchema = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqData.map(faq => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+            "@type": "Answer",
+            "text": faq.answer
+        }
+    }))
+});
 
 export default DetailedGuidePage;
