@@ -111,7 +111,7 @@ const DetailedGuidePage: React.FC<DetailedGuidePageProps> = ({ onNavigate, onLau
                                 "Design a serverless video processing pipeline on AWS. Users upload files to an S3 bucket, which triggers a Lambda function. The Lambda function uses Amazon Rekognition to analyze the video and stores the metadata in a DynamoDB table. Use API Gateway for the frontend triggering and storing logs in CloudWatch."
                             </p>
                             <p className="text-sm mt-2">
-                                This prompt gives the AI clear instructions on the <strong>event trigger</strong> (S3 -> Lambda), the <strong>external integration</strong> (Rekognition), and the <strong>data storage</strong> (DynamoDB), resulting in a precise and usable diagram.
+                                This prompt gives the AI clear instructions on the <strong>event trigger</strong> (S3 &rarr; Lambda), the <strong>external integration</strong> (Rekognition), and the <strong>data storage</strong> (DynamoDB), resulting in a precise and usable diagram.
                             </p>
                         </section>
 
