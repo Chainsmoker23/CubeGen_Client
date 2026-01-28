@@ -4,6 +4,7 @@ import ArchitectureIcon from './ArchitectureIcon';
 import { IconType } from '../types';
 import SharedFooter from './SharedFooter';
 import SEO from './SEO';
+import SharedCodeBlock from './SharedCodeBlock';
 
 type Page = 'contact' | 'about' | 'api' | 'privacy' | 'terms' | 'docs' | 'apiKey' | 'careers' | 'research' | 'sdk';
 
@@ -14,21 +15,7 @@ interface DocsPageProps {
     onNavigate: (page: Page) => void;
 }
 
-const highlightSyntax = (code: string) => {
-    const highlighted = code
-        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-        .replace(/'([^']*)'/g, `<span class="token string">'${'$1'}'</span>`)
-        .replace(/"([^"]*)"/g, `<span class="token string">"${'$1'}"</span>`)
-        .replace(/\b(curl|POST|GET|Authorization|Bearer|Content-Type|application\/json)\b/g, `<span class="token keyword">${'$&'}</span>`)
-        .replace(/(-X|-H|-d|--data-raw)/g, `<span class="token property-access">${'$&'}</span>`);
-    return { __html: highlighted };
-};
 
-const CodeBlock: React.FC<{ code: string }> = ({ code }) => (
-    <pre className="p-4 text-sm text-gray-300 bg-[#1e1e1e] rounded-xl overflow-x-auto">
-        <code dangerouslySetInnerHTML={highlightSyntax(code)} />
-    </pre>
-);
 
 const DocsSection: React.FC<{ id: string; title: string; children: React.ReactNode }> = ({ id, title, children }) => (
     <motion.div
@@ -158,13 +145,13 @@ const DocsPage: React.FC<DocsPageProps> = ({ onBack, onLaunch, onNavigateToApi, 
                                     <p>Integrate CubeGen AI directly into your applications using our REST API or Node.js SDK.</p>
 
                                     <h3 className="text-xl font-bold mt-8 mb-4">Installation</h3>
-                                    <div className="p-4 bg-[#1e1e1e] rounded-lg overflow-x-auto">
-                                        <code className="text-gray-300 font-mono">npm install cubegen-ai</code>
+                                    <div className="mb-6">
+                                        <SharedCodeBlock code="npm install cubegen-ai" />
                                     </div>
 
                                     <h3 className="text-xl font-bold mt-8 mb-4">Quick Start</h3>
-                                    <div className="bg-[#1e1e1e] text-gray-300 p-4 rounded-lg overflow-x-auto text-sm font-mono leading-relaxed">
-                                        <pre>{`import { CubeGenAI } from 'cubegen-ai';
+                                    <div className="mb-6">
+                                        <SharedCodeBlock code={`import { CubeGenAI } from 'cubegen-ai';
 
 const client = new CubeGenAI({
   apiKey: 'YOUR_API_KEY' // Get this from your API Key page
@@ -173,7 +160,7 @@ const client = new CubeGenAI({
 // Generate a diagram
 const diagram = await client.generateDiagram(
   'Microservices architecture with API Gateway and Lambda functions'
-);`}</pre>
+);`} />
                                     </div>
 
                                     <div className="mt-8">
