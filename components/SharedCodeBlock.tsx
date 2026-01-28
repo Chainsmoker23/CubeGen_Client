@@ -24,7 +24,10 @@ const highlightSyntax = (code: string) => {
     // though perfect tokenization would require a loop. Simple regex approach:
     highlighted = highlighted.replace(/(\/\/.*$)/gm, '<span style="color: #6272a4; font-style: italic">$1</span>');
 
-    // 3. Keywords (Deep Pink / Purple)
+    // 3. Numbers (Orange/Purple) - Moved up to avoid matching '600' in font-weight style injected later
+    highlighted = highlighted.replace(/\b(\d+)\b/g, '<span style="color: #bd93f9">$1</span>');
+
+    // 4. Keywords (Deep Pink / Purple)
     // const, let, var, import, from, return, if, else, try, catch, await, async, function, new, export, default, class, interface, type, void, boolean, string, number, any
     // Removed 'class' from the regex to avoid matching the 'class' keyword if we were using classes, but with inline styles it's safer.
     // However, we WANT to highlight the word 'class' in the code.
@@ -32,11 +35,8 @@ const highlightSyntax = (code: string) => {
     const keywords = '\\b(const|let|var|import|from|return|if|else|try|catch|await|async|function|new|export|default|class|interface|type|void|boolean|string|number|any)\\b';
     highlighted = highlighted.replace(new RegExp(keywords, 'g'), '<span style="color: #ff79c6; font-weight: 600">$1</span>');
 
-    // 4. Function Calls (Blue/Cyan) - looks for words followed by (
+    // 5. Function Calls (Blue/Cyan) - looks for words followed by (
     highlighted = highlighted.replace(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)(?=\()/g, '<span style="color: #8be9fd">$1</span>');
-
-    // 5. Numbers (Orange/Purple)
-    highlighted = highlighted.replace(/\b(\d+)\b/g, '<span style="color: #bd93f9">$1</span>');
 
     // 6. Boolean / null / undefined (Purple)
     highlighted = highlighted.replace(/\b(true|false|null|undefined)\b/g, '<span style="color: #bd93f9">$1</span>');
