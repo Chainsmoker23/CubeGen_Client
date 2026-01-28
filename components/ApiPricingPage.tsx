@@ -8,6 +8,7 @@ import Toast from './Toast';
 import { supabase } from '../supabaseClient';
 import { FREE_GENERATION_LIMIT } from './constants';
 import PricingTableOne from './billingsdk/PricingTableOne';
+import SharedCodeBlock from './SharedCodeBlock';
 
 type Page = 'contact' | 'about' | 'api' | 'privacy' | 'terms' | 'docs' | 'apiKey' | 'careers' | 'research' | 'auth' | 'sdk';
 
@@ -16,16 +17,7 @@ interface ApiPricingPageProps {
     onNavigate: (page: Page) => void;
 }
 
-const CodeBlock: React.FC<{ code: string }> = ({ code }) => {
-    // Simple approach: just escape HTML and return without syntax highlighting
-    const escapedCode = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    return (
-        <pre className="p-4 text-sm text-gray-300 bg-[#1e1e1e] rounded-xl overflow-x-auto">
-            <code dangerouslySetInnerHTML={{ __html: escapedCode }} />
-        </pre>
-    );
-};
 
 const ApiPricingPage: React.FC<ApiPricingPageProps> = ({ onBack, onNavigate }) => {
     const { currentUser } = useAuth();
@@ -279,14 +271,7 @@ try {
                                 viewport={{ once: true, amount: 0.5 }}
                                 transition={{ duration: 0.6, delay: 0.2 }}
                             >
-                                <div className="bg-[#2a2a2a] p-6 rounded-2xl shadow-2xl border border-pink-900/50">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-                                        <span className="w-3 h-3 bg-yellow-500 rounded-full"></span>
-                                        <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                                    </div>
-                                    <CodeBlock code={codeExample} />
-                                </div>
+                                <SharedCodeBlock code={codeExample} />
                             </motion.div>
                         </div>
                     </div>
@@ -300,4 +285,3 @@ try {
 };
 
 export default ApiPricingPage;
-
