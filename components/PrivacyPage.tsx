@@ -10,12 +10,12 @@ interface PrivacyPageProps {
 }
 
 const PrivacySection: React.FC<{ title: string, children: React.ReactNode }> = ({ title, children }) => (
-    <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#D6336C] mb-3">{title}</h2>
-        <div className="text-[#555555] space-y-4 prose max-w-none">
-            {children}
-        </div>
+  <div className="mb-8">
+    <h2 className="text-2xl font-bold text-[#D6336C] mb-3">{title}</h2>
+    <div className="text-[#555555] space-y-4 prose max-w-none">
+      {children}
     </div>
+  </div>
 );
 
 const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack, onNavigate }) => {
@@ -43,62 +43,44 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack, onNavigate }) => {
         </section>
 
         <section className="py-24 bg-white">
-            <div className="container mx-auto px-6 max-w-4xl">
-                <p className="text-sm text-gray-500 mb-8">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <div className="container mx-auto px-6 max-w-4xl">
+            <p className="text-sm text-gray-500 mb-8">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
-                <PrivacySection title="1. Introduction">
-                    <p>Welcome to CubeGen AI ("we", "us", "our"). We are committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our application. By using CubeGen AI, you agree to the collection and use of information in accordance with this policy.</p>
-                </PrivacySection>
+            <PrivacySection title="1. No Data Collection Policy">
+              <p>At CubeGen AI, we believe in complete privacy. <strong>We do not collect, store, or share your personal data.</strong></p>
+              <p>We are a tool, not a data broker. When you use our service to generate architecture diagrams, your prompts are processed and then immediately discarded. We do not maintain a database of user prompts, generated diagrams, or personal usage history.</p>
+            </PrivacySection>
 
-                <PrivacySection title="2. Information We Collect">
-                    <p>We may collect information about you in a variety of ways. The information we may collect on the Service includes:</p>
-                    <ul className="list-disc list-inside space-y-2">
-                        <li><strong>Information You Provide to Us:</strong> The primary data we collect is the content of the prompts you enter to generate diagrams. If you use our contact form, we will also collect your name and email address.</li>
-                        <li><strong>Personal API Keys:</strong> If you choose to provide your own Google Gemini API key, it is stored exclusively in your browser's local storage. This key is NOT transmitted to our servers and we do not have access to it.</li>
-                        <li><strong>Usage Data:</strong> We may automatically collect anonymous information about your usage of the Service, such as the features you use, the time you spend on the app, and general user-flow patterns. This data is aggregated and does not personally identify you.</li>
-                    </ul>
-                </PrivacySection>
+            <PrivacySection title="2. Your Information Stays With You">
+              <ul className="list-disc list-inside space-y-2">
+                <li><strong>No Account Required:</strong> You can use all core features of CubeGen AI without creating an account or providing an email address.</li>
+                <li><strong>Local Storage only:</strong> Any preferences or settings (like your API key) are stored locally in your browser's `localStorage`. This data never leaves your device and is never sent to our servers.</li>
+                <li><strong>You Own Your Data:</strong> Since we don't store your diagrams, you are the sole owner of your creations. Make sure to export your work if you wish to save it.</li>
+              </ul>
+            </PrivacySection>
 
-                <PrivacySection title="3. How We Use Your Information">
-                    <p>Having accurate information about you permits us to provide you with a smooth, efficient, and customized experience. Specifically, we may use information collected about you via the Service to:</p>
-                     <ul className="list-disc list-inside space-y-2">
-                        <li>Process your prompts to generate and display architecture diagrams.</li>
-                        <li>Monitor and analyze usage and trends to improve your experience with the Service.</li>
-                        <li>Respond to your comments and questions when you contact us.</li>
-                    </ul>
-                </PrivacySection>
+            <PrivacySection title="3. Communication & Email Policy">
+              <p>We strictly respect your inbox. If you choose to contact us or provide your email for any reason:</p>
+              <ul className="list-disc list-inside space-y-2">
+                <li><strong>Zero Spam:</strong> We will <strong>NEVER</strong> send you marketing emails, newsletters, or promotional offers.</li>
+                <li><strong>Important Updates Only:</strong> We will only contact you for critical notifications regarding the service, such as security alerts or major breaking changes that affect your usage.</li>
+                <li><strong>No Third-Party Sharing:</strong> We do not sell, trade, or transfer your email address to outside parties.</li>
+              </ul>
+            </PrivacySection>
 
-                <PrivacySection title="4. Third-Party Services">
-                     <p>CubeGen AI relies on third-party services to function. Our primary third-party service is:</p>
-                    <ul className="list-disc list-inside space-y-2">
-                        <li><strong>Google Gemini API:</strong> To generate diagrams, the text prompts you submit are sent to Google's servers for processing by the Gemini model. Your use of this feature is subject to Google's Privacy Policy. We do not send any other personal information to Google. You can review their policy <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#D6336C] hover:underline">here</a>.</li>
-                    </ul>
-                </PrivacySection>
+            <PrivacySection title="4. Third-Party Services">
+              <p>To provide our AI generation service, we use the Google Gemini API. When you generate a diagram:</p>
+              <ul className="list-disc list-inside space-y-2">
+                <li>Your text prompt is sent securely to Google's servers for processing.</li>
+                <li>Google processes this data in accordance with their <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-[#D6336C] hover:underline">Privacy Policy</a>.</li>
+                <li>We do not send any additional personal markers or user identifiers to Google.</li>
+              </ul>
+            </PrivacySection>
 
-                <PrivacySection title="5. Data Storage and Security">
-                    <p>We use administrative, technical, and physical security measures to help protect your information. While we have taken reasonable steps to secure the information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable.</p>
-                     <ul className="list-disc list-inside space-y-2">
-                        <li>Your generated diagrams and prompts are not stored on our servers. Your session is contained entirely within your browser.</li>
-                        <li>As mentioned, user-provided API keys are stored in your browser's local storage. You can clear this at any time by clearing your browser's cache and site data.</li>
-                    </ul>
-                </PrivacySection>
-                
-                 <PrivacySection title="6. Your Rights and Choices">
-                    <p>You have certain rights regarding the information we handle.</p>
-                     <ul className="list-disc list-inside space-y-2">
-                        <li><strong>Access and Control:</strong> Since we do not store your data, most of your control lies within your browser. You can clear your API key, prompts, and any cached data by clearing your browser's data for our site.</li>
-                        <li><strong>Opt-Out of Data Collection:</strong> You can stop all collection of information by the Service by discontinuing use of the Service.</li>
-                    </ul>
-                </PrivacySection>
-
-                 <PrivacySection title="7. Changes to This Privacy Policy">
-                    <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page. You are advised to review this Privacy Policy periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.</p>
-                </PrivacySection>
-
-                 <PrivacySection title="8. Contact Us">
-                    <p>If you have questions or comments about this Privacy Policy, please contact us through the contact form on our website or by emailing <a href="mailto:privacy@cubegen.ai" className="text-[#D6336C] hover:underline">privacy@cubegen.ai</a>.</p>
-                </PrivacySection>
-            </div>
+            <PrivacySection title="5. Contact Us">
+              <p>If you have any questions about our strict privacy standards, please contact us at <a href="mailto:privacy@cubegen.ai" className="text-[#D6336C] hover:underline">privacy@cubegen.ai</a>.</p>
+            </PrivacySection>
+          </div>
         </section>
       </main>
 
