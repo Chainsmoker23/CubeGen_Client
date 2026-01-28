@@ -47,13 +47,13 @@ const PrivacyPage: React.FC<PrivacyPageProps> = ({ onBack, onNavigate }) => {
             <p className="text-sm text-gray-500 mb-8">Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
 
             <PrivacySection title="1. No Data Collection Policy">
-              <p>At CubeGen AI, we believe in complete privacy. <strong>We do not collect, store, or share your personal data.</strong></p>
+              <p>At CubeGen AI, we believe in complete privacy. <strong>We do not collect your diagrams or prompts.</strong></p>
               <p>We are a tool, not a data broker. When you use our service to generate architecture diagrams, your prompts are processed and then immediately discarded. We do not maintain a database of user prompts, generated diagrams, or personal usage history.</p>
             </PrivacySection>
 
             <PrivacySection title="2. Your Information Stays With You">
               <ul className="list-disc list-inside space-y-2">
-                <li><strong>No Account Required:</strong> You can use all core features of CubeGen AI without creating an account or providing an email address.</li>
+                <li><strong>Account for Subscriptions:</strong> You can use basic features freely, but an account with a valid email is required to manage Pro subscriptions. This email is used strictly for authentication and billing.</li>
                 <li><strong>Local Storage only:</strong> Any preferences or settings (like your API key) are stored locally in your browser's `localStorage`. This data never leaves your device and is never sent to our servers.</li>
                 <li><strong>You Own Your Data:</strong> Since we don't store your diagrams, you are the sole owner of your creations. Make sure to export your work if you wish to save it.</li>
               </ul>
