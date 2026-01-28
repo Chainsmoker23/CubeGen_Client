@@ -17,17 +17,17 @@ interface SEOProps {
 }
 
 const SEO = ({
-  title = 'CubeGen AI: Instant AI Architecture Diagrams',
-  description = 'Generate professional software architecture diagrams for free, instantly from a single prompt with CubeGen AI. AI-powered design for AWS, GCP, Azure, microservices, and more.',
-  keywords = 'AI, architecture generator, generative AI, diagram as code, system design, software architecture, diagram tool, cloud architecture, AWS, GCP, Azure, microservices, DevOps, CI/CD, neural network diagram, RAG architecture, LLM, AI-powered design, instant diagrams, free architecture tool, online diagram maker, UML alternative',
+  title = 'CubeGen AI: Free AI Architecture & Diagram Generator | Text to Diagram',
+  description = 'Realise your vision with CubeGen AI. The best free AI diagram generator and AI Architecture generator. Create professional diagrams, neural networks, and cloud architecture from text instantly. DiagramGPT alternative.',
+  keywords = 'AI diagram generator, AI Architecture generator, AI Architecture Diagram Generator, AI neuron generator, DiagramGPT, Free AI diagram generator, Free AI Architecture generator, AI diagram generator online, AI Architecture generator online, text to diagram tool, CubeGen AI, diagram from text, cloud architecture, AWS, GCP, Azure, microservices, software architecture, free architecture tool',
   canonical = 'https://cubegenai.com/',
-  ogTitle = 'CubeGen AI — AI Software Architecture Generator',
-  ogDescription = 'Generate professional software architecture diagrams instantly from a single prompt with CubeGen AI.',
+  ogTitle = 'CubeGen AI — Free AI Architecture & Diagram Generator',
+  ogDescription = 'Realise your vision with CubeGen AI. Create professional software architecture diagrams and neural networks instantly from text. Free AI diagram generator.',
   ogType = 'website',
   ogImage = 'https://cubegenai.com/social-preview.svg',
   twitterCard = 'summary_large_image',
-  twitterTitle = 'CubeGen AI — AI Software Architecture Generator',
-  twitterDescription = 'Generate professional software architecture diagrams instantly from a single prompt with CubeGen AI.',
+  twitterTitle = 'CubeGen AI — Free AI Architecture & Diagram Generator',
+  twitterDescription = 'Realise your vision with CubeGen AI. Create professional software architecture diagrams and neural networks instantly from text. Free AI diagram generator.',
   twitterImage = 'https://cubegenai.com/social-preview.svg',
   schema,
 }: SEOProps) => {
