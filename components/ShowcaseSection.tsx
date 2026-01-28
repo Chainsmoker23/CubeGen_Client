@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { PREVIEW_IMAGE_1, PREVIEW_IMAGE_2 } from './content/ShowcaseImages';
+import { PREVIEW_IMAGE_1, PREVIEW_IMAGE_2, PREVIEW_IMAGE_3 } from './content/ShowcaseImages';
 
 const SimpleShowcaseImage = ({ src, alt }: { src: string, alt: string }) => {
     return (
@@ -42,6 +42,18 @@ const ShowcaseSection = () => {
                         <SimpleShowcaseImage
                             src={PREVIEW_IMAGE_2}
                             alt="Global CDN Architecture"
+                        />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                    >
+                        <SimpleShowcaseImage
+                            src={PREVIEW_IMAGE_3}
+                            alt="Advanced Microservices Architecture"
                         />
                     </motion.div>
                 </div>
