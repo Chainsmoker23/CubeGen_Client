@@ -21,6 +21,7 @@ const BlogListPage = React.lazy(() => import('./components/BlogListPage'));
 const BlogPostPage = React.lazy(() => import('./components/BlogPostPage'));
 const PlaygroundPage = React.lazy(() => import('./components/PlaygroundPage'));
 const DetailedGuidePage = React.lazy(() => import('./components/DetailedGuidePage'));
+const CodePlayground = React.lazy(() => import('./components/CodePlayground'));
 
 import Loader from './components/Loader';
 import { useAuth } from './contexts/AuthContext';
@@ -28,7 +29,7 @@ import { useAdminAuth } from './contexts/AdminAuthContext';
 import InstallPromptToast from './components/InstallPromptToast';
 import { AnimatePresence } from 'framer-motion';
 
-type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost' | 'playground' | 'guide';
+type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost' | 'playground' | 'guide' | 'codeDiagram';
 
 // Helper to parse route string into Page object
 const parseRoute = (route: string): { page: Page; subpage?: string } => {
@@ -43,7 +44,7 @@ const parseRoute = (route: string): { page: Page; subpage?: string } => {
     return { page: 'blogPost', subpage };
   }
 
-  const validPages: Page[] = ['landing', 'auth', 'app', 'contact', 'about', 'api', 'apiKey', 'privacy', 'terms', 'docs', 'neuralNetwork', 'careers', 'research', 'admin', 'adminLogin', 'sdk', 'blog', 'playground', 'guide'];
+  const validPages: Page[] = ['landing', 'auth', 'app', 'contact', 'about', 'api', 'apiKey', 'privacy', 'terms', 'docs', 'neuralNetwork', 'careers', 'research', 'admin', 'adminLogin', 'sdk', 'blog', 'playground', 'guide', 'codeDiagram'];
   if (validPages.includes(mainPage as Page)) {
     return { page: mainPage as Page };
   }
@@ -212,6 +213,7 @@ const App: React.FC = () => {
         }
         return <LandingPage onLaunch={() => onNavigate('auth')} onNavigate={onNavigate} />; // Fallback
       case 'guide': return <DetailedGuidePage onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
+      case 'codeDiagram': return <CodePlayground onNavigate={onNavigate} />;
       default: return <LandingPage onLaunch={() => onNavigate('auth')} onNavigate={onNavigate} />;
     }
   }
