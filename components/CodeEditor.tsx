@@ -143,17 +143,13 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
             </div>
 
             {/* Code Area Container */}
-            <div className="flex-1 relative" style={{ minHeight: '400px' }}>
+            <div className="flex-1 relative overflow-auto" style={{ minHeight: '400px' }}>
                 {/* Syntax Highlighted Background */}
                 <div
                     ref={highlightRef}
-                    className="absolute inset-0 py-4 px-4 overflow-hidden pointer-events-none whitespace-pre font-mono text-sm leading-6"
-                    style={{
-                        wordWrap: 'break-word',
-                        overflowWrap: 'break-word',
-                    }}
+                    className="absolute inset-0 py-4 px-4 overflow-auto pointer-events-none whitespace-pre-wrap break-words font-mono text-sm leading-6"
                     aria-hidden="true"
-                    dangerouslySetInnerHTML={{ __html: highlightedHtml + '\n' }}
+                    dangerouslySetInnerHTML={{ __html: highlightedHtml || '&nbsp;' }}
                 />
 
                 {/* Transparent Textarea for editing */}
@@ -165,10 +161,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     spellCheck={false}
-                    className="absolute inset-0 w-full h-full py-4 px-4 bg-transparent text-transparent caret-[#f8f8f2] resize-none outline-none font-mono text-sm leading-6 whitespace-pre placeholder:text-[#6272a4]"
+                    className="absolute inset-0 w-full h-full py-4 px-4 bg-transparent resize-none outline-none font-mono text-sm leading-6 whitespace-pre-wrap break-words placeholder:text-[#6272a4]"
                     style={{
+                        color: 'transparent',
                         caretColor: '#f8f8f2',
-                        WebkitTextFillColor: 'transparent',
                     }}
                 />
             </div>
