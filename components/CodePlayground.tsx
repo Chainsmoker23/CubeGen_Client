@@ -447,80 +447,83 @@ const CodePlayground: React.FC<CodePlaygroundProps> = ({ onNavigate }) => {
                         variants={pageItemVariants}
                         className={`rounded-2xl shadow-sm flex flex-col relative min-h-[60vh] lg:min-h-0 glass-panel transition-all duration-300 ${isPropertiesPanelOpen ? 'lg:col-span-5' : 'lg:col-span-8'}`}
                     >
-                        {/* Empty State - only when no diagram */}
-                        <AnimatePresence>
-                            {!diagramData && (
+                        {/* Content - either empty state or diagram */}
+                        <AnimatePresence mode="wait">
+                            {!diagramData ? (
                                 <motion.div
+                                    key="empty-state"
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95 }}
                                     className="flex-1 flex flex-col items-center justify-center text-center p-8"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-[var(--color-text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                     <h3 className="mt-4 text-xl font-semibold text-[var(--color-text-primary)]">Your diagram will appear here</h3>
                                     <p className="mt-1 text-[var(--color-text-secondary)]">Write your code and click "Generate".</p>
                                 </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="diagram-content"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex-1 flex flex-col relative"
+                                >
+                                    <div className="p-4 border-b border-[var(--color-border-translucent)] flex justify-between items-center gap-4">
+                                        <div className="group min-w-0 flex items-center gap-2">
+                                            {isEditingTitle ? (
+                                                <input
+                                                    ref={titleInputRef}
+                                                    type="text"
+                                                    value={editingTitle}
+                                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                                    onBlur={handleTitleSave}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
+                                                    className="text-xl font-semibold bg-transparent border-b border-[var(--color-accent-soft)] focus:outline-none focus:border-[var(--color-accent-text)]"
+                                                />
+                                            ) : (
+                                                <>
+                                                    <h2 className="text-xl font-semibold truncate" title={diagramData.title}>{diagramData.title}</h2>
+                                                    <button onClick={() => { setIsEditingTitle(true); setEditingTitle(diagramData.title); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <ArchitectureIcon type={IconType.Edit} className="w-4 h-4 text-[var(--color-text-secondary)]" />
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        <div className="flex-shrink-0">
+                                            <Suspense fallback={null}>
+                                                <Toolbar
+                                                    onExport={handleExport}
+                                                    onExplain={handleExplain}
+                                                    isExplaining={isExplaining}
+                                                    onUndo={handleUndo}
+                                                    onRedo={handleRedo}
+                                                    canUndo={historyIndex > 0}
+                                                    canRedo={historyIndex < history.length - 1}
+                                                    onFitToScreen={handleFitToScreen}
+                                                    onGoToPlayground={handleEnterPlayground}
+                                                    canGoToPlayground={!!diagramData}
+                                                />
+                                            </Suspense>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 relative">
+                                        <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader /></div>}>
+                                            <DiagramCanvas
+                                                forwardedRef={svgRef}
+                                                fitScreenRef={fitScreenRef}
+                                                data={diagramData}
+                                                onDataChange={handleDiagramUpdate}
+                                                selectedIds={selectedIds}
+                                                setSelectedIds={setSelectedIds}
+                                                isEditable={false}
+                                            />
+                                        </Suspense>
+                                    </div>
+                                </motion.div>
                             )}
                         </AnimatePresence>
-
-                        {diagramData && (
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="flex-1 flex flex-col relative"
-                            >
-                                <div className="p-4 border-b border-[var(--color-border-translucent)] flex justify-between items-center gap-4">
-                                    <div className="group min-w-0 flex items-center gap-2">
-                                        {isEditingTitle ? (
-                                            <input
-                                                ref={titleInputRef}
-                                                type="text"
-                                                value={editingTitle}
-                                                onChange={(e) => setEditingTitle(e.target.value)}
-                                                onBlur={handleTitleSave}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
-                                                className="text-xl font-semibold bg-transparent border-b border-[var(--color-accent-soft)] focus:outline-none focus:border-[var(--color-accent-text)]"
-                                            />
-                                        ) : (
-                                            <>
-                                                <h2 className="text-xl font-semibold truncate" title={diagramData.title}>{diagramData.title}</h2>
-                                                <button onClick={() => { setIsEditingTitle(true); setEditingTitle(diagramData.title); }} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <ArchitectureIcon type={IconType.Edit} className="w-4 h-4 text-[var(--color-text-secondary)]" />
-                                                </button>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    <div className="flex-shrink-0">
-                                        <Toolbar
-                                            onExport={handleExport}
-                                            onExplain={handleExplain}
-                                            isExplaining={isExplaining}
-                                            onUndo={handleUndo}
-                                            onRedo={handleRedo}
-                                            canUndo={historyIndex > 0}
-                                            canRedo={historyIndex < history.length - 1}
-                                            onFitToScreen={handleFitToScreen}
-                                            onGoToPlayground={handleEnterPlayground}
-                                            canGoToPlayground={!!diagramData}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex-1 relative">
-                                    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader /></div>}>
-                                        <DiagramCanvas
-                                            forwardedRef={svgRef}
-                                            fitScreenRef={fitScreenRef}
-                                            data={diagramData}
-                                            onDataChange={handleDiagramUpdate}
-                                            selectedIds={selectedIds}
-                                            setSelectedIds={setSelectedIds}
-                                            isEditable={false}
-                                        />
-                                    </Suspense>
-                                </div>
-                            </motion.div>
-                        )}
                     </motion.section>
 
                     {/* Properties Panel */}
