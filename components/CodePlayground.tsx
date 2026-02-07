@@ -4,18 +4,12 @@
  * Same UX as GeneralArchitecturePage, but with code input instead of prompt
  */
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, Suspense } from 'react';
 import { DiagramData, ArchNode, Container, Link, IconType } from '../types';
-import DiagramCanvas from './DiagramCanvas';
-import Toolbar from './Toolbar';
-import SummaryModal from './SummaryModal';
 import Loader from './Loader';
-import PropertiesSidebar from './PropertiesSidebar';
 import SettingsSidebar from './SettingsSidebar';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import Playground from './Playground';
 import ArchitectureIcon from './ArchitectureIcon';
-import MobilePlayground from './MobilePlayground';
 import Logo from './Logo';
 import { useAuth } from '../contexts/AuthContext';
 import MobileWarning from './MobileWarning';
@@ -23,6 +17,14 @@ import Toast from './Toast';
 import CodeEditor from './CodeEditor';
 import { parseCubeGenDSL, ParseError } from '../utils/cubegenDSL';
 import { explainArchitecture } from '../services/geminiService';
+
+// Lazy load heavy components
+const DiagramCanvas = React.lazy(() => import('./DiagramCanvas'));
+const Toolbar = React.lazy(() => import('./Toolbar'));
+const SummaryModal = React.lazy(() => import('./SummaryModal'));
+const PropertiesSidebar = React.lazy(() => import('./PropertiesSidebar'));
+const Playground = React.lazy(() => import('./Playground'));
+const MobilePlayground = React.lazy(() => import('./MobilePlayground'));
 
 type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'awsArchitecture' | 'careers' | 'research' | 'codeDiagram';
 
@@ -374,9 +376,13 @@ const CodePlayground: React.FC<CodePlaygroundProps> = ({ onNavigate }) => {
             isExplaining: isExplaining,
         };
 
-        return isMobile
-            ? <MobilePlayground {...playgroundProps} />
-            : <Playground {...playgroundProps} />;
+        return (
+            <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center app-bg"><Loader /></div>}>
+                {isMobile
+                    ? <MobilePlayground {...playgroundProps} />
+                    : <Playground {...playgroundProps} />}
+            </Suspense>
+        );
     }
 
     const isPropertiesPanelOpen = selectedIds.length > 0;
