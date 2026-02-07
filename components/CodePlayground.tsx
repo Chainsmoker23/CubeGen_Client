@@ -455,9 +455,10 @@ const CodePlayground: React.FC<CodePlaygroundProps> = ({ onNavigate }) => {
                         variants={pageItemVariants}
                         className={`rounded-2xl shadow-sm flex flex-col relative min-h-[60vh] lg:min-h-0 glass-panel transition-all duration-300 ${isPropertiesPanelOpen ? 'lg:col-span-5' : 'lg:col-span-8'}`}
                     >
-                        <AnimatePresence>
-                            {isLoading && (
+                        <AnimatePresence mode="wait">
+                            {isLoading && !diagramData && (
                                 <motion.div
+                                    key="loading-overlay"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
@@ -526,15 +527,17 @@ const CodePlayground: React.FC<CodePlaygroundProps> = ({ onNavigate }) => {
                                     </div>
                                 </div>
                                 <div className="flex-1 relative">
-                                    <DiagramCanvas
-                                        forwardedRef={svgRef}
-                                        fitScreenRef={fitScreenRef}
-                                        data={diagramData}
-                                        onDataChange={handleDiagramUpdate}
-                                        selectedIds={selectedIds}
-                                        setSelectedIds={setSelectedIds}
-                                        isEditable={false}
-                                    />
+                                    <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader /></div>}>
+                                        <DiagramCanvas
+                                            forwardedRef={svgRef}
+                                            fitScreenRef={fitScreenRef}
+                                            data={diagramData}
+                                            onDataChange={handleDiagramUpdate}
+                                            selectedIds={selectedIds}
+                                            setSelectedIds={setSelectedIds}
+                                            isEditable={false}
+                                        />
+                                    </Suspense>
                                 </div>
                             </motion.div>
                         )}
