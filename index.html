@@ -26,10 +26,6 @@
   <!-- Favicon -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
-  <!-- Preconnect to Google Fonts for faster font loading -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
   <!-- Web App Manifest for PWA -->
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#D6336C" />
@@ -54,10 +50,37 @@
     content="Realise your vision with CubeGen AI. Create professional software architecture diagrams and neural networks instantly from text. Free AI diagram generator.">
   <meta property="twitter:image" content="https://cubegenai.com/social-preview.svg">
 
-
-  <!-- Production uses bundled CSS via Vite - Tailwind CDN removed for performance -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/styles.css" />
-
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+    "d3": "https://aistudiocdn.com/d3@^7.9.0",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.24",
+    "d3-zoom": "https://aistudiocdn.com/d3-zoom@^3.0.0",
+    "d3-drag": "https://aistudiocdn.com/d3-drag@^3.0.0",
+    "d3-selection": "https://aistudiocdn.com/d3-selection@^3.0.0",
+    "d3-transition": "https://aistudiocdn.com/d3-transition@^3.0.1",
+    "nanoid": "https://aistudiocdn.com/nanoid@^5.1.6",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.0",
+    "vite": "https://aistudiocdn.com/vite@^7.1.12",
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.79.0",
+    "std/": "https://aistudiocdn.com/std@^0.1.40/",
+    "cors": "https://aistudiocdn.com/cors@^2.8.5",
+    "express": "https://aistudiocdn.com/express@^5.1.0",
+    "dotenv": "https://aistudiocdn.com/dotenv@^17.2.3",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "crypto": "https://aistudiocdn.com/crypto@^1.0.1",
+    "jsonwebtoken": "https://aistudiocdn.com/jsonwebtoken@^9.0.2",
+    "dodopayments": "https://aistudiocdn.com/dodopayments@^2.4.6",
+    "openai": "https://aistudiocdn.com/openai@^6.9.0"
+  }
+}
+</script>
   <!-- === ADVANCED SEO & STRUCTURED DATA (JSON-LD) === -->
 
   <!-- 1. Organization Schema: Defines your brand for Google's Knowledge Graph -->
