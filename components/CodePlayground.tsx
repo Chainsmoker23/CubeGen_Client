@@ -66,7 +66,6 @@ const CodePlayground: React.FC<CodePlaygroundProps> = ({ onNavigate }) => {
     const [historyIndex, setHistoryIndex] = useState(0);
     const diagramData = history[historyIndex];
 
-    const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isExplaining, setIsExplaining] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -279,34 +278,28 @@ const CodePlayground: React.FC<CodePlaygroundProps> = ({ onNavigate }) => {
         fitScreenRef.current?.();
     };
 
-    // Parse code and generate diagram
+    // Parse code and generate diagram - instant, no loading state needed
     const handleGenerate = useCallback(() => {
         if (!code.trim()) {
             setError("Please enter some code.");
             return;
         }
 
-        setIsLoading(true);
         setError(null);
         setParseErrors([]);
 
-        // Small timeout to show loading state
-        setTimeout(() => {
-            const result = parseCubeGenDSL(code);
+        const result = parseCubeGenDSL(code);
 
-            if (result.success && result.data) {
-                setHistory([result.data]);
-                setHistoryIndex(0);
-                setSelectedIds([]);
-                setSuccessMessage('Diagram Generated!');
-                setTimeout(() => handleFitToScreen(), 100);
-            } else {
-                setParseErrors(result.errors);
-                setError(`Syntax error on line ${result.errors[0]?.line}: ${result.errors[0]?.message}`);
-            }
-
-            setIsLoading(false);
-        }, 300);
+        if (result.success && result.data) {
+            setHistory([result.data]);
+            setHistoryIndex(0);
+            setSelectedIds([]);
+            setSuccessMessage('Diagram Generated!');
+            setTimeout(() => handleFitToScreen(), 100);
+        } else {
+            setParseErrors(result.errors);
+            setError(`Syntax error on line ${result.errors[0]?.line}: ${result.errors[0]?.message}`);
+        }
     }, [code]);
 
     const handleExplain = useCallback(async () => {
@@ -426,10 +419,9 @@ const CodePlayground: React.FC<CodePlaygroundProps> = ({ onNavigate }) => {
                             </h2>
                             <button
                                 onClick={handleGenerate}
-                                disabled={isLoading}
-                                className="px-4 py-2 bg-[var(--color-accent-soft)] text-[var(--color-accent-text)] rounded-lg font-medium hover:bg-[var(--color-accent-text)] hover:text-white transition-colors disabled:opacity-50"
+                                className="px-4 py-2 bg-[var(--color-accent-soft)] text-[var(--color-accent-text)] rounded-lg font-medium hover:bg-[var(--color-accent-text)] hover:text-white transition-colors"
                             >
-                                {isLoading ? 'Parsing...' : 'Generate'}
+                                Generate
                             </button>
                         </div>
                         <CodeEditor
@@ -455,25 +447,13 @@ const CodePlayground: React.FC<CodePlaygroundProps> = ({ onNavigate }) => {
                         variants={pageItemVariants}
                         className={`rounded-2xl shadow-sm flex flex-col relative min-h-[60vh] lg:min-h-0 glass-panel transition-all duration-300 ${isPropertiesPanelOpen ? 'lg:col-span-5' : 'lg:col-span-8'}`}
                     >
-                        <AnimatePresence mode="wait">
-                            {isLoading && !diagramData && (
-                                <motion.div
-                                    key="loading-overlay"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="absolute inset-0 bg-[var(--color-panel-bg-translucent)] flex flex-col items-center justify-center z-20 rounded-2xl"
-                                >
-                                    <Loader />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
+                        {/* Empty State - only when no diagram */}
                         <AnimatePresence>
-                            {!diagramData && !isLoading && (
+                            {!diagramData && (
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0 }}
                                     className="flex-1 flex flex-col items-center justify-center text-center p-8"
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-20 w-20 text-[var(--color-text-tertiary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
