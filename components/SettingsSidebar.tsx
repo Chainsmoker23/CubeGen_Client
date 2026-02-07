@@ -9,7 +9,7 @@ import BillingPanel from './BillingPanel'; // Import the new component
 import { FREE_GENERATION_LIMIT, HOBBYIST_GENERATION_LIMIT } from './constants';
 
 
-type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'sdk';
+type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'sdk' | 'codeDiagram';
 
 
 interface SettingsSidebarProps {
@@ -31,7 +31,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
   useEffect(() => {
     const updateActiveModeler = () => {
       const hash = window.location.hash.substring(1);
-      if (hash === 'neuralNetwork' || hash === 'apiKey' || hash === 'playground') {
+      if (hash === 'neuralNetwork' || hash === 'apiKey' || hash === 'playground' || hash === 'codeDiagram') {
         setActiveModeler(hash.split('/')[0]);
       } else {
         setActiveModeler('app');
@@ -252,6 +252,13 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({ userApiKey, setUserAp
                       >
                         <ArchitectureIcon type={IconType.Edit} className={`w-6 h-6 flex-shrink-0 ${activeModeler === 'playground' ? 'text-[var(--color-accent-text)]' : 'text-[var(--color-text-secondary)]'}`} />
                         <span className={`font-semibold text-sm ${activeModeler === 'playground' ? 'text-[var(--color-text-primary)]' : ''}`}>Custom Playground</span>
+                      </button>
+                      <button
+                        onClick={() => { onNavigate('codeDiagram'); setIsOpen(false); }}
+                        className={modelerButtonClasses('codeDiagram')}
+                      >
+                        <ArchitectureIcon type={IconType.FileCode} className={`w-6 h-6 flex-shrink-0 ${activeModeler === 'codeDiagram' ? 'text-[var(--color-accent-text)]' : 'text-[var(--color-text-secondary)]'}`} />
+                        <span className={`font-semibold text-sm ${activeModeler === 'codeDiagram' ? 'text-[var(--color-text-primary)]' : ''}`}>Code to Diagram</span>
                       </button>
                       <button
                         onClick={() => { onNavigate('neuralNetwork'); setIsOpen(false); }}
