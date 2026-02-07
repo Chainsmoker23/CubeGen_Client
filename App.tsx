@@ -28,6 +28,7 @@ import { useAuth } from './contexts/AuthContext';
 import { useAdminAuth } from './contexts/AdminAuthContext';
 import InstallPromptToast from './components/InstallPromptToast';
 import { AnimatePresence } from 'framer-motion';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 type Page = 'landing' | 'auth' | 'app' | 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'neuralNetwork' | 'careers' | 'research' | 'admin' | 'adminLogin' | 'sdk' | 'blog' | 'blogPost' | 'playground' | 'guide' | 'codeDiagram';
 
@@ -232,6 +233,7 @@ const App: React.FC = () => {
           <InstallPromptToast onInstall={handleInstall} onDismiss={handleDismissInstall} />
         )}
       </AnimatePresence>
+      <SpeedInsights />
     </>
   );
 };
