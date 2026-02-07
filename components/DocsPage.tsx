@@ -169,6 +169,56 @@ const diagram = await client.generateDiagram(
                                         </button>
                                     </div>
                                 </DocsSection>
+
+                                <SectionSeparator />
+
+                                <DocsSection id="code-to-diagram" title="Code to Diagram">
+                                    <p>Create diagrams programmatically using our declarative DSL syntax—no AI needed. Write code, get diagrams instantly.</p>
+
+                                    <h3 className="text-xl font-bold mt-8 mb-4">DSL Syntax</h3>
+
+                                    <h4 className="text-lg font-semibold mt-6 mb-2">Nodes</h4>
+                                    <p>Define nodes with position and icon:</p>
+                                    <div className="mb-4">
+                                        <SharedCodeBlock code={`node user: "User" icon=User x=100 y=200
+node api: "API Gateway" icon=ApiGateway x=300 y=200
+node db: "Database" icon=Database x=500 y=200`} />
+                                    </div>
+
+                                    <h4 className="text-lg font-semibold mt-6 mb-2">Connections</h4>
+                                    <p>Connect nodes with unidirectional or bidirectional arrows:</p>
+                                    <div className="mb-4">
+                                        <SharedCodeBlock code={`user -> api: "HTTP Request"
+api <-> db: "Read/Write"`} />
+                                    </div>
+
+                                    <h4 className="text-lg font-semibold mt-6 mb-2">Containers</h4>
+                                    <p>Group nodes inside containers (VPC, Region, Subnet, etc.):</p>
+                                    <div className="mb-4">
+                                        <SharedCodeBlock code={`container vpc: "AWS VPC" type=vpc x=50 y=50 width=600 height=400 {
+    node ec2: "EC2 Instance" icon=AwsEc2 x=100 y=100
+    node rds: "RDS MySQL" icon=AwsRds x=300 y=100
+}`} />
+                                    </div>
+
+                                    <h4 className="text-lg font-semibold mt-6 mb-2">Full Example</h4>
+                                    <div className="mb-6">
+                                        <SharedCodeBlock code={`// 3-Tier Web Application
+node user: "Users" icon=User x=50 y=150
+node lb: "Load Balancer" icon=LoadBalancer x=200 y=150
+node api: "API Server" icon=Api x=350 y=150
+node db: "Database" icon=Database x=500 y=150
+
+user -> lb: "HTTPS"
+lb -> api: "Route"
+api -> db: "Query"`} />
+                                    </div>
+
+                                    <div className="mt-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-r-md">
+                                        <p className="font-semibold text-green-700">Available for all users!</p>
+                                        <p className="text-green-600 text-sm mt-1">Code to Diagram is free for all pricing plans. Access it from the sidebar menu.</p>
+                                    </div>
+                                </DocsSection>
                             </article>
                         </div>
                     </div>
