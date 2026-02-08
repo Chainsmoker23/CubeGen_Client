@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
-import { getAdminUsers, adminUpdateUserPlan } from '../../services/geminiService';
+import { getAdminUsers, adminUpdateUserPlan, adminSyncSubscriptions } from '../../services/geminiService';
 import Loader from '../Loader';
 
 const useDebounce = (value: string, delay: number) => {
@@ -30,6 +30,8 @@ const UserManagement: React.FC = () => {
     const [selectedPlanForUpdate, setSelectedPlanForUpdate] = useState('');
     const [updateError, setUpdateError] = useState<string | null>(null);
     const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncResult, setSyncResult] = useState<string | null>(null);
 
     const fetchUsers = useCallback(async () => {
         if (!adminToken) return;
@@ -61,7 +63,7 @@ const UserManagement: React.FC = () => {
         if (!window.confirm(`Are you sure you want to change this user's plan from "${currentPlan}" to "${selectedPlanForUpdate}"? This is an emergency override.`)) {
             return;
         }
-        
+
         if (!adminToken) return;
 
         setUpdatingUserId(userId);
@@ -74,7 +76,7 @@ const UserManagement: React.FC = () => {
                 await fetchUsers();
                 setExpandedUserId(null);
                 setUpdateSuccess(null);
-                
+
                 // If the response indicates that the user needs to refresh their session,
                 // we should notify the admin to inform the user
                 if (response.requiresRefresh) {
@@ -87,28 +89,29 @@ const UserManagement: React.FC = () => {
             setUpdatingUserId(null);
         }
     };
-    
+
     const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
         const baseClasses = "px-2 inline-flex text-xs leading-5 font-semibold rounded-full";
         let colorClasses = "bg-gray-100 text-gray-800";
         if (status === 'active') colorClasses = "bg-green-100 text-green-800";
         if (status === 'cancelled') colorClasses = "bg-yellow-100 text-yellow-800";
         if (status === 'expired') colorClasses = "bg-red-100 text-red-800";
+        if (status === 'past_due') colorClasses = "bg-orange-100 text-orange-800";
         if (status === 'pending') colorClasses = "bg-blue-100 text-blue-800";
         return <span className={`${baseClasses} ${colorClasses}`}>{status}</span>;
     };
-    
+
     if (isLoading) {
         return <div className="flex justify-center items-center h-64"><Loader /></div>;
     }
-    
+
     return (
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                 <div>
                     <h2 className="text-2xl font-bold">User Management</h2>
                     <p className="text-gray-500 text-sm">
-                        Search, view, and manage user subscriptions. 
+                        Search, view, and manage user subscriptions.
                         Total users: <span className="font-semibold text-pink-600">{users.length}</span>
                         {debouncedSearchTerm && ` (filtered by: "${debouncedSearchTerm}")`}
                     </p>
@@ -130,13 +133,39 @@ const UserManagement: React.FC = () => {
             {error && <div className="bg-red-100 border border-red-300 text-red-700 p-3 rounded-lg mb-4 text-sm">{error}</div>}
 
             <div className="mb-4 flex justify-between items-center">
-                <div>
-                    <button 
+                <div className="flex gap-2">
+                    <button
                         onClick={fetchUsers}
                         className="bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                         Refresh Users
                     </button>
+                    <button
+                        onClick={async () => {
+                            if (!adminToken) return;
+                            setIsSyncing(true);
+                            setSyncResult(null);
+                            try {
+                                const result = await adminSyncSubscriptions(adminToken);
+                                setSyncResult(`✓ ${result.message} (${result.expired} expired, ${result.errors} errors)`);
+                                await fetchUsers();
+                            } catch (err: any) {
+                                setSyncResult(`✗ Sync failed: ${err.message}`);
+                            } finally {
+                                setIsSyncing(false);
+                                setTimeout(() => setSyncResult(null), 5000);
+                            }
+                        }}
+                        disabled={isSyncing}
+                        className="bg-purple-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                    >
+                        {isSyncing ? 'Syncing...' : 'Sync with Dodo'}
+                    </button>
+                    {syncResult && (
+                        <span className={`py-2 px-3 text-sm rounded-lg ${syncResult.startsWith('✓') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {syncResult}
+                        </span>
+                    )}
                 </div>
                 <div className="text-sm text-gray-500">
                     Showing {users.length} user{users.length !== 1 ? 's' : ''}
@@ -166,10 +195,10 @@ const UserManagement: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button onClick={() => {
-                                             setExpandedUserId(expandedUserId === user.id ? null : user.id);
-                                             setSelectedPlanForUpdate(user.currentPlan);
-                                             setUpdateError(null);
-                                             setUpdateSuccess(null);
+                                            setExpandedUserId(expandedUserId === user.id ? null : user.id);
+                                            setSelectedPlanForUpdate(user.currentPlan);
+                                            setUpdateError(null);
+                                            setUpdateSuccess(null);
                                         }} className="text-pink-600 hover:text-pink-900">
                                             {expandedUserId === user.id ? 'Hide' : 'Details'}
                                         </button>
@@ -194,6 +223,7 @@ const UserManagement: React.FC = () => {
                                                                     <th className="px-4 py-2 text-left">Status</th>
                                                                     <th className="px-4 py-2 text-left">Subscription ID</th>
                                                                     <th className="px-4 py-2 text-left">Date</th>
+                                                                    <th className="px-4 py-2 text-left">Expires</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody className="bg-white">
@@ -203,6 +233,12 @@ const UserManagement: React.FC = () => {
                                                                         <td className="px-4 py-2"><StatusBadge status={sub.status} /></td>
                                                                         <td className="px-4 py-2 font-mono text-xs">{sub.dodo_subscription_id || 'N/A'}</td>
                                                                         <td className="px-4 py-2">{new Date(sub.created_at).toLocaleString()}</td>
+                                                                        <td className="px-4 py-2">
+                                                                            {sub.period_ends_at
+                                                                                ? new Date(sub.period_ends_at).toLocaleDateString()
+                                                                                : <span className="text-gray-400">-</span>
+                                                                            }
+                                                                        </td>
                                                                     </tr>
                                                                 ))}
                                                             </tbody>
@@ -213,7 +249,7 @@ const UserManagement: React.FC = () => {
                                                 <div className="mt-4 pt-4 border-t border-red-200 bg-red-50 p-4 rounded-lg">
                                                     <h4 className="font-bold text-red-800">Emergency Actions</h4>
                                                     <p className="text-sm text-red-700 mb-3">Manually override the user's plan. This does not create a real subscription and is for emergency use only.</p>
-                                                    
+
                                                     <div className="flex items-center gap-4">
                                                         <select
                                                             value={selectedPlanForUpdate}
@@ -232,10 +268,10 @@ const UserManagement: React.FC = () => {
                                                             {updatingUserId === user.id ? 'Updating...' : 'Update Plan'}
                                                         </button>
                                                     </div>
-                                                    
+
                                                     <AnimatePresence>
-                                                        {updateError && <motion.p initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-red-600 text-sm mt-2">{updateError}</motion.p>}
-                                                        {updateSuccess && <motion.p initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-green-600 text-sm mt-2">{updateSuccess}</motion.p>}
+                                                        {updateError && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-red-600 text-sm mt-2">{updateError}</motion.p>}
+                                                        {updateSuccess && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-green-600 text-sm mt-2">{updateSuccess}</motion.p>}
                                                     </AnimatePresence>
                                                 </div>
 
@@ -248,7 +284,7 @@ const UserManagement: React.FC = () => {
                     </tbody>
                 </table>
             </div>
-             {users.length === 0 && !isLoading && (
+            {users.length === 0 && !isLoading && (
                 <div className="text-center py-12">
                     <p className="text-gray-500">No users found for your search.</p>
                 </div>
