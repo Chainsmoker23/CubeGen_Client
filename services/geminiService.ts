@@ -844,6 +844,16 @@ export const adminUpdateUserPlan = async (userId: string, newPlan: string, admin
     }
 };
 
+export const adminSyncSubscriptions = async (adminToken: string): Promise<{ message: string, synced: number, expired: number, errors: number }> => {
+    try {
+        const response = await fetchFromApi('/admin/sync-subscriptions', {}, 'POST', adminToken);
+        return response;
+    } catch (error) {
+        console.error("Error syncing subscriptions via admin service:", String(error));
+        throw error;
+    }
+};
+
 // --- NEW BLOG SERVICES ---
 
 // Helper function to convert a file to a base64 string
