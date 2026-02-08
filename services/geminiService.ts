@@ -844,7 +844,7 @@ export const adminUpdateUserPlan = async (userId: string, newPlan: string, admin
     }
 };
 
-export const adminSyncSubscriptions = async (adminToken: string): Promise<{ message: string, synced: number, expired: number, errors: number }> => {
+export const adminSyncSubscriptions = async (adminToken: string): Promise<{ message: string, checked: number, expiredByDate: number, syncedWithDodo: number, dodoErrors: number }> => {
     try {
         const response = await fetchFromApi('/admin/sync-subscriptions', {}, 'POST', adminToken);
         return response;
