@@ -147,7 +147,12 @@ const UserManagement: React.FC = () => {
                             setSyncResult(null);
                             try {
                                 const result = await adminSyncSubscriptions(adminToken);
-                                setSyncResult(`✓ ${result.message} (${result.expired} expired, ${result.errors} errors)`);
+                                const details = [];
+                                if (result.expiredByDate > 0) details.push(`${result.expiredByDate} expired`);
+                                if (result.syncedWithDodo > 0) details.push(`${result.syncedWithDodo} synced with Dodo`);
+                                if (result.dodoErrors > 0) details.push(`${result.dodoErrors} API errors`);
+                                setSyncResult(`✓ ${result.checked} checked. ${details.length > 0 ? details.join(', ') + '.' : 'No changes needed.'}`);
+
                                 await fetchUsers();
                             } catch (err: any) {
                                 setSyncResult(`✗ Sync failed: ${err.message}`);
