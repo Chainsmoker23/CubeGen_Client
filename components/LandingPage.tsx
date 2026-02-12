@@ -287,7 +287,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onDownload, onNavig
                 <div className="flex flex-col sm:flex-row gap-5">
                   <button
                     onClick={onDownload}
-                    className="flex items-center justify-center gap-3 bg-[#0078D4] text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-[#006ABD] hover:scale-105 transition-all duration-300 group ring-4 ring-transparent hover:ring-blue-100"
+                    className="flex items-center justify-center gap-3 bg-white text-[#D6336C] border-2 border-[#F9D7E3] font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-[#FFF0F5] hover:scale-105 transition-all duration-300 group"
                   >
                     {/* Official Microsoft Windows Logo */}
                     <svg className="w-6 h-6" viewBox="0 0 88 88" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -297,11 +297,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onDownload, onNavig
                       <div className="text-xs font-normal opacity-80">Download for</div>
                       <div className="text-lg">Windows</div>
                     </div>
-                    <span className="ml-3 bg-white/20 px-2 py-0.5 rounded text-xs font-medium backdrop-blur-sm">Free</span>
+                    <span className="ml-3 bg-[#D6336C]/10 px-2 py-0.5 rounded text-xs font-medium border border-[#D6336C]/20">Free</span>
                   </button>
                   <div className="flex flex-col justify-center text-sm text-gray-500 font-medium space-y-1">
                     <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> v1.0.0 Stable Build</span>
-                    <span className="text-gray-400">Windows 10/11 (64-bit) • Login Required</span>
+                    <span className="text-gray-400">Windows 10/11 (64-bit)</span>
                   </div>
                 </div>
               </motion.div>
@@ -319,7 +319,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onDownload, onNavig
                     <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E] hover:bg-[#FF5F56]/80 transition-colors"></div>
                     <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123] hover:bg-[#FFBD2E]/80 transition-colors"></div>
                     <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29] hover:bg-[#27C93F]/80 transition-colors"></div>
-                    <div className="ml-4 text-xs text-gray-500 font-medium select-none flex-1 text-center pr-12 opacity-70">CubeGen AI Studio - Untitled Project</div>
+                    <div className="ml-4 text-xs text-gray-500 font-medium select-none flex-1 text-center pr-12 opacity-70">CubeGen AI Studio</div>
                   </div>
                   <div className="flex-1 p-8 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
                     {/* Background Grid Pattern */}
@@ -337,18 +337,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onDownload, onNavig
                     </div>
                   </div>
 
-                  {/* Floating Badge */}
-                  <div className="absolute -bottom-5 -right-5 bg-white p-4 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100 rotate-6 group-hover:rotate-3 transition-all duration-500">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-green-100 p-2.5 rounded-full">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-800 leading-tight text-sm">Auto-Updates</div>
-                        <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Active</div>
-                      </div>
-                    </div>
-                  </div>
+
                 </div>
               </motion.div>
             </div>
