@@ -274,28 +274,34 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onDownload, onNavig
                 transition={{ duration: 0.6 }}
                 className="flex-1"
               >
-                <div className="inline-block px-4 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-sm mb-4">
+                <div className="inline-block px-4 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-sm mb-4 border border-blue-200">
                   New Release v1.0.0
                 </div>
-                <h2 className="text-4xl font-bold mb-4 text-[#2B2B2B]">Experience CubeGen on Desktop</h2>
-                <p className="text-lg text-[#555555] mb-8 leading-relaxed">
+                <h2 className="text-4xl font-bold mb-4 text-[#2B2B2B] leading-tight">Experience CubeGen on Desktop</h2>
+                <p className="text-lg text-[#555555] mb-8 leading-relaxed max-w-xl">
                   Get the full power of CubeGen AI Studio on your Windows machine.
                   Enjoy <span className="font-bold text-[#2B2B2B]">faster performance</span>,
                   dedicated workspace, and seamless auto-updates.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-5">
                   <button
                     onClick={onDownload}
-                    className="flex items-center justify-center gap-3 bg-[#0078D4] text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-[#006ABD] hover:scale-105 transition-all duration-300 group"
+                    className="flex items-center justify-center gap-3 bg-[#0078D4] text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-[#006ABD] hover:scale-105 transition-all duration-300 group ring-4 ring-transparent hover:ring-blue-100"
                   >
-                    <ArchitectureIcon type={IconType.Microsoft} className="w-6 h-6 text-white" />
-                    <span>Download for Windows</span>
-                    <span className="ml-2 text-blue-200 text-sm font-normal">(Free)</span>
+                    {/* Official Microsoft Windows Logo */}
+                    <svg className="w-6 h-6" viewBox="0 0 88 88" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M0 12.402l35.687-4.86.016 34.423H0V12.402zm35.67 33.329l-.016 34.563-35.654-4.89V45.731h35.67zm4.343-39.066L88 0v41.965H40.013V6.666zm47.95 38.995V88L40.013 81.246V45.66H88z" />
+                    </svg>
+                    <div className="text-left leading-tight">
+                      <div className="text-xs font-normal opacity-80">Download for</div>
+                      <div className="text-lg">Windows</div>
+                    </div>
+                    <span className="ml-3 bg-white/20 px-2 py-0.5 rounded text-xs font-medium backdrop-blur-sm">Free</span>
                   </button>
-                  <div className="flex flex-col justify-center text-sm text-gray-500">
-                    <span>v1.0.0 • Windows 10/11</span>
-                    <span>Requires Login</span>
+                  <div className="flex flex-col justify-center text-sm text-gray-500 font-medium space-y-1">
+                    <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> v1.0.0 Stable Build</span>
+                    <span className="text-gray-400">Windows 10/11 (64-bit) • Login Required</span>
                   </div>
                 </div>
               </motion.div>
@@ -305,30 +311,41 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onDownload, onNavig
                 whileInView={{ x: 0, opacity: 1 }}
                 viewport={{ once: true, amount: 0.5 }}
                 transition={{ duration: 0.6 }}
-                className="flex-1 flex justify-center"
+                className="flex-1 flex justify-center w-full"
               >
                 {/* Visual Representation of Window App */}
-                <div className="relative w-full max-w-md aspect-video bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col">
-                  <div className="h-8 bg-[#F3F3F3] border-b border-[#E5E5E5] flex items-center px-4 gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                    <div className="ml-4 text-xs text-gray-400 font-medium">CubeGen AI Studio</div>
+                <div className="relative w-full max-w-lg aspect-video bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col transform hover:scale-[1.02] transition-transform duration-500 group">
+                  <div className="h-9 bg-[#F3F3F3] border-b border-[#E5E5E5] flex items-center px-4 gap-2">
+                    <div className="w-3 h-3 rounded-full bg-[#FF5F56] border border-[#E0443E] hover:bg-[#FF5F56]/80 transition-colors"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#FFBD2E] border border-[#DEA123] hover:bg-[#FFBD2E]/80 transition-colors"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29] hover:bg-[#27C93F]/80 transition-colors"></div>
+                    <div className="ml-4 text-xs text-gray-500 font-medium select-none flex-1 text-center pr-12 opacity-70">CubeGen AI Studio - Untitled Project</div>
                   </div>
-                  <div className="flex-1 p-6 flex flex-col items-center justify-center bg-gray-50">
-                    <ArchitectureIcon type={IconType.Sparkles} className="w-24 h-24 text-gray-300 mb-4" />
-                    <div className="text-gray-400 font-medium">Native Experience</div>
+                  <div className="flex-1 p-8 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
+                    {/* Background Grid Pattern */}
+                    <div className="absolute inset-0 opacity-[0.03]"
+                      style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+                    </div>
+
+                    {/* Official Pulsing Logo */}
+                    <div className="relative z-10 flex flex-col items-center">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-[#D6336C] blur-3xl opacity-20 rounded-full animate-pulse"></div>
+                        <Logo className="w-28 h-28 text-[#D6336C] relative z-10 drop-shadow-xl" />
+                      </div>
+                      <div className="mt-6 text-gray-400 font-medium tracking-widest uppercase text-xs">Native Desktop Experience</div>
+                    </div>
                   </div>
 
                   {/* Floating Badge */}
-                  <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-xl shadow-lg border border-gray-100 rotate-12">
+                  <div className="absolute -bottom-5 -right-5 bg-white p-4 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-gray-100 rotate-6 group-hover:rotate-3 transition-all duration-500">
                     <div className="flex items-center gap-3">
-                      <div className="bg-green-100 p-2 rounded-full">
-                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                      <div className="bg-green-100 p-2.5 rounded-full">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
                       </div>
                       <div>
-                        <div className="font-bold text-gray-800">Auto-Updates</div>
-                        <div className="text-xs text-gray-500">Always current</div>
+                        <div className="font-bold text-gray-800 leading-tight text-sm">Auto-Updates</div>
+                        <div className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Active</div>
                       </div>
                     </div>
                   </div>
