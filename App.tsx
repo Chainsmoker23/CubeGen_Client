@@ -186,10 +186,25 @@ const App: React.FC = () => {
     return <PaymentStatusPage onNavigate={onNavigate} />;
   }
 
+  // --- Secure Download Handler ---
+  const handleDownload = () => {
+    if (currentUser) {
+      // User IS logged in -> Start Download
+      window.location.href = 'https://github.com/Chainsmoker23/CubeGen-Ai-Window/releases/download/v1.0.0/CubeGen.AI.Studio.Setup.1.0.0.exe';
+    } else {
+      // User is NOT logged in -> Go to Login Page
+      onNavigate('auth');
+    }
+  };
+
   // --- Page rendering logic ---
   const renderPage = () => {
     switch (pageInfo.page) {
-      case 'landing': return <LandingPage onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')} onNavigate={onNavigate} />;
+      case 'landing': return <LandingPage
+        onLaunch={() => onNavigate(currentUser ? 'app' : 'auth')}
+        onDownload={handleDownload}
+        onNavigate={onNavigate}
+      />;
       case 'auth': return <AuthPage onBack={() => onNavigate('landing')} />;
       case 'admin': return <AdminPage onNavigate={onNavigate} />;
       case 'adminLogin': return <AdminLoginPage onBack={() => onNavigate('landing')} />;
