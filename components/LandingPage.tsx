@@ -16,6 +16,7 @@ import ShowcaseSection from './ShowcaseSection';
 
 interface LandingPageProps {
   onLaunch: () => void;
+  onDownload: () => void;
   onNavigate: (page: 'contact' | 'about' | 'api' | 'apiKey' | 'privacy' | 'terms' | 'docs' | 'careers' | 'research' | 'sdk' | 'blog') => void;
 }
 
@@ -92,7 +93,7 @@ const TestimonialCard: React.FC<{ testimonial: typeof TESTIMONIALS[0] }> = ({ te
   );
 };
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onDownload, onNavigate }) => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -257,6 +258,81 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLaunch, onNavigate }) => {
                 transition={{ duration: 0.6, ease: 'easeOut' }}
               >
                 <ApiKeyAnimation />
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Desktop App Download Section */}
+        <section className="py-24 bg-[#F8F9FA] border-y border-[#EAEAEA]">
+          <div className="container mx-auto px-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+              <motion.div
+                initial={{ x: -30, opacity: 0 }}
+                whileInView={{ x: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.5 }}
+                transition={{ duration: 0.6 }}
+                className="flex-1"
+              >
+                <div className="inline-block px-4 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-sm mb-4">
+                  New Release v1.0.0
+                </div>
+                <h2 className="text-4xl font-bold mb-4 text-[#2B2B2B]">Experience CubeGen on Desktop</h2>
+                <p className="text-lg text-[#555555] mb-8 leading-relaxed">
+                  Get the full power of CubeGen AI Studio on your Windows machine.
+                  Enjoy <span className="font-bold text-[#2B2B2B]">faster performance</span>,
+                  dedicated workspace, and seamless auto-updates.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button
+                    onClick={onDownload}
+                    className="flex items-center justify-center gap-3 bg-[#0078D4] text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl hover:bg-[#006ABD] hover:scale-105 transition-all duration-300 group"
+                  >
+                    <ArchitectureIcon type={IconType.Microsoft} className="w-6 h-6 text-white" />
+                    <span>Download for Windows</span>
+                    <span className="ml-2 text-blue-200 text-sm font-normal">(Free)</span>
+                  </button>
+                  <div className="flex flex-col justify-center text-sm text-gray-500">
+                    <span>v1.0.0 • Windows 10/11</span>
+                    <span>Requires Login</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ x: 30, opacity: 0 }}
+                whileInView={{ x: 0, opacity: 1 }}
+                viewport={{ once: true, amount: 0.5 }}
+                transition={{ duration: 0.6 }}
+                className="flex-1 flex justify-center"
+              >
+                {/* Visual Representation of Window App */}
+                <div className="relative w-full max-w-md aspect-video bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col">
+                  <div className="h-8 bg-[#F3F3F3] border-b border-[#E5E5E5] flex items-center px-4 gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    <div className="ml-4 text-xs text-gray-400 font-medium">CubeGen AI Studio</div>
+                  </div>
+                  <div className="flex-1 p-6 flex flex-col items-center justify-center bg-gray-50">
+                    <ArchitectureIcon type={IconType.Sparkles} className="w-24 h-24 text-gray-300 mb-4" />
+                    <div className="text-gray-400 font-medium">Native Experience</div>
+                  </div>
+
+                  {/* Floating Badge */}
+                  <div className="absolute -bottom-6 -right-6 bg-white p-4 rounded-xl shadow-lg border border-gray-100 rotate-12">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-green-100 p-2 rounded-full">
+                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                      </div>
+                      <div>
+                        <div className="font-bold text-gray-800">Auto-Updates</div>
+                        <div className="text-xs text-gray-500">Always current</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             </div>
           </div>
